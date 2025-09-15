@@ -13,7 +13,7 @@ use App\Models\Team;
 use App\Models\Topic;
 use App\Services\GraphBuilder;
 use App\Services\KnowledgeGraph\BuildLouvainCommunities;
-use App\Services\KnowledgeGraph\KnowledgeGraph;
+use Memgraph as MemgraphClient;
 use App\Services\LLM\Embedder;
 use App\Services\Search\SearchEngine;
 use Illuminate\Http\Request;
@@ -22,7 +22,6 @@ class TestController extends Controller
 {
     public function index(BuildLouvainCommunities $communities, GraphBuilder $graphBuilder)
     {
-        return $graphBuilder->build();
 //        $communities->build();
 //        $communities->index();
 //        $knowledgeGraph->buildCommunities();
