@@ -60,7 +60,7 @@ class IndexFile implements ShouldQueue
             if ($this->file->mimeType() === 'application/pdf') {
                 $this->indexPDF($pdfParser, $textChunker, $indexingWorkflowItem);
                 $this->createEmbedding($indexingWorkflowItem, $embedder, $vectorStore, $graphDB);
-                $this->createEntities($indexingWorkflowItem, $entityExtractor, $graphDB);
+//                $this->createEntities($indexingWorkflowItem, $entityExtractor, $graphDB);
                 $indexingWorkflowItem->update([
                     'status' => 'completed',
                 ]);
@@ -107,7 +107,7 @@ class IndexFile implements ShouldQueue
                 'status' => 'prepared',
             ]);
             $this->createEmbedding($indexingWorkflowItem, $embedder, $vectorStore, $graphDB);
-            $this->createEntities($indexingWorkflowItem, $entityExtractor, $graphDB);
+//            $this->createEntities($indexingWorkflowItem, $entityExtractor, $graphDB);
             $indexingWorkflowItem->update([
                 'status' => 'completed',
             ]);
@@ -169,16 +169,16 @@ class IndexFile implements ShouldQueue
                 $embedding = $embedder->createEmbedding($chunk->getEmbeddableContent());
                 $vectorStore->upsert($chunk, $embedding);
 
-                $graphDB->createNodeWithRelation(
-                    newNodeLabel: 'FileChunk',
-                    newNodeAttributes: [
-                        'id' => $chunk->id,
-                        'embedding' => $embedding,
-                    ],
-                    relation: 'CHUNK_OF',
-                    relatedNodeLabel: 'File',
-                    relatedNodeID: $indexingWorkflowItem->document->id,
-                );
+//                $graphDB->createNodeWithRelation(
+//                    newNodeLabel: 'FileChunk',
+//                    newNodeAttributes: [
+//                        'id' => $chunk->id,
+//                        'embedding' => $embedding,
+//                    ],
+//                    relation: 'CHUNK_OF',
+//                    relatedNodeLabel: 'File',
+//                    relatedNodeID: $indexingWorkflowItem->document->id,
+//                );
             }
 
             $indexingWorkflowItem->update([

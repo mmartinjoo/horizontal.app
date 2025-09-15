@@ -40,7 +40,7 @@ class IndexGoogleDrive implements ShouldQueue
             'team_id' => $this->team->id,
             'job_id' => $this->job->payload()['uuid'],
         ]);
-        $files = $drive->listDirectoryContents();
+        $files = $drive->listDirectoryContents('horizontal.app');
         $contents = $prioritizer->prioritize($files);
         $indexing->update([
             'status' => 'downloaded',
@@ -76,11 +76,11 @@ class IndexGoogleDrive implements ShouldQueue
                     'priority' => $prio,
                     'embedding' => $embedding,
                 ]);
-                $graphDB->createNode('File', [
-                    'id' => $document->id,
-                    'name' => $document->title,
-                    'embedding' => $embedding,
-                ]);
+//                $graphDB->createNode('File', [
+//                    'id' => $document->id,
+//                    'name' => $document->title,
+//                    'embedding' => $embedding,
+//                ]);
                 $indexingItem = IndexingWorkflowItem::create([
                     'indexing_workflow_id' => $indexing->id,
                     'data' => $file,
@@ -108,17 +108,17 @@ class IndexGoogleDrive implements ShouldQueue
                         'context' => 'revision author',
                         'embedding' => json_encode($embedding),
                     ]);
-                    $graphDB->createNodeWithRelation(
-                        newNodeLabel: 'Participant',
-                        newNodeAttributes: [
-                            'id' => $p->id,
-                            'name' => $p->name,
-                            'embedding' => $embedding,
-                        ],
-                        relation: 'REVISION_AUTHOR_OF',
-                        relatedNodeLabel: 'File',
-                        relatedNodeID: $document->id,
-                    );
+//                    $graphDB->createNodeWithRelation(
+//                        newNodeLabel: 'Participant',
+//                        newNodeAttributes: [
+//                            'id' => $p->id,
+//                            'name' => $p->name,
+//                            'embedding' => $embedding,
+//                        ],
+//                        relation: 'REVISION_AUTHOR_OF',
+//                        relatedNodeLabel: 'File',
+//                        relatedNodeID: $document->id,
+//                    );
                 }
 
                 $sharingUser = $file->getSharingUser();
@@ -139,17 +139,18 @@ class IndexGoogleDrive implements ShouldQueue
                     $document->participants()->attach($p->id, [
                         'context' => 'sharing user',
                         'embedding' => json_encode($embedding),
-                    ]);$graphDB->createNodeWithRelation(
-                        newNodeLabel: 'Participant',
-                        newNodeAttributes: [
-                            'id' => $p->id,
-                            'name' => $p->name,
-                            'embedding' => $embedding,
-                        ],
-                        relation: 'SHARING_USER_OF',
-                        relatedNodeLabel: 'File',
-                        relatedNodeID: $document->id,
-                    );
+                    ]);
+//                    $graphDB->createNodeWithRelation(
+//                        newNodeLabel: 'Participant',
+//                        newNodeAttributes: [
+//                            'id' => $p->id,
+//                            'name' => $p->name,
+//                            'embedding' => $embedding,
+//                        ],
+//                        relation: 'SHARING_USER_OF',
+//                        relatedNodeLabel: 'File',
+//                        relatedNodeID: $document->id,
+//                    );
                 }
 
                 foreach ($file->getOwners() as $owner) {
@@ -170,17 +171,17 @@ class IndexGoogleDrive implements ShouldQueue
                         'context' => 'owner',
                         'embedding' => json_encode($embedding),
                     ]);
-                    $graphDB->createNodeWithRelation(
-                        newNodeLabel: 'Participant',
-                        newNodeAttributes: [
-                            'id' => $p->id,
-                            'name' => $p->name,
-                            'embedding' => $embedding,
-                        ],
-                        relation: 'OWNER_OF',
-                        relatedNodeLabel: 'File',
-                        relatedNodeID: $document->id,
-                    );
+//                    $graphDB->createNodeWithRelation(
+//                        newNodeLabel: 'Participant',
+//                        newNodeAttributes: [
+//                            'id' => $p->id,
+//                            'name' => $p->name,
+//                            'embedding' => $embedding,
+//                        ],
+//                        relation: 'OWNER_OF',
+//                        relatedNodeLabel: 'File',
+//                        relatedNodeID: $document->id,
+//                    );
                 }
 
                 $comments = $drive->getComments($file);
@@ -202,17 +203,17 @@ class IndexGoogleDrive implements ShouldQueue
                         'context' => 'commented',
                         'embedding' => json_encode($authorEmbedding),
                     ]);
-                    $graphDB->createNodeWithRelation(
-                        newNodeLabel: 'Participant',
-                        newNodeAttributes: [
-                            'id' => $p->id,
-                            'name' => $p->name,
-                            'embedding' => $authorEmbedding,
-                        ],
-                        relation: 'COMMENTED_ON',
-                        relatedNodeLabel: 'File',
-                        relatedNodeID: $document->id,
-                    );
+//                    $graphDB->createNodeWithRelation(
+//                        newNodeLabel: 'Participant',
+//                        newNodeAttributes: [
+//                            'id' => $p->id,
+//                            'name' => $p->name,
+//                            'embedding' => $authorEmbedding,
+//                        ],
+//                        relation: 'COMMENTED_ON',
+//                        relatedNodeLabel: 'File',
+//                        relatedNodeID: $document->id,
+//                    );
                     $embedding = $embedder->createEmbedding($comment['content']);
                     $documentComment = $document->comments()->create([
                         'author_id' => $p->id,
@@ -222,42 +223,42 @@ class IndexGoogleDrive implements ShouldQueue
                         'metadata' => $comment,
                         'embedding' => $embedding,
                     ]);
-                    $graphDB->createNodeWithRelation(
-                        newNodeLabel: 'FileComment',
-                        newNodeAttributes: [
-                            'id' => $documentComment->id,
-                            'embedding' => $embedding,
-                        ],
-                        relation: 'COMMENT_OF',
-                        relatedNodeLabel: 'File',
-                        relatedNodeID: $document->id,
-                    );
-                    $graphDB->addRelation(
-                        fromNodeLabel: 'Participant',
-                        fromNodeID: $p->id,
-                        relation: 'AUTHOR_OF',
-                        toNodeLabel: 'FileComment',
-                        toNodeID: $documentComment->id,
-                    );
-                    $topics = $entityExtractor->extractTopics($comment['content']);
-                    $documentComment->createTopics($topics['topics']);
-                    foreach ($documentComment->topics as $topic) {
-                        $graphDB->createNodeWithRelation(
-                            newNodeLabel: 'Topic',
-                            newNodeAttributes: [
-                                'id' => $topic->id,
-                                'name' => $topic->name,
-                                'embedding' => $topic->embedding,
-                            ],
-                            relation: 'MENTIONED_IN',
-                            relatedNodeLabel: 'FileComment',
-                            relatedNodeID: $documentComment->id,
-                            relationAttributes: [
-                                'context' => $topic->pivot->context,
-                                'embedding' => $topic->pivot->embedding,
-                            ],
-                        );
-                    }
+//                    $graphDB->createNodeWithRelation(
+//                        newNodeLabel: 'FileComment',
+//                        newNodeAttributes: [
+//                            'id' => $documentComment->id,
+//                            'embedding' => $embedding,
+//                        ],
+//                        relation: 'COMMENT_OF',
+//                        relatedNodeLabel: 'File',
+//                        relatedNodeID: $document->id,
+//                    );
+//                    $graphDB->addRelation(
+//                        fromNodeLabel: 'Participant',
+//                        fromNodeID: $p->id,
+//                        relation: 'AUTHOR_OF',
+//                        toNodeLabel: 'FileComment',
+//                        toNodeID: $documentComment->id,
+//                    );
+//                    $topics = $entityExtractor->extractTopics($comment['content']);
+//                    $documentComment->createTopics($topics['topics']);
+//                    foreach ($documentComment->topics as $topic) {
+//                        $graphDB->createNodeWithRelation(
+//                            newNodeLabel: 'Topic',
+//                            newNodeAttributes: [
+//                                'id' => $topic->id,
+//                                'name' => $topic->name,
+//                                'embedding' => $topic->embedding,
+//                            ],
+//                            relation: 'MENTIONED_IN',
+//                            relatedNodeLabel: 'FileComment',
+//                            relatedNodeID: $documentComment->id,
+//                            relationAttributes: [
+//                                'context' => $topic->pivot->context,
+//                                'embedding' => $topic->pivot->embedding,
+//                            ],
+//                        );
+//                    }
                 }
             }
         }

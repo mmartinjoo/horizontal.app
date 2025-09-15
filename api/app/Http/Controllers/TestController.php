@@ -21,16 +21,16 @@ class TestController extends Controller
 {
     public function index(BuildLouvainCommunities $communities)
     {
-        $communities->build();
-        $communities->index();
+//        $communities->build();
+//        $communities->index();
 //        $knowledgeGraph->buildCommunities();
 //        $knowledgeGraph->indexParentCommunities();
 
-//        $team = Team::where('name', 'Test Company')->firstOrFail();
+        $team = Team::where('name', 'Test Company')->firstOrFail();
         /** @var Topic $topic */
 //        LinkRelatedTopics::dispatch();
 //        IndexJira::dispatch($team);
-//        IndexGoogleDrive::dispatch($team);
+        IndexGoogleDrive::dispatch($team);
 
         return response('indexing...');
     }

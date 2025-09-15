@@ -1,3 +1,4 @@
 /.venv
 /input
 .env
+__pycache__
