@@ -23,6 +23,7 @@ class TestController extends Controller
     public function index(BuildLouvainCommunities $communities, GraphBuilder $graphBuilder)
     {
         $graphBuilder->buildComments();
+        $graphBuilder->buildParticipants();
 //        $communities->build();
 //        $communities->index();
 
