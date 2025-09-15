@@ -4,7 +4,6 @@ from llama_index.core.bridge.pydantic import PrivateAttr
 from llama_index.core.embeddings import BaseEmbedding
 from openai import OpenAI
 import os
-import sys
 
 
 class FireworksEmbeddor(BaseEmbedding):
@@ -34,6 +33,7 @@ class FireworksEmbeddor(BaseEmbedding):
         response = self._client.embeddings.create(
             model="nomic-ai/nomic-embed-text-v1.5",
             input=f"search_query: {query}",
+            dimensions=768,
         )
         return response.data[0].embedding
 
@@ -41,6 +41,7 @@ class FireworksEmbeddor(BaseEmbedding):
         response = self._client.embeddings.create(
             model="nomic-ai/nomic-embed-text-v1.5",
             input=f"search_document: {text}",
+            dimensions=768,
         )        
         return response.data[0].embedding
 
@@ -50,6 +51,7 @@ class FireworksEmbeddor(BaseEmbedding):
             response = self._client.embeddings.create(
                 model="nomic-ai/nomic-embed-text-v1.5",
                 input=f"search_document: {text}",
+                dimensions=768,
             )
             embeddings.append(response.data[0].embedding)
         return embeddings

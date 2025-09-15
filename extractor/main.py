@@ -43,28 +43,29 @@ documents = reader.load_data(
             document_chunks.id as id, 
             documents.title as title, 
             document_chunks.body as body, 
-            documents.source_type as source_type
+            documents.source_type as source_type,
+            documents.source_url as source_url
         from document_chunks
         inner join documents on documents.id = document_chunks.document_id
     """,
     document_id=lambda row: f"{row['id']}",
     metadata_cols=[
-        "title", "source_type",
+        "title", "source_type", "source_url",
     ],
 )
 
-for doc in documents:
-    name = doc.metadata["source_type"] + "_" + slugify(doc.metadata["title"])
-    path = os.path.join("input2", name)
-    with open(path, "w") as file:
-        file.write(doc.text)
+# for doc in documents:
+#     name = doc.metadata["source_type"] + "_" + slugify(doc.metadata["title"])
+#     path = os.path.join("input2", name)
+#     with open(path, "w") as file:
+#         file.write(doc.text)
 
 # print(documents[0])
 # sys.exit(-2)
 
 
-reader = SimpleDirectoryReader(input_dir="input2")
-documents = reader.load_data()
+# reader = SimpleDirectoryReader(input_dir="input2")
+# documents = reader.load_data()
 
 # print(documents[0])
 # print(type(documents))
