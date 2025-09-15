@@ -6,7 +6,7 @@ from openai import OpenAI
 import os
 
 
-class FireworksEmbeddor(BaseEmbedding):
+class FireworksEmbedding(BaseEmbedding):
     _client: OpenAI
     
     def __init__(

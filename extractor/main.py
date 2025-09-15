@@ -6,7 +6,7 @@ from llama_index.llms.fireworks import Fireworks
 from llama_index.graph_stores.memgraph import MemgraphPropertyGraphStore
 from llama_index.readers.database import DatabaseReader
 from dotenv import load_dotenv
-from fireworks_embeddor import FireworksEmbeddor
+from fireworks_embedding import FireworksEmbedding
 
 load_dotenv()
 
@@ -17,7 +17,7 @@ llm = Fireworks(
     model=os.getenv("LLM_MODEL"),
 )
 
-embed_model = FireworksEmbeddor()
+embed_model = FireworksEmbedding()
 
 Settings.llm = llm
 Settings.embed_model = embed_model
