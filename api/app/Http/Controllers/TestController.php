@@ -11,6 +11,7 @@ use App\Models\DocumentComment;
 use App\Models\JiraProject;
 use App\Models\Team;
 use App\Models\Topic;
+use App\Services\GraphBuilder;
 use App\Services\KnowledgeGraph\BuildLouvainCommunities;
 use App\Services\KnowledgeGraph\KnowledgeGraph;
 use App\Services\LLM\Embedder;
@@ -19,20 +20,21 @@ use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
-    public function index(BuildLouvainCommunities $communities)
+    public function index(BuildLouvainCommunities $communities, GraphBuilder $graphBuilder)
     {
-        $communities->build();
-        $communities->index();
+        return $graphBuilder->build();
+//        $communities->build();
+//        $communities->index();
 //        $knowledgeGraph->buildCommunities();
 //        $knowledgeGraph->indexParentCommunities();
 
-        $team = Team::where('name', 'Test Company')->firstOrFail();
+//        $team = Team::where('name', 'Test Company')->firstOrFail();
         /** @var Topic $topic */
 //        LinkRelatedTopics::dispatch();
 //        IndexJira::dispatch($team);
-        IndexGoogleDrive::dispatch($team);
+//        IndexGoogleDrive::dispatch($team);
 
-        return response('indexing...');
+//        return response('indexing...');
     }
 
     public function token()

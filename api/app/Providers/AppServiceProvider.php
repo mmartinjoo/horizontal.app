@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Integrations\Communication\Jira\JiraOAuthService;
+use App\Services\GraphBuilder;
 use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\Memgraph;
 use App\Services\Indexing\EntityExtractor;
@@ -84,5 +85,10 @@ class AppServiceProvider extends ServiceProvider
             ->when(SearchEngine::class)
             ->needs('$cosineSimilarityThreshold')
             ->give(config('search_engine.cosine_similarity_threshold'));
+
+        $this->app
+            ->when(GraphBuilder::class)
+            ->needs('$baseUrl')
+            ->give(config('graph_builder.base_url'));
     }
 }

@@ -1,5 +1,6 @@
 import os
-from flask import Flask, request, jsonify
+import asyncio
+from fastapi import FastAPI, HTTPException
 from llama_index.core.indices.property_graph import SimpleLLMPathExtractor
 from llama_index.core import Settings, PropertyGraphIndex
 from llama_index.llms.fireworks import Fireworks
@@ -26,14 +27,17 @@ reader = DatabaseReader(
     uri=os.getenv("DB_URI")
 )
 
-def build_graph():
+async def build_graph():
     print("build_graph")
-    documents = reader.load_data(
+
+    # Run blocking database operation in thread pool
+    documents = await asyncio.to_thread(
+        reader.load_data,
         query="""
-            select 
-                document_chunks.id as id, 
-                documents.title as title, 
-                document_chunks.body as body, 
+            select
+                document_chunks.id as id,
+                documents.title as title,
+                document_chunks.body as body,
                 documents.source_type as source_type,
                 documents.source_url as source_url
             from document_chunks
@@ -44,35 +48,40 @@ def build_graph():
             "title", "source_type", "source_url",
         ],
     )
-    
-    graph_store = MemgraphPropertyGraphStore(
-        password="",
-        username="",
-        url="bolt://127.0.0.1:7687"
-    )
-    kg_extractor = SimpleLLMPathExtractor(
-        llm=llm,
-        max_paths_per_chunk=20,
-        num_workers=4,
-    )
-    PropertyGraphIndex.from_documents(
-        documents,
-        llm=llm,
-        embed_kg_nodes=True,
-        kg_extractors=[kg_extractor],
-        show_progress=True,
-        property_graph_store=graph_store,
-    )
 
-app = Flask(__name__)
+    # Run blocking graph operations in thread pool
+    def _build_graph_sync():
+        graph_store = MemgraphPropertyGraphStore(
+            password="",
+            username="",
+            url="bolt://127.0.0.1:7687"
+        )
+        kg_extractor = SimpleLLMPathExtractor(
+            llm=llm,
+            max_paths_per_chunk=20,
+            num_workers=4,
+        )
+        PropertyGraphIndex.from_documents(
+            documents,
+            llm=llm,
+            embed_kg_nodes=True,
+            kg_extractors=[kg_extractor],
+            show_progress=True,
+            property_graph_store=graph_store,
+        )
 
-@app.route('/build_graph', methods=['POST'])
-def api_build_graph():
+    await asyncio.to_thread(_build_graph_sync)
+
+app = FastAPI()
+
+@app.post("/api/build", status_code=202)
+async def api_build_graph():
     try:
-        build_graph()
-        return jsonify({"status": "success", "message": "Graph built successfully"})
+        asyncio.create_task(build_graph())
+        return {"status": "accepted"}
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=9998)
+    import uvicorn
+    uvicorn.run(app, host='0.0.0.0', port=9998)
