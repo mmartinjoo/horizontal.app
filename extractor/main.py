@@ -1,4 +1,5 @@
 import os
+from flask import Flask, request, jsonify
 from llama_index.core.indices.property_graph import SimpleLLMPathExtractor
 from llama_index.core import Settings, PropertyGraphIndex
 from llama_index.llms.fireworks import Fireworks
@@ -25,32 +26,33 @@ reader = DatabaseReader(
     uri=os.getenv("DB_URI")
 )
 
-documents = reader.load_data(
-    query="""
-        select 
-            document_chunks.id as id, 
-            documents.title as title, 
-            document_chunks.body as body, 
-            documents.source_type as source_type,
-            documents.source_url as source_url
-        from document_chunks
-        inner join documents on documents.id = document_chunks.document_id
-    """,
-    document_id=lambda row: f"{row['id']}",
-    metadata_cols=[
-        "title", "source_type", "source_url",
-    ],
-)
-
 def build_graph():
+    print("build_graph")
+    documents = reader.load_data(
+        query="""
+            select 
+                document_chunks.id as id, 
+                documents.title as title, 
+                document_chunks.body as body, 
+                documents.source_type as source_type,
+                documents.source_url as source_url
+            from document_chunks
+            inner join documents on documents.id = document_chunks.document_id
+        """,
+        document_id=lambda row: f"{row['id']}",
+        metadata_cols=[
+            "title", "source_type", "source_url",
+        ],
+    )
+    
     graph_store = MemgraphPropertyGraphStore(
         password="",
         username="",
         url="bolt://127.0.0.1:7687"
     )
     kg_extractor = SimpleLLMPathExtractor(
-        llm=llm, 
-        max_paths_per_chunk=20, 
+        llm=llm,
+        max_paths_per_chunk=20,
         num_workers=4,
     )
     PropertyGraphIndex.from_documents(
@@ -61,5 +63,16 @@ def build_graph():
         show_progress=True,
         property_graph_store=graph_store,
     )
-    
-build_graph()
+
+app = Flask(__name__)
+
+@app.route('/build_graph', methods=['POST'])
+def api_build_graph():
+    try:
+        build_graph()
+        return jsonify({"status": "success", "message": "Graph built successfully"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=9998)
