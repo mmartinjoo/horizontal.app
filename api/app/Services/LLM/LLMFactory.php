@@ -15,6 +15,6 @@ class LLMFactory
 
     public static function createEmbedder(): Embedder
     {
-        return new OpenAI(config('services.openai.api_key'), config('embedder.model'));
+        return new Fireworks(config('services.fireworks.api_key'), config('embedder.model'));
     }
 }

@@ -21,8 +21,8 @@ class TestController extends Controller
 {
     public function index(BuildLouvainCommunities $communities)
     {
-//        $communities->build();
-//        $communities->index();
+        $communities->build();
+        $communities->index();
 //        $knowledgeGraph->buildCommunities();
 //        $knowledgeGraph->indexParentCommunities();
 
