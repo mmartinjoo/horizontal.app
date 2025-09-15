@@ -65,6 +65,8 @@ class IndexGoogleDrive implements ShouldQueue
                     ->where('source_id', $file->extraMetadata()['id'])
                     ->delete();
 
+                // TODO: delete related graph nodes
+
                 $indexing->increment('deleted_items', $count);
                 $embedding = $embedder->createEmbedding($file->path());
                 $document = Document::create([
@@ -224,7 +226,7 @@ class IndexGoogleDrive implements ShouldQueue
                         'embedding' => $embedding,
                     ]);
 //                    $graphDB->createNodeWithRelation(
-//                        newNodeLabel: 'FileComment',
+//                        newNodeLabel: 'Comment',
 //                        newNodeAttributes: [
 //                            'id' => $documentComment->id,
 //                            'embedding' => $embedding,

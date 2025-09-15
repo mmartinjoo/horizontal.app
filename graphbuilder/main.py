@@ -35,17 +35,17 @@ async def build_graph():
         reader.load_data,
         query="""
             select
-                document_chunks.id as id,
+                document_chunks.id as document_chunk_id,
                 documents.title as title,
                 document_chunks.body as body,
                 documents.source_type as source_type,
-                documents.source_url as source_url
+                documents.source_url as source_url,
+                documents.id as source_document_id
             from document_chunks
             inner join documents on documents.id = document_chunks.document_id
         """,
-        document_id=lambda row: f"{row['id']}",
         metadata_cols=[
-            "title", "source_type", "source_url",
+            "title", "source_type", "source_url", "document_chunk_id", "source_document_id",
         ],
     )
 

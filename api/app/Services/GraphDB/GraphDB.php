@@ -2,7 +2,6 @@
 
 namespace App\Services\GraphDB;
 
-use App\Services\GraphDB\Exceptions\NodeNotFoundException;
 use App\Services\GraphDB\Exceptions\UnableToConnect;
 use Bolt\Bolt;
 use Bolt\connection\Socket;

@@ -22,10 +22,9 @@ class TestController extends Controller
 {
     public function index(BuildLouvainCommunities $communities, GraphBuilder $graphBuilder)
     {
+        $graphBuilder->buildComments();
 //        $communities->build();
 //        $communities->index();
-//        $knowledgeGraph->buildCommunities();
-//        $knowledgeGraph->indexParentCommunities();
 
 //        $team = Team::where('name', 'Test Company')->firstOrFail();
         /** @var Topic $topic */
