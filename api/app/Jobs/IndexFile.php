@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Exceptions\EmbeddingException;
 use App\Exceptions\NoContentToIndexException;
 use App\Integrations\Storage\File;
 use App\Integrations\Storage\GoogleDrive;
@@ -10,14 +9,11 @@ use App\Models\DocumentChunk;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
 use App\Services\Indexing\TextChunker;
-use App\Services\LLM\Embedder;
 use App\Services\PdfParser;
-use App\Services\VectorStore\VectorStore;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
-use Throwable;
 
 class IndexFile implements ShouldQueue
 {
@@ -34,8 +30,6 @@ class IndexFile implements ShouldQueue
         GoogleDrive $drive,
         TextChunker $textChunker,
         PdfParser $pdfParser,
-        Embedder $embedder,
-        VectorStore $vectorStore,
     ): void {
         try {
             $indexingWorkflowItem = IndexingWorkflowItem::find($this->indexingWorkflowItemId);
@@ -54,7 +48,6 @@ class IndexFile implements ShouldQueue
 
             if ($this->file->mimeType() === 'application/pdf') {
                 $this->indexPDF($pdfParser, $textChunker, $indexingWorkflowItem);
-                $this->createEmbedding($indexingWorkflowItem, $embedder, $vectorStore);
                 $indexingWorkflowItem->update([
                     'status' => 'completed',
                 ]);
@@ -100,7 +93,6 @@ class IndexFile implements ShouldQueue
             $indexingWorkflowItem->update([
                 'status' => 'prepared',
             ]);
-            $this->createEmbedding($indexingWorkflowItem, $embedder, $vectorStore);
             $indexingWorkflowItem->update([
                 'status' => 'completed',
             ]);
@@ -145,33 +137,6 @@ class IndexFile implements ShouldQueue
         $indexingWorkflowItem->update([
             'status' => 'prepared',
         ]);
-    }
-
-    private function createEmbedding(
-        IndexingWorkflowItem $indexingWorkflowItem,
-        Embedder $embedder,
-        VectorStore $vectorStore,
-    ) {
-        try {
-            $indexingWorkflowItem->update([
-                'status' => 'vectorizing',
-            ]);
-
-            foreach ($indexingWorkflowItem->document->chunks as $chunk) {
-                $embedding = $embedder->createEmbedding($chunk->getEmbeddableContent());
-                $vectorStore->upsert($chunk, $embedding);
-            }
-
-            $indexingWorkflowItem->update([
-                'status' => 'vectorizing_completed',
-            ]);
-        } catch (Throwable $e) {
-            $indexingWorkflowItem->update([
-                'status' => 'warning',
-                'error_message' => $e->getMessage(),
-            ]);
-            throw EmbeddingException::wrap($e);
-        }
     }
 
 

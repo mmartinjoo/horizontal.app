@@ -16,9 +16,6 @@ return new class extends Migration
             $table->string('type')->default('person');
             $table->timestamps();
         });
-
-        DB::statement("ALTER TABLE participants ADD COLUMN embedding vector(768)");
-        DB::statement("CREATE INDEX participants_embedding_idx ON participants USING hnsw (embedding vector_cosine_ops)");
     }
 
     public function down(): void

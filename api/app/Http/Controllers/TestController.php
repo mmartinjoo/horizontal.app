@@ -10,11 +10,11 @@ class TestController extends Controller
 {
     public function index(GraphBuilder $graphBuilder)
     {
-//        $graphBuilder->buildCommunities();
 //        $graphBuilder->buildKG();
 //        $graphBuilder->buildComments();
 //        $graphBuilder->buildParticipants();
 //        $graphBuilder->buildWorklogs();
+        $graphBuilder->buildCommunities();
 //        $communities->build();
 //        $communities->index();
 

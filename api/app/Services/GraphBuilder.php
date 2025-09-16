@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Jobs\IndexGraphCommunity;
 use App\Models\Document;
 use App\Services\GraphDB\GraphDB;
+use App\Services\LLM\Embedder;
 use Bolt\protocol\v5\structures\Node;
 use Illuminate\Support\Facades\Http;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,6 +15,7 @@ class GraphBuilder
     public function __construct(
         private string $baseUrl,
         private GraphDB $graphDB,
+        private Embedder $embedder,
     ) {}
 
     public function buildKG(): bool
@@ -39,7 +41,7 @@ class GraphBuilder
                     label: 'Comment',
                     attributes: [
                         'id' => $comment->id,
-                        'embedding' => $comment->embedding,
+                        'embedding' => $this->embedder->createEmbedding($comment->body),
                         'body' => $comment->body,
                     ],
                 );
@@ -60,7 +62,7 @@ class GraphBuilder
                     newNodeAttributes: [
                         'id' => $comment->author->id,
                         'name' => $comment->author->name,
-                        'embedding' => $comment->author->embedding,
+                        'embedding' => $this->embedder->createEmbedding($comment->author->name),
                     ],
                     relation: 'AUTHOR_OF',
                     relatedNodeLabel: 'Comment',
@@ -91,7 +93,7 @@ class GraphBuilder
                     attributes: [
                         'id' => $participant->id,
                         'name' => $participant->name,
-                        'embedding' => $participant->embedding,
+                        'embedding' => $this->embedder->createEmbedding($participant->name),
                     ],
                 );
 
@@ -101,6 +103,7 @@ class GraphBuilder
                         'revision author' => 'CO_AUTHOR_OF',
                         'watcher' => 'WATCHER_OF',
                         'voter' => 'VOTED_FOR',
+                        'sharing user' => 'SHARED_BY',
                         default => 'MENTIONED_IN',
                     };
 
@@ -131,7 +134,7 @@ class GraphBuilder
                     label: 'Worklog',
                     attributes: [
                         'id' => $worklog->id,
-                        'embedding' => $worklog->embedding ?? [],
+                        'embedding' => $worklog->description ? $this->embedder->createEmbedding($worklog->description) : [],
                         'description' => $worklog->description,
                     ],
                 );
@@ -152,7 +155,7 @@ class GraphBuilder
                     newNodeAttributes: [
                         'id' => $worklog->author->id,
                         'name' => $worklog->author->name,
-                        'embedding' => $worklog->author->embedding,
+                        'embedding' => $this->embedder->createEmbedding($worklog->author->name),
                     ],
                     relation: 'AUTHOR_OF',
                     relatedNodeLabel: 'Worklog',

@@ -22,8 +22,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement("ALTER TABLE document_comments ADD COLUMN embedding vector(768)");
-
         DB::statement("
           ALTER TABLE document_comments
           ADD COLUMN search_vector tsvector
@@ -33,7 +31,6 @@ return new class extends Migration
       ");
 
         DB::statement("CREATE INDEX document_comments_search_vector_idx ON document_comments USING GIN(search_vector)");
-        DB::statement("CREATE INDEX document_comments_embedding_idx ON document_comments USING hnsw (embedding vector_cosine_ops)");
     }
 
     public function down(): void

@@ -13,8 +13,6 @@ use App\Services\LLM\LLM;
 use App\Services\LLM\LLMFactory;
 use App\Services\LLM\OpenAI;
 use App\Services\Search\SearchEngine;
-use App\Services\VectorStore\VectorStore;
-use App\Services\VectorStore\VectorStoreFactory;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -54,11 +52,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app
             ->bind(Embedder::class, function () {
                 return LLMFactory::createEmbedder();
-            });
-
-        $this->app
-            ->bind(VectorStore::class, function () {
-                return VectorStoreFactory::create();
             });
 
         $this->app

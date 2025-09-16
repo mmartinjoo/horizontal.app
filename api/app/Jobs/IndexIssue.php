@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Exceptions\EmbeddingException;
 use App\Exceptions\NoContentToIndexException;
 use App\Integrations\Communication\Issue;
 use App\Models\Document;
@@ -11,12 +10,9 @@ use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
-use App\Services\LLM\Embedder;
-use App\Services\VectorStore\VectorStore;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;
-use Throwable;
 
 class IndexIssue implements ShouldQueue
 {
@@ -31,8 +27,6 @@ class IndexIssue implements ShouldQueue
 
     public function handle(
         TextChunker $textChunker,
-        Embedder $embedder,
-        VectorStore $vectorStore,
     ): void {
         $indexingWorkflowItem = IndexingWorkflowItem::findOrFail($this->indexingWorkflowItemId);
         $chunks = $textChunker->chunk($this->issue->title . ' ' . $this->issue->description);
@@ -74,7 +68,6 @@ class IndexIssue implements ShouldQueue
                     'slug' => Str::slug($this->issue->assignee),
                     'name' => $this->issue->assignee,
                     'type' => 'person',
-                    'embedding' => $embedder->createEmbedding($this->issue->assignee),
                 ],
             );
             $this->document->participants()->attach($assignee->id, [
@@ -82,35 +75,7 @@ class IndexIssue implements ShouldQueue
             ]);
         }
 
-        $this->createEmbedding($indexingWorkflowItem, $embedder, $vectorStore);
         $this->updateWorkflowStatus($indexingWorkflowItem);
-    }
-
-    private function createEmbedding(
-        IndexingWorkflowItem $indexingWorkflowItem,
-        Embedder $embedder,
-        VectorStore $vectorStore,
-    ) {
-        try {
-            $indexingWorkflowItem->update([
-                'status' => 'vectorizing',
-            ]);
-
-            foreach ($indexingWorkflowItem->document->chunks as $chunk) {
-                $embedding = $embedder->createEmbedding($chunk->getEmbeddableContent());
-                $vectorStore->upsert($chunk, $embedding);
-            }
-
-            $indexingWorkflowItem->update([
-                'status' => 'vectorizing_completed',
-            ]);
-        } catch (Throwable $e) {
-            $indexingWorkflowItem->update([
-                'status' => 'warning',
-                'error_message' => $e->getMessage(),
-            ]);
-            throw EmbeddingException::wrap($e);
-        }
     }
 
     private function updateWorkflowStatus(IndexingWorkflowItem $indexingWorkflowItem)

@@ -11,10 +11,6 @@ class DocumentParticipant extends Model
 
     protected $guarded = [];
 
-    protected $casts = [
-        'embeddings' => 'array',
-    ];
-
     public function entity(): MorphTo
     {
         return $this->morphTo();

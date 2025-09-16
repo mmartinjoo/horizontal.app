@@ -18,9 +18,6 @@ return new class extends Migration
             $table->string('context')->nullable();
             $table->timestamps();
         });
-
-        DB::statement("ALTER TABLE documents_participants ADD COLUMN embedding vector(768)");
-        DB::statement("CREATE INDEX documents_participants_embedding_idx ON documents_participants USING hnsw (embedding vector_cosine_ops)");
     }
 
     public function down(): void

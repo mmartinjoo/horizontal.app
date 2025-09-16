@@ -2,27 +2,23 @@
 
 namespace App\Models;
 
-use App\Exceptions\NoEmbeddingsException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Document extends Model implements Embeddable
+class Document extends Model
 {
     use HasFactory;
-    use HasEmbedding;
     use HasParticipants;
 
     protected $guarded = [];
 
     protected $hidden = [
-        'embedding',
         'search_vector',
     ];
 
     protected $casts = [
         'metadata' => 'array',
-        'embedding' => 'array',
         'indexed_at' => 'datetime',
     ];
 
@@ -59,16 +55,5 @@ class Document extends Model implements Embeddable
                     ->delete();
             }
         });
-    }
-
-    public function getEmbeddableContent(): string
-    {
-        if (!$this->body && !$this->preview) {
-            throw new NoEmbeddingsException("No content to embed: " . json_encode($this->attributes));
-        }
-        if (!$this->body) {
-            return $this->preview;
-        }
-        return $this->body;
     }
 }

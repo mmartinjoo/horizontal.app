@@ -8,6 +8,8 @@ use OpenAI\Client;
 
 class OpenAI extends LLM implements Embedder
 {
+    use HasEmbeddingCache;
+
     private Client $client;
 
     public function __construct(
@@ -31,7 +33,7 @@ class OpenAI extends LLM implements Embedder
         return $result->choices[0]->message->content;
     }
 
-    public function createEmbedding(string $text): array
+    protected function createEmbeddingWithoutCache(string $text): array
     {
         $response = $this->client->embeddings()->create([
             'input' => $text,

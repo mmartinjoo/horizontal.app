@@ -10,7 +10,6 @@ use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
 use App\Models\Team;
 use App\Services\Indexing\FilePrioritizer;
-use App\Services\LLM\Embedder;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;
@@ -27,7 +26,6 @@ class IndexGoogleDrive implements ShouldQueue
     public function handle(
         GoogleDrive $drive,
         FilePrioritizer $prioritizer,
-        Embedder $embedder,
     ): void {
         /** @var IndexingWorkflow $indexing */
         $indexing = IndexingWorkflow::create([
@@ -64,7 +62,6 @@ class IndexGoogleDrive implements ShouldQueue
                 // TODO: delete related graph nodes
 
                 $indexing->increment('deleted_items', $count);
-                $embedding = $embedder->createEmbedding($file->path());
                 $document = Document::create([
                     'team_id' => $this->team->id,
                     'source_type' => 'google_drive',
@@ -72,7 +69,6 @@ class IndexGoogleDrive implements ShouldQueue
                     'title' => $file->path(),
                     'metadata' => $file,
                     'priority' => $prio,
-                    'embedding' => $embedding,
                 ]);
                 $indexingItem = IndexingWorkflowItem::create([
                     'indexing_workflow_id' => $indexing->id,
@@ -84,7 +80,6 @@ class IndexGoogleDrive implements ShouldQueue
 
                 $revisionAuthors = $drive->getRevisionAuthors($file);
                 foreach ($revisionAuthors as $author) {
-                    $embedding = $embedder->createEmbedding($author);
                     $p = Participant::updateOrCreate(
                         [
                             'slug' => Str::slug($author),
@@ -94,18 +89,15 @@ class IndexGoogleDrive implements ShouldQueue
                             'slug' => Str::slug($author),
                             'name' => $author,
                             'type' => 'person',
-                            'embedding' => $embedding,
                         ],
                     );
                     $document->participants()->attach($p->id, [
                         'context' => 'revision author',
-                        'embedding' => json_encode($embedding),
                     ]);
                 }
 
                 $sharingUser = $file->getSharingUser();
                 if ($sharingUser) {
-                    $embedding = $embedder->createEmbedding($sharingUser);
                     $p = Participant::updateOrCreate(
                         [
                             'slug' => Str::slug($sharingUser),
@@ -115,16 +107,13 @@ class IndexGoogleDrive implements ShouldQueue
                             'slug' => Str::slug($sharingUser),
                             'name' => $sharingUser,
                             'type' => 'person',
-                            'embedding' => $embedding,
                         ],
                     );
                     $document->participants()->attach($p->id, [
                         'context' => 'sharing user',
-                        'embedding' => json_encode($embedding),
                     ]);
 
                     foreach ($file->getOwners() as $owner) {
-                        $embedding = $embedder->createEmbedding($owner);
                         $p = Participant::updateOrCreate(
                             [
                                 'slug' => Str::slug($owner),
@@ -134,17 +123,14 @@ class IndexGoogleDrive implements ShouldQueue
                                 'slug' => Str::slug($owner),
                                 'name' => $owner,
                                 'type' => 'person',
-                                'embedding' => $embedding,
                             ],
                         );
                         $document->participants()->attach($p->id, [
                             'context' => 'owner',
-                            'embedding' => json_encode($embedding),
                         ]);
 
                         $comments = $drive->getComments($file);
                         foreach ($comments as $comment) {
-                            $authorEmbedding = $embedder->createEmbedding($comment['author']);
                             $p = Participant::updateOrCreate(
                                 [
                                     'slug' => Str::slug($comment['author']),
@@ -154,21 +140,14 @@ class IndexGoogleDrive implements ShouldQueue
                                     'slug' => Str::slug($comment['author']),
                                     'name' => $comment['author'],
                                     'type' => 'person',
-                                    'embedding' => $authorEmbedding,
                                 ],
                             );
-                            $document->participants()->attach($p->id, [
-                                'context' => 'commented',
-                                'embedding' => json_encode($authorEmbedding),
-                            ]);
-                            $embedding = $embedder->createEmbedding($comment['content']);
                             $document->comments()->create([
                                 'author_id' => $p->id,
                                 'body' => $comment['content'],
                                 'commented_at' => $comment['created_at'],
                                 'comment_id' => $comment['id'],
                                 'metadata' => $comment,
-                                'embedding' => $embedding,
                             ]);
                         }
                     }

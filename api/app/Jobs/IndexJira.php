@@ -15,7 +15,6 @@ use App\Models\JiraIntegration;
 use App\Models\JiraProject;
 use App\Models\Participant;
 use App\Models\Team;
-use App\Services\LLM\Embedder;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -31,7 +30,6 @@ class IndexJira implements ShouldQueue
 
     public function handle(
         Jira $jira,
-        Embedder $embedder,
     ): void {
         /** @var IndexingWorkflow $indexing */
         $indexing = IndexingWorkflow::create([
@@ -50,14 +48,12 @@ class IndexJira implements ShouldQueue
                 ->first();
 
             if (!$project) {
-                $embedding = $embedder->createEmbedding($projectData['name']);
                 JiraProject::create([
                     'team_id' => $this->team->id,
                     'jira_integration_id' => $jiraIntegration->id,
                     'title' => $projectData['name'],
                     'key' => $projectData['key'],
                     'jira_id' => $projectData['id'],
-                    'embedding' => $embedding,
                 ]);
             }
 
@@ -89,7 +85,6 @@ class IndexJira implements ShouldQueue
                         ->delete();
 
                     $indexing->increment('deleted_items', $count);
-                    $embedding = $embedder->createEmbedding($issue->title);
                     $doc = Document::create([
                         'team_id' => $this->team->id,
                         'source_type' => 'jira',
@@ -98,7 +93,6 @@ class IndexJira implements ShouldQueue
                         'title' => $issue->title,
                         'priority' => $prio,
                         'metadata' => $issueData,
-                        'embedding' => $embedding,
                     ]);
                     $indexingItem = IndexingWorkflowItem::create([
                         'indexing_workflow_id' => $indexing->id,
@@ -124,10 +118,9 @@ class IndexJira implements ShouldQueue
                                 'slug' => Str::slug($comment->author),
                                 'name' => $comment->author,
                                 'type' => 'person',
-                                'embedding' => $embedder->createEmbedding($comment->author),
                             ],
                         );
-                        $indexedComment = DocumentComment::create([
+                        DocumentComment::create([
                             'document_id' => $doc->id,
                             'author_id' => $p->id,
                             'body' => $comment->body,
@@ -135,7 +128,6 @@ class IndexJira implements ShouldQueue
                             'comment_id' => $comment->id,
                             'metadata' => $comment,
                         ]);
-                        IndexIssueComment::dispatch($indexedComment);
                     }
 
                     $worklogsData = $jira->getWorklogs($this->team, $issue);
@@ -154,10 +146,9 @@ class IndexJira implements ShouldQueue
                                 'slug' => Str::slug($worklog->author),
                                 'name' => $worklog->author,
                                 'type' => 'person',
-                                'embedding' => $embedder->createEmbedding($worklog->author),
                             ],
                         );
-                        $documentWorklog = DocumentWorklog::create([
+                        DocumentWorklog::create([
                             'document_id' => $doc->id,
                             'author_id' => $p->id,
                             'description' => $worklog->description,
@@ -165,7 +156,6 @@ class IndexJira implements ShouldQueue
                             'worklog_id' => $worklog->id,
                             'metadata' => $worklog,
                         ]);
-                        IndexIssueWorklog::dispatch($documentWorklog);
                     }
 
                     $watchersData = $jira->getWatchers($this->team, $issue);
@@ -180,12 +170,10 @@ class IndexJira implements ShouldQueue
                                 'slug' => Str::slug($watcher),
                                 'name' => $watcher,
                                 'type' => 'person',
-                                'embedding' => $embedder->createEmbedding($watcher),
                             ],
                         );
                         $doc->participants()->attach($p->id, [
                             'context' => 'watcher',
-                            'embedding' => json_encode($p->embedding),
                         ]);
                     }
 
@@ -200,7 +188,6 @@ class IndexJira implements ShouldQueue
                                 'slug' => Str::slug($voter),
                                 'name' => $voter,
                                 'type' => 'person',
-                                'embedding' => $embedder->createEmbedding($voter),
                             ],
                         );
                         $doc->participants()->attach($p->id, [

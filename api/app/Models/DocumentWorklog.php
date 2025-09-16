@@ -4,23 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class DocumentWorklog extends Model implements Embeddable
+class DocumentWorklog extends Model
 {
-    use HasEmbedding;
-
     protected $guarded = [];
 
     protected $casts = [
         'metadata' => 'array',
-        'embedding' => 'array',
     ];
-
-    public function getEmbeddableContent(): string
-    {
-        return $this->description;
-    }
 
     public function document(): BelongsTo
     {

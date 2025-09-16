@@ -21,8 +21,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement("ALTER TABLE document_worklogs ADD COLUMN embedding vector(768)");
-
         DB::statement("
           ALTER TABLE document_worklogs
           ADD COLUMN search_vector tsvector
@@ -32,7 +30,6 @@ return new class extends Migration
       ");
 
         DB::statement("CREATE INDEX document_worklogs_search_vector_idx ON document_worklogs USING GIN(search_vector)");
-        DB::statement("CREATE INDEX document_worklogs_embedding_idx ON document_worklogs USING hnsw (embedding vector_cosine_ops)");
     }
 
     public function down(): void

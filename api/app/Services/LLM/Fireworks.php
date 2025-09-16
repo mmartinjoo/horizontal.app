@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Http;
 
 class Fireworks extends LLM implements Embedder
 {
+    use HasEmbeddingCache;
+
     public function completion(string $prompt, $maxTokens = 1024): string
     {
         $res = Http::withHeaders([
@@ -30,7 +32,7 @@ class Fireworks extends LLM implements Embedder
         return $this->sanitizeJSON($res['choices'][0]['text']);
     }
 
-    public function createEmbedding(string $text): array
+    protected function createEmbeddingWithoutCache(string $text): array
     {
         $res = Http::withHeaders([
             'Authorization' => 'Bearer '.$this->apiKey,
