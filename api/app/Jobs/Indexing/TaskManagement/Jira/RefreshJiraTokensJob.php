@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Integration\TaskManagement\Jira;
 
 use App\Integrations\Communication\Jira\JiraTokenManager;
 use Illuminate\Contracts\Queue\ShouldQueue;

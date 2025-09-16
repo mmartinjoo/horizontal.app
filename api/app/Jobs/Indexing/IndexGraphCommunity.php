@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Indexing;
 
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;

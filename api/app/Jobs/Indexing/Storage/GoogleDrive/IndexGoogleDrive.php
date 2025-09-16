@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Integration\Storage\GoogleDrive;
 
 use App\Integrations\Storage\File;
 use App\Integrations\Storage\GoogleDrive;
+use App\Jobs\Integration\Storage\IndexFile;
 use App\Models\Document;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;

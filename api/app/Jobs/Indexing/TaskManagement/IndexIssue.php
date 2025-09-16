@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Integration\TaskManagement;
 
 use App\Exceptions\NoContentToIndexException;
 use App\Integrations\Communication\Issue;

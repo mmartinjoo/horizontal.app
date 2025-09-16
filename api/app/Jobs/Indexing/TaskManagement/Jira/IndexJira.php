@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Integration\TaskManagement\Jira;
 
 use App\Integrations\Communication\Issue;
 use App\Integrations\Communication\IssueComment;
 use App\Integrations\Communication\IssueWorklog;
 use App\Integrations\Communication\Jira\Jira;
+use App\Jobs\Integration\TaskManagement\IndexIssue;
 use App\Models\Document;
 use App\Models\DocumentComment;
 use App\Models\DocumentWorklog;

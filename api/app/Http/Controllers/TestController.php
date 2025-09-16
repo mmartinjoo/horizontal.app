@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\IndexGoogleDrive;
+use App\Jobs\Integration\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Models\Team;
 use App\Services\GraphBuilder;
 

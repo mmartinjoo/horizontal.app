@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Integration\Storage;
 
 use App\Exceptions\NoContentToIndexException;
 use App\Integrations\Storage\File;

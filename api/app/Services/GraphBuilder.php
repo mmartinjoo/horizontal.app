@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Jobs\IndexGraphCommunity;
+use App\Jobs\Indexing\IndexGraphCommunity;
 use App\Models\Document;
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
