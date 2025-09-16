@@ -1,6 +1,6 @@
 <?php
 
-use App\Jobs\Integration\TaskManagement\Jira\RefreshJiraTokensJob;
+use App\Jobs\Indexing\TaskManagement\Jira\RefreshJiraTokensJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
