@@ -4,7 +4,7 @@ namespace App\Services\Integration\TaskManagement\Jira;
 
 use App\Models\JiraIntegration;
 use App\Models\Team;
-use App\Services\Integration\TaskManagement\Issue;
+use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Client\Response;

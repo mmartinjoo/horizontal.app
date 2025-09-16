@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\File;
 
 use Generator;
 use PrinsFrank\PdfParser\PdfParser as VendorPdfParser;

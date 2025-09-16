@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Integration\TaskManagement;
+namespace App\Services\Integration\TaskManagement\DataTransferObjects;
 
 use Carbon\Carbon;
 use Illuminate\Support\Collection;

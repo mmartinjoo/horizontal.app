@@ -9,7 +9,7 @@ use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
-use App\Services\Integration\TaskManagement\Issue;
+use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;

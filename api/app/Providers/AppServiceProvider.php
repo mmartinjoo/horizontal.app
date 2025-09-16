@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
-use App\Services\GraphBuilder;
 use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\Memgraph;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
+use App\Services\KnowledgeGraph\GraphBuilder;
 use App\Services\LLM\Anthropic;
 use App\Services\LLM\Embedder;
 use App\Services\LLM\Fireworks;
