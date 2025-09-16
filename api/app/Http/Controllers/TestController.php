@@ -10,19 +10,11 @@ class TestController extends Controller
 {
     public function index(GraphBuilder $graphBuilder)
     {
-//        $graphBuilder->buildKG();
-//        $graphBuilder->buildComments();
-//        $graphBuilder->buildParticipants();
-//        $graphBuilder->buildWorklogs();
-        $graphBuilder->buildCommunities();
-//        $communities->build();
-//        $communities->index();
-
-        $team = Team::where('name', 'Test Company')->firstOrFail();
+//        $team = Team::where('name', 'Test Company')->firstOrFail();
 //        IndexJira::dispatch($team);
-        IndexGoogleDrive::dispatch($team);
+//        IndexGoogleDrive::dispatch($team);
 
-        return response('indexing...');
+//        return response('indexing...');
     }
 
     public function token()

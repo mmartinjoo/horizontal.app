@@ -26,143 +26,11 @@ class GraphBuilder
         return $response->status() === Response::HTTP_ACCEPTED;
     }
 
-    public function buildComments()
+    public function buildRelatedNodes()
     {
-        $documents = Document::with('comments.author')->get();
-        foreach ($documents as $document) {
-            $chunkNodes = $this->graphDB->queryMany("
-                match (n:Chunk)
-                where n.source_document_id={$document->id}
-                return n
-            ");
-
-            foreach ($document->comments as $comment) {
-                $this->graphDB->createNode(
-                    label: 'Comment',
-                    attributes: [
-                        'id' => $comment->id,
-                        'embedding' => $this->embedder->createEmbedding($comment->body),
-                        'body' => $comment->body,
-                    ],
-                );
-                foreach ($chunkNodes as $chunkNode) {
-                    $this->graphDB->addRelation(
-                        fromNodeLabel: 'Comment',
-                        fromNodeID: $comment->id,
-                        relation: 'COMMENT_FOR',
-                        toNodeLabel: 'Chunk',
-                        toNodeID: $chunkNode->properties['id'],
-                        relationAttributes: [
-                            'commented_at' => $comment->commented_at,
-                        ],
-                    );
-                }
-                $this->graphDB->createNodeWithRelation(
-                    newNodeLabel: 'Participant',
-                    newNodeAttributes: [
-                        'id' => $comment->author->id,
-                        'name' => $comment->author->name,
-                        'embedding' => $this->embedder->createEmbedding($comment->author->name),
-                    ],
-                    relation: 'AUTHOR_OF',
-                    relatedNodeLabel: 'Comment',
-                    relatedNodeID: $comment->id,
-                );
-            }
-        }
-    }
-
-    public function buildParticipants()
-    {
-        $documents = Document::with('participants')->get();
-        foreach ($documents as $document) {
-            $chunkNodes = $this->graphDB->queryMany("
-                match (n:Chunk)
-                where n.source_document_id={$document->id}
-                return n
-            ");
-
-            foreach ($document->participants as $participant) {
-                // Already processed in `buildComments`
-                if ($participant->pivot->context === 'commented') {
-                    continue;
-                }
-
-                $this->graphDB->createNode(
-                    label: 'Participant',
-                    attributes: [
-                        'id' => $participant->id,
-                        'name' => $participant->name,
-                        'embedding' => $this->embedder->createEmbedding($participant->name),
-                    ],
-                );
-
-                foreach ($chunkNodes as $chunkNode) {
-                    $relation = match ($participant->pivot->context) {
-                        'owner' => 'OWNER_OF',
-                        'revision author' => 'CO_AUTHOR_OF',
-                        'watcher' => 'WATCHER_OF',
-                        'voter' => 'VOTED_FOR',
-                        'sharing user' => 'SHARED_BY',
-                        default => 'MENTIONED_IN',
-                    };
-
-                    $this->graphDB->addRelation(
-                        fromNodeLabel: 'Participant',
-                        fromNodeID: $participant->id,
-                        relation: $relation,
-                        toNodeLabel: 'Chunk',
-                        toNodeID: $chunkNode->properties['id'],
-                    );
-                }
-            }
-        }
-    }
-
-    public function buildWorklogs()
-    {
-        $documents = Document::with('worklogs.author')->get();
-        foreach ($documents as $document) {
-            $chunkNodes = $this->graphDB->queryMany("
-                match (n:Chunk)
-                where n.source_document_id={$document->id}
-                return n
-            ");
-
-            foreach ($document->worklogs as $worklog) {
-                $this->graphDB->createNode(
-                    label: 'Worklog',
-                    attributes: [
-                        'id' => $worklog->id,
-                        'embedding' => $worklog->description ? $this->embedder->createEmbedding($worklog->description) : [],
-                        'description' => $worklog->description,
-                    ],
-                );
-                foreach ($chunkNodes as $chunkNode) {
-                    $this->graphDB->addRelation(
-                        fromNodeLabel: 'Worklog',
-                        fromNodeID: $worklog->id,
-                        relation: 'WORKLOG_FOR',
-                        toNodeLabel: 'Chunk',
-                        toNodeID: $chunkNode->properties['id'],
-                        relationAttributes: [
-                            'logged_at' => $worklog->logged_at,
-                        ],
-                    );
-                }
-                $this->graphDB->createNodeWithRelation(
-                    newNodeLabel: 'Participant',
-                    newNodeAttributes: [
-                        'id' => $worklog->author->id,
-                        'name' => $worklog->author->name,
-                        'embedding' => $this->embedder->createEmbedding($worklog->author->name),
-                    ],
-                    relation: 'AUTHOR_OF',
-                    relatedNodeLabel: 'Worklog',
-                    relatedNodeID: $worklog->id,
-                );
-            }
-        }
+        $this->buildComments();
+        $this->buildParticipants();
+        $this->buildWorklogs();
     }
 
     public function buildCommunities()
@@ -229,6 +97,145 @@ class GraphBuilder
                 $summary,
                 $context,
             );
+        }
+    }
+
+    private function buildComments()
+    {
+        $documents = Document::with('comments.author')->get();
+        foreach ($documents as $document) {
+            $chunkNodes = $this->graphDB->queryMany("
+                match (n:Chunk)
+                where n.source_document_id={$document->id}
+                return n
+            ");
+
+            foreach ($document->comments as $comment) {
+                $this->graphDB->createNode(
+                    label: 'Comment',
+                    attributes: [
+                        'id' => $comment->id,
+                        'embedding' => $this->embedder->createEmbedding($comment->body),
+                        'body' => $comment->body,
+                    ],
+                );
+                foreach ($chunkNodes as $chunkNode) {
+                    $this->graphDB->addRelation(
+                        fromNodeLabel: 'Comment',
+                        fromNodeID: $comment->id,
+                        relation: 'COMMENT_FOR',
+                        toNodeLabel: 'Chunk',
+                        toNodeID: $chunkNode->properties['id'],
+                        relationAttributes: [
+                            'commented_at' => $comment->commented_at,
+                        ],
+                    );
+                }
+                $this->graphDB->createNodeWithRelation(
+                    newNodeLabel: 'Participant',
+                    newNodeAttributes: [
+                        'id' => $comment->author->id,
+                        'name' => $comment->author->name,
+                        'embedding' => $this->embedder->createEmbedding($comment->author->name),
+                    ],
+                    relation: 'AUTHOR_OF',
+                    relatedNodeLabel: 'Comment',
+                    relatedNodeID: $comment->id,
+                );
+            }
+        }
+    }
+
+    private function buildParticipants()
+    {
+        $documents = Document::with('participants')->get();
+        foreach ($documents as $document) {
+            $chunkNodes = $this->graphDB->queryMany("
+                match (n:Chunk)
+                where n.source_document_id={$document->id}
+                return n
+            ");
+
+            foreach ($document->participants as $participant) {
+                // Already processed in `buildComments`
+                if ($participant->pivot->context === 'commented') {
+                    continue;
+                }
+
+                $this->graphDB->createNode(
+                    label: 'Participant',
+                    attributes: [
+                        'id' => $participant->id,
+                        'name' => $participant->name,
+                        'embedding' => $this->embedder->createEmbedding($participant->name),
+                    ],
+                );
+
+                foreach ($chunkNodes as $chunkNode) {
+                    $relation = match ($participant->pivot->context) {
+                        'owner' => 'OWNER_OF',
+                        'revision author' => 'CO_AUTHOR_OF',
+                        'watcher' => 'WATCHER_OF',
+                        'voter' => 'VOTED_FOR',
+                        'sharing user' => 'SHARED_BY',
+                        default => 'MENTIONED_IN',
+                    };
+
+                    $this->graphDB->addRelation(
+                        fromNodeLabel: 'Participant',
+                        fromNodeID: $participant->id,
+                        relation: $relation,
+                        toNodeLabel: 'Chunk',
+                        toNodeID: $chunkNode->properties['id'],
+                    );
+                }
+            }
+        }
+    }
+
+    private function buildWorklogs()
+    {
+        $documents = Document::with('worklogs.author')->get();
+        foreach ($documents as $document) {
+            $chunkNodes = $this->graphDB->queryMany("
+                match (n:Chunk)
+                where n.source_document_id={$document->id}
+                return n
+            ");
+
+            foreach ($document->worklogs as $worklog) {
+                $this->graphDB->createNode(
+                    label: 'Worklog',
+                    attributes: [
+                        'id' => $worklog->id,
+                        'embedding' => $worklog->description ? $this->embedder->createEmbedding($worklog->description) : [],
+                        'description' => $worklog->description,
+                    ],
+                );
+                foreach ($chunkNodes as $chunkNode) {
+                    $this->graphDB->addRelation(
+                        fromNodeLabel: 'Worklog',
+                        fromNodeID: $worklog->id,
+                        relation: 'WORKLOG_FOR',
+                        toNodeLabel: 'Chunk',
+                        toNodeID: $chunkNode->properties['id'],
+                        relationAttributes: [
+                            'logged_at' => $worklog->logged_at,
+                        ],
+                    );
+                }
+                $this->graphDB->createNodeWithRelation(
+                    newNodeLabel: 'Participant',
+                    newNodeAttributes: [
+                        'id' => $worklog->author->id,
+                        'name' => $worklog->author->name,
+                        'embedding' => $this->embedder->createEmbedding($worklog->author->name),
+                    ],
+                    relation: 'AUTHOR_OF',
+                    relatedNodeLabel: 'Worklog',
+                    relatedNodeID: $worklog->id,
+                );
+            }
         }
     }
 }
