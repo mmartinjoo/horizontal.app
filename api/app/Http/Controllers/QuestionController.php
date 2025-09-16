@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Question;
 use App\Services\GraphDB\GraphDB;
-use App\Services\Indexing\EntityExtractor;
 use App\Services\LLM\Embedder;
 use App\Services\Search\SearchEngine;
 use Illuminate\Http\Request;

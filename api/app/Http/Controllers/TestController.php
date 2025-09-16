@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Topic;
+use App\Jobs\IndexGoogleDrive;
+use App\Models\Team;
 use App\Services\GraphBuilder;
 
 class TestController extends Controller
 {
     public function index(GraphBuilder $graphBuilder)
     {
-        $graphBuilder->buildCommunities();
+//        $graphBuilder->buildCommunities();
 //        $graphBuilder->buildKG();
 //        $graphBuilder->buildComments();
 //        $graphBuilder->buildParticipants();
@@ -17,11 +18,9 @@ class TestController extends Controller
 //        $communities->build();
 //        $communities->index();
 
-//        $team = Team::where('name', 'Test Company')->firstOrFail();
-        /** @var Topic $topic */
-//        LinkRelatedTopics::dispatch();
+        $team = Team::where('name', 'Test Company')->firstOrFail();
 //        IndexJira::dispatch($team);
-//        IndexGoogleDrive::dispatch($team);
+        IndexGoogleDrive::dispatch($team);
 
         return response('indexing...');
     }

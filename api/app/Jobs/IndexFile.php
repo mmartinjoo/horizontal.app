@@ -3,15 +3,12 @@
 namespace App\Jobs;
 
 use App\Exceptions\EmbeddingException;
-use App\Exceptions\ExtractingEntitiesException;
 use App\Exceptions\NoContentToIndexException;
 use App\Integrations\Storage\File;
 use App\Integrations\Storage\GoogleDrive;
 use App\Models\DocumentChunk;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
-use App\Services\GraphDB\GraphDB;
-use App\Services\Indexing\EntityExtractor;
 use App\Services\Indexing\TextChunker;
 use App\Services\LLM\Embedder;
 use App\Services\PdfParser;
@@ -39,8 +36,6 @@ class IndexFile implements ShouldQueue
         PdfParser $pdfParser,
         Embedder $embedder,
         VectorStore $vectorStore,
-        EntityExtractor $entityExtractor,
-        GraphDB $graphDB,
     ): void {
         try {
             $indexingWorkflowItem = IndexingWorkflowItem::find($this->indexingWorkflowItemId);
@@ -59,8 +54,7 @@ class IndexFile implements ShouldQueue
 
             if ($this->file->mimeType() === 'application/pdf') {
                 $this->indexPDF($pdfParser, $textChunker, $indexingWorkflowItem);
-                $this->createEmbedding($indexingWorkflowItem, $embedder, $vectorStore, $graphDB);
-//                $this->createEntities($indexingWorkflowItem, $entityExtractor, $graphDB);
+                $this->createEmbedding($indexingWorkflowItem, $embedder, $vectorStore);
                 $indexingWorkflowItem->update([
                     'status' => 'completed',
                 ]);
@@ -106,8 +100,7 @@ class IndexFile implements ShouldQueue
             $indexingWorkflowItem->update([
                 'status' => 'prepared',
             ]);
-            $this->createEmbedding($indexingWorkflowItem, $embedder, $vectorStore, $graphDB);
-//            $this->createEntities($indexingWorkflowItem, $entityExtractor, $graphDB);
+            $this->createEmbedding($indexingWorkflowItem, $embedder, $vectorStore);
             $indexingWorkflowItem->update([
                 'status' => 'completed',
             ]);
@@ -158,7 +151,6 @@ class IndexFile implements ShouldQueue
         IndexingWorkflowItem $indexingWorkflowItem,
         Embedder $embedder,
         VectorStore $vectorStore,
-        GraphDB $graphDB,
     ) {
         try {
             $indexingWorkflowItem->update([
@@ -168,17 +160,6 @@ class IndexFile implements ShouldQueue
             foreach ($indexingWorkflowItem->document->chunks as $chunk) {
                 $embedding = $embedder->createEmbedding($chunk->getEmbeddableContent());
                 $vectorStore->upsert($chunk, $embedding);
-
-//                $graphDB->createNodeWithRelation(
-//                    newNodeLabel: 'FileChunk',
-//                    newNodeAttributes: [
-//                        'id' => $chunk->id,
-//                        'embedding' => $embedding,
-//                    ],
-//                    relation: 'CHUNK_OF',
-//                    relatedNodeLabel: 'File',
-//                    relatedNodeID: $indexingWorkflowItem->document->id,
-//                );
             }
 
             $indexingWorkflowItem->update([
@@ -193,50 +174,6 @@ class IndexFile implements ShouldQueue
         }
     }
 
-    private function createEntities(
-        IndexingWorkflowItem $indexingWorkflowItem,
-        EntityExtractor $entityExtractor,
-        GraphDB $graphDB,
-    ) {
-        try {
-            $indexingWorkflowItem->update([
-                'status' => 'extracting_entities',
-            ]);
-
-            /** @var DocumentChunk $chunk */
-            foreach ($indexingWorkflowItem->document->chunks as $chunk) {
-                $topics = $entityExtractor->extractTopics($chunk->body);
-                $chunk->createTopics($topics['topics']);
-                foreach ($chunk->topics as $topic) {
-                    $graphDB->createNodeWithRelation(
-                        newNodeLabel: 'Topic',
-                        newNodeAttributes: [
-                            'id' => $topic->id,
-                            'name' => $topic->name,
-                            'embedding' => $topic->embedding,
-                        ],
-                        relation: 'MENTIONED_IN',
-                        relatedNodeLabel: 'FileChunk',
-                        relatedNodeID: $chunk->id,
-                        relationAttributes: [
-                            'context' => $topic->pivot->context,
-                            'embedding' => $topic->pivot->embedding,
-                        ],
-                    );
-                }
-            }
-
-            $indexingWorkflowItem->update([
-                'status' => 'extracting_entities_completed',
-            ]);
-        } catch (Throwable $e) {
-            $indexingWorkflowItem->update([
-                'status' => 'warning',
-                'error_message' => $e->getMessage(),
-            ]);
-            throw ExtractingEntitiesException::wrap($e);
-        }
-    }
 
     private function updateWorkflowStatus(IndexingWorkflowItem $indexingWorkflowItem)
     {

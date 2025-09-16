@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class DocumentWorklog extends Model implements Embeddable
 {
     use HasEmbedding;
-    use HasTopics;
 
     protected $guarded = [];
 

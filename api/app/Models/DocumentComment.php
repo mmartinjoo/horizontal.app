@@ -12,7 +12,6 @@ class DocumentComment extends Model implements Embeddable
 {
     use HasEmbedding;
     use HasParticipants;
-    use HasTopics;
 
     protected $guarded = [];
 

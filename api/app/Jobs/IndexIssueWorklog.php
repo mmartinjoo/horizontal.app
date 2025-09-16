@@ -4,8 +4,6 @@ namespace App\Jobs;
 
 use App\Exceptions\EmbeddingException;
 use App\Models\DocumentWorklog;
-use App\Services\GraphDB\GraphDB;
-use App\Services\Indexing\EntityExtractor;
 use App\Services\LLM\Embedder;
 use App\Services\VectorStore\VectorStore;
 use Illuminate\Contracts\Queue\ShouldQueue;

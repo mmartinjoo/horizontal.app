@@ -6,7 +6,6 @@ use App\Integrations\Communication\Jira\JiraOAuthService;
 use App\Services\GraphBuilder;
 use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\Memgraph;
-use App\Services\Indexing\EntityExtractor;
 use App\Services\LLM\Anthropic;
 use App\Services\LLM\Embedder;
 use App\Services\LLM\Fireworks;

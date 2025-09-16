@@ -36,11 +36,6 @@ class Document extends Model implements Embeddable
         return $this->hasMany(DocumentComment::class);
     }
 
-    public function interactions(): HasMany
-    {
-        return $this->hasMany(DocumentInteraction::class);
-    }
-
     public function worklogs(): HasMany
     {
         return $this->hasMany(DocumentWorklog::class);
@@ -55,20 +50,10 @@ class Document extends Model implements Embeddable
                     ->where('entity_id', $chunk->id)
                     ->where('entity_type', get_class($chunk))
                     ->delete();
-
-                DocumentTopic::query()
-                    ->where('entity_id', $chunk->id)
-                    ->where('entity_type', get_class($chunk))
-                    ->delete();
             }
             $comments = DocumentComment::where('document_id', $document->id)->get();
             foreach ($comments as $comment) {
                 DocumentParticipant::query()
-                    ->where('entity_id', $comment->id)
-                    ->where('entity_type', get_class($comment))
-                    ->delete();
-
-                DocumentTopic::query()
                     ->where('entity_id', $comment->id)
                     ->where('entity_type', get_class($comment))
                     ->delete();

@@ -5,7 +5,6 @@ namespace App\Services\Search;
 use App\Models\DocumentChunk;
 use App\Models\Question;
 use App\Services\GraphDB\GraphDB;
-use App\Services\Indexing\EntityExtractor;
 use App\Services\LLM\Embedder;
 use App\Services\LLM\LLM;
 use App\Services\Search\DataTransferObjects\Path;
@@ -18,127 +17,10 @@ class SearchEngine
 {
     public function __construct(
         private Embedder $embedder,
-        private EntityExtractor $entityExtractor,
         private GraphDB $graphDB,
         private LLM $llm,
         private string $cosineSimilarityThreshold,
     ) {
-    }
-
-    public function search(string $question)
-    {
-        $questionEntities = $this->entityExtractor->extract($question);
-        $semanticResults = $this->semanticSearch($question);
-        $keywordResults = $this->keywordSearch($questionEntities['keywords']);
-        /** @var Collection<SearchResult> $combined */
-        $combined = $this->combineResults($semanticResults, $keywordResults);
-
-        return [
-            'combined' => $this->rankResults($combined, $questionEntities),
-            'semantic' => $semanticResults,
-            'keyword' => $keywordResults,
-            'entities' => $questionEntities,
-        ];
-    }
-
-    /**
-     * @param Collection<SearchResult> $results
-     * @return Collection<SearchResult>
-     */
-    private function rankResults(Collection $results, array $questionEntities)
-    {
-        foreach ($results as $result) {
-            $score = 0;
-            if ($result->semanticScore) {
-                $score += $result->semanticScore * 0.75;
-            }
-            if ($result->keywordScore) {
-                $score += $result->keywordScore * 0.5;
-            }
-            $result->weightedScore = min($score, 1);
-
-            $people = $result->documentChunk
-                ->entities
-                ->people;
-
-            foreach ($people as $person) {
-                if (in_array($person, $questionEntities['people'])) {
-                    $result->weightedScore = min($result->weightedScore * 1.25, 1);
-                    $result->peopleBonus = 1.25;
-                    break;
-                }
-            }
-        }
-        return $results->sortByDesc('score');
-    }
-
-    public function graphSearch(Question $question): array
-    {
-        $embedding = $this->embedder->createEmbedding($question->question);
-        $results = $this->graphDB->vectorSearch('vector_index_filechunk', $embedding, 3);
-        $pivotNodes = [];
-        /** @var Node $node */
-        foreach ($results as $node) {
-            if ($node['similarity'] >= 0.5) {
-                $pivotNodes[] = $node;
-            }
-        }
-
-//        foreach ($pivotNodes as &$pivotNode) {
-//            $neighbours = $this->graphDB->queryMany("
-//                MATCH (n)-[*1..2]-(m)
-//                WHERE id(n) = {$pivotNode['node']->id}
-//                AND (m:File OR m:FileChunk OR m:Issue OR m:IssueComment OR m:IssueWorklog)
-//                RETURN m;
-//            ", 'm');
-//            $pivotNode['neighbours'] = $neighbours;
-//        }
-//        return $pivotNodes;
-
-        //  1. Related topics
-        foreach ($pivotNodes as &$pivotNode) {
-            $relatedTopics = $this->graphDB->queryMany("
-                match (fc:FileChunk)<-[r:MENTIONED_IN]-(t:Topic)
-                where id(fc) = {$pivotNode['node']->id}
-                return *
-            ", ['t']);
-            $pivotNode['relatedTopics'] = $relatedTopics;
-        }
-
-        // 2. Find documents related to topic
-        foreach ($pivotNodes as &$pivotNode) {
-            foreach ($pivotNode['relatedTopics'] as $relatedTopic) {
-                $relatedDocuments = $this->graphDB->queryMany("
-                    match (n)<-[r:MENTIONED_IN]-(t:Topic)
-                    where id(t) = {$relatedTopic->id}
-                    and id(n) <> {$pivotNode['node']->id}
-                    return *
-                ", ['n']);
-                if (empty($relatedDocuments)) {
-                    continue;
-                }
-                if (!isset($pivotNode['relatedDocuments'][$relatedTopic->id])) {
-                    $pivotNode['relatedDocuments'][$relatedTopic->id] = [];
-                }
-                $pivotNode['relatedDocuments'][$relatedTopic->id][] = $relatedDocuments;
-            }
-        }
-
-        return $pivotNodes;
-
-        //  Ez legyen több query -ben:
-        //  1. Related topics
-        //  2. Find FileChunks, IssueChunks, Comments, etc based on topics
-        //  3. Find files, issues based on those
-        //  4. Find participants
-
-
-        // Another idea:
-        // 1. Find related topics:
-        //  match p = (fc:FileChunk)<-[r:MENTIONED_IN*..1]-(t:Topic)
-        //  where id(fc) = 7038
-        //  return p
-        // Find related entities based on those topics
     }
 
     public function graphRAG(Question $question): string
@@ -223,6 +105,11 @@ class SearchEngine
 
         return Path::fromArray($paths);
     }
+
+    /**
+     * THE FOLLOWING IS NOT USED AT THE MOMENT
+     * might be useful for different question intents such as "who?" type pf questions (a person usually is not part of a community)
+     */
 
     /**
      * @return Collection<SearchResult>

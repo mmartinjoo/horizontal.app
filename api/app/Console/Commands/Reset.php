@@ -7,7 +7,6 @@ use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
 use App\Models\JiraProject;
 use App\Models\Participant;
-use App\Models\Topic;
 use App\Services\GraphDB\GraphDB;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
@@ -30,7 +29,6 @@ class Reset extends Command
         }
         Document::all()->each->delete();
         Participant::all()->each->delete();
-        Topic::all()->each->delete();
         JiraProject::all()->each->delete();
         IndexingWorkflow::all()->each->delete();
         IndexingWorkflowItem::all()->each->delete();

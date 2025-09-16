@@ -9,8 +9,6 @@ use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
 use App\Models\Team;
-use App\Services\GraphDB\GraphDB;
-use App\Services\Indexing\EntityExtractor;
 use App\Services\Indexing\FilePrioritizer;
 use App\Services\LLM\Embedder;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,9 +27,7 @@ class IndexGoogleDrive implements ShouldQueue
     public function handle(
         GoogleDrive $drive,
         FilePrioritizer $prioritizer,
-        GraphDB $graphDB,
         Embedder $embedder,
-        EntityExtractor $entityExtractor,
     ): void {
         /** @var IndexingWorkflow $indexing */
         $indexing = IndexingWorkflow::create([
@@ -78,11 +74,6 @@ class IndexGoogleDrive implements ShouldQueue
                     'priority' => $prio,
                     'embedding' => $embedding,
                 ]);
-//                $graphDB->createNode('File', [
-//                    'id' => $document->id,
-//                    'name' => $document->title,
-//                    'embedding' => $embedding,
-//                ]);
                 $indexingItem = IndexingWorkflowItem::create([
                     'indexing_workflow_id' => $indexing->id,
                     'data' => $file,
@@ -110,17 +101,6 @@ class IndexGoogleDrive implements ShouldQueue
                         'context' => 'revision author',
                         'embedding' => json_encode($embedding),
                     ]);
-//                    $graphDB->createNodeWithRelation(
-//                        newNodeLabel: 'Participant',
-//                        newNodeAttributes: [
-//                            'id' => $p->id,
-//                            'name' => $p->name,
-//                            'embedding' => $embedding,
-//                        ],
-//                        relation: 'REVISION_AUTHOR_OF',
-//                        relatedNodeLabel: 'File',
-//                        relatedNodeID: $document->id,
-//                    );
                 }
 
                 $sharingUser = $file->getSharingUser();
@@ -142,125 +122,56 @@ class IndexGoogleDrive implements ShouldQueue
                         'context' => 'sharing user',
                         'embedding' => json_encode($embedding),
                     ]);
-//                    $graphDB->createNodeWithRelation(
-//                        newNodeLabel: 'Participant',
-//                        newNodeAttributes: [
-//                            'id' => $p->id,
-//                            'name' => $p->name,
-//                            'embedding' => $embedding,
-//                        ],
-//                        relation: 'SHARING_USER_OF',
-//                        relatedNodeLabel: 'File',
-//                        relatedNodeID: $document->id,
-//                    );
-                }
 
-                foreach ($file->getOwners() as $owner) {
-                    $embedding = $embedder->createEmbedding($owner);
-                    $p = Participant::updateOrCreate(
-                        [
-                            'slug' => Str::slug($owner),
-                            'type' => 'person',
-                        ],
-                        [
-                            'slug' => Str::slug($owner),
-                            'name' => $owner,
-                            'type' => 'person',
-                            'embedding' => $embedding,
-                        ],
-                    );
-                    $document->participants()->attach($p->id, [
-                        'context' => 'owner',
-                        'embedding' => json_encode($embedding),
-                    ]);
-//                    $graphDB->createNodeWithRelation(
-//                        newNodeLabel: 'Participant',
-//                        newNodeAttributes: [
-//                            'id' => $p->id,
-//                            'name' => $p->name,
-//                            'embedding' => $embedding,
-//                        ],
-//                        relation: 'OWNER_OF',
-//                        relatedNodeLabel: 'File',
-//                        relatedNodeID: $document->id,
-//                    );
-                }
+                    foreach ($file->getOwners() as $owner) {
+                        $embedding = $embedder->createEmbedding($owner);
+                        $p = Participant::updateOrCreate(
+                            [
+                                'slug' => Str::slug($owner),
+                                'type' => 'person',
+                            ],
+                            [
+                                'slug' => Str::slug($owner),
+                                'name' => $owner,
+                                'type' => 'person',
+                                'embedding' => $embedding,
+                            ],
+                        );
+                        $document->participants()->attach($p->id, [
+                            'context' => 'owner',
+                            'embedding' => json_encode($embedding),
+                        ]);
 
-                $comments = $drive->getComments($file);
-                foreach ($comments as $comment) {
-                    $authorEmbedding = $embedder->createEmbedding($comment['author']);
-                    $p = Participant::updateOrCreate(
-                        [
-                            'slug' => Str::slug($comment['author']),
-                            'type' => 'person',
-                        ],
-                        [
-                            'slug' => Str::slug($comment['author']),
-                            'name' => $comment['author'],
-                            'type' => 'person',
-                            'embedding' => $authorEmbedding,
-                        ],
-                    );
-                    $document->participants()->attach($p->id, [
-                        'context' => 'commented',
-                        'embedding' => json_encode($authorEmbedding),
-                    ]);
-//                    $graphDB->createNodeWithRelation(
-//                        newNodeLabel: 'Participant',
-//                        newNodeAttributes: [
-//                            'id' => $p->id,
-//                            'name' => $p->name,
-//                            'embedding' => $authorEmbedding,
-//                        ],
-//                        relation: 'COMMENTED_ON',
-//                        relatedNodeLabel: 'File',
-//                        relatedNodeID: $document->id,
-//                    );
-                    $embedding = $embedder->createEmbedding($comment['content']);
-                    $documentComment = $document->comments()->create([
-                        'author_id' => $p->id,
-                        'body' => $comment['content'],
-                        'commented_at' => $comment['created_at'],
-                        'comment_id' => $comment['id'],
-                        'metadata' => $comment,
-                        'embedding' => $embedding,
-                    ]);
-//                    $graphDB->createNodeWithRelation(
-//                        newNodeLabel: 'Comment',
-//                        newNodeAttributes: [
-//                            'id' => $documentComment->id,
-//                            'embedding' => $embedding,
-//                        ],
-//                        relation: 'COMMENT_OF',
-//                        relatedNodeLabel: 'File',
-//                        relatedNodeID: $document->id,
-//                    );
-//                    $graphDB->addRelation(
-//                        fromNodeLabel: 'Participant',
-//                        fromNodeID: $p->id,
-//                        relation: 'AUTHOR_OF',
-//                        toNodeLabel: 'FileComment',
-//                        toNodeID: $documentComment->id,
-//                    );
-//                    $topics = $entityExtractor->extractTopics($comment['content']);
-//                    $documentComment->createTopics($topics['topics']);
-//                    foreach ($documentComment->topics as $topic) {
-//                        $graphDB->createNodeWithRelation(
-//                            newNodeLabel: 'Topic',
-//                            newNodeAttributes: [
-//                                'id' => $topic->id,
-//                                'name' => $topic->name,
-//                                'embedding' => $topic->embedding,
-//                            ],
-//                            relation: 'MENTIONED_IN',
-//                            relatedNodeLabel: 'FileComment',
-//                            relatedNodeID: $documentComment->id,
-//                            relationAttributes: [
-//                                'context' => $topic->pivot->context,
-//                                'embedding' => $topic->pivot->embedding,
-//                            ],
-//                        );
-//                    }
+                        $comments = $drive->getComments($file);
+                        foreach ($comments as $comment) {
+                            $authorEmbedding = $embedder->createEmbedding($comment['author']);
+                            $p = Participant::updateOrCreate(
+                                [
+                                    'slug' => Str::slug($comment['author']),
+                                    'type' => 'person',
+                                ],
+                                [
+                                    'slug' => Str::slug($comment['author']),
+                                    'name' => $comment['author'],
+                                    'type' => 'person',
+                                    'embedding' => $authorEmbedding,
+                                ],
+                            );
+                            $document->participants()->attach($p->id, [
+                                'context' => 'commented',
+                                'embedding' => json_encode($authorEmbedding),
+                            ]);
+                            $embedding = $embedder->createEmbedding($comment['content']);
+                            $document->comments()->create([
+                                'author_id' => $p->id,
+                                'body' => $comment['content'],
+                                'commented_at' => $comment['created_at'],
+                                'comment_id' => $comment['id'],
+                                'metadata' => $comment,
+                                'embedding' => $embedding,
+                            ]);
+                        }
+                    }
                 }
             }
         }
