@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Search\DataTransferObjects;
+namespace App\Services\SearchEngine\DataTransferObjects;
 
 use App\Models\DocumentChunk;
 

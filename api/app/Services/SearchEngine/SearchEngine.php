@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Services\Search;
+namespace App\Services\SearchEngine;
 
 use App\Models\DocumentChunk;
 use App\Models\Question;
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
 use App\Services\LLM\LLM;
-use App\Services\Search\DataTransferObjects\Path;
-use App\Services\Search\DataTransferObjects\SearchResult;
+use App\Services\SearchEngine\DataTransferObjects\Path;
+use App\Services\SearchEngine\DataTransferObjects\SearchResult;
 use Bolt\protocol\v1\structures\Path as BoltPath;
 use Bolt\protocol\v5\structures\Node;
 use Illuminate\Support\Collection;

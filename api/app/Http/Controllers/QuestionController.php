@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Question;
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
-use App\Services\Search\SearchEngine;
+use App\Services\SearchEngine\SearchEngine;
 use Illuminate\Http\Request;
 
 class QuestionController

@@ -12,7 +12,7 @@ use App\Services\LLM\Fireworks;
 use App\Services\LLM\LLM;
 use App\Services\LLM\LLMFactory;
 use App\Services\LLM\OpenAI;
-use App\Services\Search\SearchEngine;
+use App\Services\SearchEngine\SearchEngine;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Search\DataTransferObjects;
+namespace App\Services\SearchEngine\DataTransferObjects;
 
 use Bolt\protocol\v1\structures\Path as BoltPath;
 use Bolt\protocol\v1\structures\Node;
