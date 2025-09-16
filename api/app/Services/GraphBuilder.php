@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Jobs\IndexGraphCommunity;
 use App\Models\Document;
 use App\Services\GraphDB\GraphDB;
+use Bolt\protocol\v5\structures\Node;
 use Illuminate\Support\Facades\Http;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -157,6 +159,73 @@ class GraphBuilder
                     relatedNodeID: $worklog->id,
                 );
             }
+        }
+    }
+
+    public function buildCommunities()
+    {
+        $this->graphDB->run("
+            match p=(n)-[r]-(m)
+            where (not n:Chunk) and (not m:Chunk)
+            with project(p) as subgraph
+            call community_detection.get(subgraph)
+            yield node, community_id
+            merge (c:Community {id: community_id, name: community_id})
+            merge (node)-[:BELONGS_TO]->(c);
+        ");
+
+        $communities = $this->graphDB->queryMany("
+            match (c:Community)
+            return c
+        ", ['c']);
+
+        foreach ($communities as $community) {
+            $summary = "";
+            $nodes = $this->graphDB->queryMany("
+                match (n:__Entity__)-[r:BELONGS_TO]->(c:Community)
+                where c.id = {$community->properties['id']}
+                return n
+            ", ['n']);
+
+            foreach ($nodes as $node) {
+                $summary .= "{$node->properties['name']}; ";
+            }
+
+            $nodeIds = [];
+            foreach ($nodes as $node) {
+                $nodeIds[] = $node->id;
+            }
+            $nodeIdsStr = json_encode($nodeIds);
+
+            /** @var Node $chunk */
+            $chunks = $this->graphDB->queryMany("
+                match (n:__Entity__)<-[r:MENTIONS]-(c:Chunk)
+                where id(n) IN {$nodeIdsStr}
+                return c
+            ", ['c']);
+
+            $context = "";
+            foreach ($chunks as $chunk) {
+                $context .= $chunk ? $chunk->properties['text'] : "";
+                $context .= " ";
+                $relatedNodes = $this->graphDB->queryMany("
+                    match (n)-[r]->(c:Chunk)
+                    where id(c) = {$chunk->id} and not (n:__Entity__)
+                    return n
+                ", ['n']);
+
+                foreach ($relatedNodes as $relatedNode) {
+                    $context .= $relatedNode->properties['body'] ?? $relatedNode->properties['name'] ?? $relatedNode->properties['text'] ?? $relatedNode->properties['description'];
+                    $context .= " ";
+                }
+                $context .= " ";
+            }
+
+            IndexGraphCommunity::dispatch(
+                $community->properties['id'],
+                $summary,
+                $context,
+            );
         }
     }
 }
