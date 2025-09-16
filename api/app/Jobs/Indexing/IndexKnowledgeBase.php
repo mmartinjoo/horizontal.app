@@ -2,8 +2,8 @@
 
 namespace App\Jobs\Indexing;
 
-use App\Jobs\Integration\Storage\GoogleDrive\IndexGoogleDrive;
-use App\Jobs\Integration\TaskManagement\Jira\IndexJira;
+use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
+use App\Jobs\Indexing\TaskManagement\Jira\IndexJira;
 use App\Models\Team;
 use App\Services\KnowledgeGraph\GraphBuilder;
 use Illuminate\Contracts\Queue\ShouldQueue;

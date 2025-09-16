@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\Integration\TaskManagement;
+namespace App\Jobs\Indexing\TaskManagement;
 
 use App\Exceptions\NoContentToIndexException;
 use App\Models\Document;

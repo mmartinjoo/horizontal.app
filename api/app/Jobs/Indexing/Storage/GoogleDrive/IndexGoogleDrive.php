@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\Integration\Storage\GoogleDrive;
+namespace App\Jobs\Indexing\Storage\GoogleDrive;
 
 use App\Jobs\Integration\Storage\IndexFile;
 use App\Models\Document;

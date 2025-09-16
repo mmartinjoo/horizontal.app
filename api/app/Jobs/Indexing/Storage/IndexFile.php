@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\Integration\Storage;
+namespace App\Jobs\Indexing\Storage;
 
 use App\Exceptions\NoContentToIndexException;
 use App\Models\DocumentChunk;

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Jobs\Integration\TaskManagement\Jira;
+namespace App\Jobs\Indexing\TaskManagement\Jira;
 
-use App\Jobs\Integration\TaskManagement\IndexIssue;
+use App\Jobs\Indexing\TaskManagement\IndexIssue;
 use App\Models\Document;
 use App\Models\DocumentComment;
 use App\Models\DocumentWorklog;
