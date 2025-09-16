@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement("ALTER TABLE topics ADD COLUMN embedding vector(1536)");
+        DB::statement("ALTER TABLE topics ADD COLUMN embedding vector(768)");
 
         DB::statement("
           ALTER TABLE topics

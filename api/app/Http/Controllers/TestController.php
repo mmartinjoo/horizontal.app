@@ -22,8 +22,10 @@ class TestController extends Controller
 {
     public function index(BuildLouvainCommunities $communities, GraphBuilder $graphBuilder)
     {
-        $graphBuilder->buildComments();
-        $graphBuilder->buildParticipants();
+//        $graphBuilder->buildKG();
+//        $graphBuilder->buildComments();
+//        $graphBuilder->buildParticipants();
+        $graphBuilder->buildWorklogs();
 //        $communities->build();
 //        $communities->index();
 
@@ -33,7 +35,7 @@ class TestController extends Controller
 //        IndexJira::dispatch($team);
 //        IndexGoogleDrive::dispatch($team);
 
-//        return response('indexing...');
+        return response('indexing...');
     }
 
     public function token()

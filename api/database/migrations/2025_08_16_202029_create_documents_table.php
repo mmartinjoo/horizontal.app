@@ -31,7 +31,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement("ALTER TABLE documents ADD COLUMN embedding vector(1536)");
+        DB::statement("ALTER TABLE documents ADD COLUMN embedding vector(768)");
         DB::statement("CREATE INDEX documents_embedding_idx ON documents USING hnsw (embedding vector_cosine_ops)");
     }
 

@@ -41,6 +41,11 @@ class Document extends Model implements Embeddable
         return $this->hasMany(DocumentInteraction::class);
     }
 
+    public function worklogs(): HasMany
+    {
+        return $this->hasMany(DocumentWorklog::class);
+    }
+
     protected static function booted()
     {
         static::deleting(function (Document $document) {

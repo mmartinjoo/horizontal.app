@@ -23,7 +23,7 @@ return new class extends Migration
             $table->unique(['team_id', 'key']);
         });
 
-        DB::statement("ALTER TABLE jira_projects ADD COLUMN embedding vector(1536)");
+        DB::statement("ALTER TABLE jira_projects ADD COLUMN embedding vector(768)");
         DB::statement("CREATE INDEX jira_projects_embedding_idx ON jira_projects USING hnsw (embedding vector_cosine_ops)");
     }
 

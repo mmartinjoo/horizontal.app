@@ -97,6 +97,8 @@ class GraphBuilder
                     $relation = match ($participant->pivot->context) {
                         'owner' => 'OWNER_OF',
                         'revision author' => 'CO_AUTHOR_OF',
+                        'watcher' => 'WATCHER_OF',
+                        'voter' => 'VOTED_FOR',
                         default => 'MENTIONED_IN',
                     };
 
@@ -108,6 +110,52 @@ class GraphBuilder
                         toNodeID: $chunkNode->properties['id'],
                     );
                 }
+            }
+        }
+    }
+
+    public function buildWorklogs()
+    {
+        $documents = Document::with('worklogs.author')->get();
+        foreach ($documents as $document) {
+            $chunkNodes = $this->graphDB->queryMany("
+                match (n:Chunk)
+                where n.source_document_id={$document->id}
+                return n
+            ");
+
+            foreach ($document->worklogs as $worklog) {
+                $this->graphDB->createNode(
+                    label: 'Worklog',
+                    attributes: [
+                        'id' => $worklog->id,
+                        'embedding' => $worklog->embedding ?? [],
+                        'description' => $worklog->description,
+                    ],
+                );
+                foreach ($chunkNodes as $chunkNode) {
+                    $this->graphDB->addRelation(
+                        fromNodeLabel: 'Worklog',
+                        fromNodeID: $worklog->id,
+                        relation: 'WORKLOG_FOR',
+                        toNodeLabel: 'Chunk',
+                        toNodeID: $chunkNode->properties['id'],
+                        relationAttributes: [
+                            'logged_at' => $worklog->logged_at,
+                        ],
+                    );
+                }
+                $this->graphDB->createNodeWithRelation(
+                    newNodeLabel: 'Participant',
+                    newNodeAttributes: [
+                        'id' => $worklog->author->id,
+                        'name' => $worklog->author->name,
+                        'embedding' => $worklog->author->embedding,
+                    ],
+                    relation: 'AUTHOR_OF',
+                    relatedNodeLabel: 'Worklog',
+                    relatedNodeID: $worklog->id,
+                );
             }
         }
     }

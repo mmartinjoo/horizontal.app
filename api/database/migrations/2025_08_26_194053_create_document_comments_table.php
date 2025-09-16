@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement("ALTER TABLE document_comments ADD COLUMN embedding vector(1536)");
+        DB::statement("ALTER TABLE document_comments ADD COLUMN embedding vector(768)");
 
         DB::statement("
           ALTER TABLE document_comments

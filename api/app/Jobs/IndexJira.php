@@ -8,7 +8,6 @@ use App\Integrations\Communication\IssueWorklog;
 use App\Integrations\Communication\Jira\Jira;
 use App\Models\Document;
 use App\Models\DocumentComment;
-use App\Models\DocumentInteraction;
 use App\Models\DocumentWorklog;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
@@ -16,7 +15,6 @@ use App\Models\JiraIntegration;
 use App\Models\JiraProject;
 use App\Models\Participant;
 use App\Models\Team;
-use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,7 +31,6 @@ class IndexJira implements ShouldQueue
 
     public function handle(
         Jira $jira,
-        GraphDB $graphDB,
         Embedder $embedder,
     ): void {
         /** @var IndexingWorkflow $indexing */
@@ -54,17 +51,12 @@ class IndexJira implements ShouldQueue
 
             if (!$project) {
                 $embedding = $embedder->createEmbedding($projectData['name']);
-                $project = JiraProject::create([
+                JiraProject::create([
                     'team_id' => $this->team->id,
                     'jira_integration_id' => $jiraIntegration->id,
                     'title' => $projectData['name'],
                     'key' => $projectData['key'],
                     'jira_id' => $projectData['id'],
-                    'embedding' => $embedding,
-                ]);
-                $graphDB->createNode('Project', [
-                    'id' => $project->id,
-                    'name' => $project->title,
                     'embedding' => $embedding,
                 ]);
             }
@@ -108,24 +100,13 @@ class IndexJira implements ShouldQueue
                         'metadata' => $issueData,
                         'embedding' => $embedding,
                     ]);
-                    $graphDB->createNodeWithRelation(
-                        newNodeLabel: 'Issue',
-                        newNodeAttributes: [
-                            'id' => $doc->id,
-                            'name' => $doc->title,
-                            'embedding' => $embedding,
-                        ],
-                        relation: 'PART_OF',
-                        relatedNodeLabel: 'Project',
-                        relatedNodeID: $project->id,
-                    );
                     $indexingItem = IndexingWorkflowItem::create([
                         'indexing_workflow_id' => $indexing->id,
                         'data' => $issue,
                         'status' => 'queued',
                         'document_id' => $doc->id,
                     ]);
-                    IndexIssue::dispatch($issue, $indexingItem->id);
+                    IndexIssue::dispatch($doc, $issue, $indexingItem->id);
 
                     $commentsData = $jira->getIssueComments($this->team, $issue);
                     $bodies = [];
@@ -206,17 +187,6 @@ class IndexJira implements ShouldQueue
                             'context' => 'watcher',
                             'embedding' => json_encode($p->embedding),
                         ]);
-                        $graphDB->createNodeWithRelation(
-                            newNodeLabel: 'Participant',
-                            newNodeAttributes: [
-                                'id' => $p->id,
-                                'name' => $p->name,
-                                'embedding' => $p->embedding,
-                            ],
-                            relation: 'WATCHES',
-                            relatedNodeLabel: 'Issue',
-                            relatedNodeID: $doc->id,
-                        );
                     }
 
                     $voters = $jira->getVoters($this->team, $issue);
@@ -233,21 +203,9 @@ class IndexJira implements ShouldQueue
                                 'embedding' => $embedder->createEmbedding($voter),
                             ],
                         );
-                        $doc->interactions()->create([
-                            'type' => 'vote',
-                            'participant_id' => $p->id,
+                        $doc->participants()->attach($p->id, [
+                            'context' => 'voter',
                         ]);
-                        $graphDB->createNodeWithRelation(
-                            newNodeLabel: 'Participant',
-                            newNodeAttributes: [
-                                'id' => $p->id,
-                                'name' => $p->name,
-                                'embedding' => $p->embedding,
-                            ],
-                            relation: 'VOTED_FOR',
-                            relatedNodeLabel: 'Issue',
-                            relatedNodeID: $doc->id,
-                        );
                     }
                 }
             }
