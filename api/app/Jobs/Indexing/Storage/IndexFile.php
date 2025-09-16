@@ -3,12 +3,12 @@
 namespace App\Jobs\Integration\Storage;
 
 use App\Exceptions\NoContentToIndexException;
-use App\Integrations\Storage\File;
-use App\Integrations\Storage\GoogleDrive;
 use App\Models\DocumentChunk;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
 use App\Services\Indexing\TextChunker;
+use App\Services\Integration\Storage\DataTransferObjects\File;
+use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use App\Services\PdfParser;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;

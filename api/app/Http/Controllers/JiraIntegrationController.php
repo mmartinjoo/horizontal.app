@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\JiraOAuthAuthorizeRequest;
 use App\Http\Requests\JiraOAuthCallbackRequest;
-use App\Integrations\Communication\Jira\JiraOAuthService;
 use App\Models\JiraIntegration;
+use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;

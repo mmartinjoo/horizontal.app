@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Integrations\Communication\Jira;
+namespace App\Services\Integration\TaskManagement\Jira;
 
 use App\Models\JiraIntegration;
 use Illuminate\Support\Facades\Log;

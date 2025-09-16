@@ -3,13 +3,13 @@
 namespace App\Jobs\Integration\TaskManagement;
 
 use App\Exceptions\NoContentToIndexException;
-use App\Integrations\Communication\Issue;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
+use App\Services\Integration\TaskManagement\Issue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;

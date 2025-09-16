@@ -1,16 +1,15 @@
 <?php
 
-namespace App\Integrations\Communication\Jira;
+namespace App\Services\Integration\TaskManagement\Jira;
 
-use App\Integrations\Communication\Issue;
 use App\Models\JiraIntegration;
 use App\Models\Team;
+use App\Services\Integration\TaskManagement\Issue;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class Jira
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Integrations\Storage;
+namespace App\Services\Integration\Storage\DataTransferObjects;
 
 use Carbon\Carbon;
 use Generator;

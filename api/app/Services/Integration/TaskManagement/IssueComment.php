@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Integrations\Communication;
+namespace App\Services\Integration\TaskManagement;
 
 use Carbon\Carbon;
 use Illuminate\Support\Collection;

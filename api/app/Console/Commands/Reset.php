@@ -20,7 +20,7 @@ class Reset extends Command
 
     public function handle(GraphDB $graphDB)
     {
-        $sure = $this->confirm('Are you sure?', true);
+        $sure = $this->confirm('This will clean everything except integration-related data such as tokens, refresh tokens, etc. Are you sure?', true);
         if (!$sure) {
             return;
         }

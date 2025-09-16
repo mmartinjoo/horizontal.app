@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Integrations\Storage;
+namespace App\Services\Integration\Storage\GoogleDrive;
 
 use App\Exceptions\Storage\FileDownloadException;
 use App\Services\Indexing\FilePrioritizer;
+use App\Services\Integration\Storage\DataTransferObjects\File;
 use Exception;
 use Generator;
 use Google\Client;

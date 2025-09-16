@@ -2,7 +2,7 @@
 
 namespace App\Services\Indexing;
 
-use App\Integrations\Storage\File;
+use App\Services\Integration\Storage\DataTransferObjects\File;
 use Generator;
 
 class FilePrioritizer

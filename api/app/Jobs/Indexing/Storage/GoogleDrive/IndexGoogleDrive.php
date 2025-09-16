@@ -2,8 +2,6 @@
 
 namespace App\Jobs\Integration\Storage\GoogleDrive;
 
-use App\Integrations\Storage\File;
-use App\Integrations\Storage\GoogleDrive;
 use App\Jobs\Integration\Storage\IndexFile;
 use App\Models\Document;
 use App\Models\IndexingWorkflow;
@@ -11,6 +9,8 @@ use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
 use App\Models\Team;
 use App\Services\Indexing\FilePrioritizer;
+use App\Services\Integration\Storage\DataTransferObjects\File;
+use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;

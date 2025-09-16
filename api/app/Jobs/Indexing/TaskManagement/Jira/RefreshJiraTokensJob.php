@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Integration\TaskManagement\Jira;
 
-use App\Integrations\Communication\Jira\JiraTokenManager;
+use App\Services\Integration\TaskManagement\Jira\JiraTokenManager;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
