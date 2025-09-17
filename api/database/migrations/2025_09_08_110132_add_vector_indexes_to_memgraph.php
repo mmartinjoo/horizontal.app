@@ -2,18 +2,21 @@
 
 use App\Services\GraphDB\GraphDB;
 use Illuminate\Database\Migrations\Migration;
-use Memgraph as MemgraphClient;
 
 return new class extends Migration
 {
     public function up(): void
     {
 //        $graphDB = app(GraphDB::class);
-//        $graphDB->query("
+//        $graphDB->run("
 //            CREATE VECTOR INDEX vector_index_entity
 //            ON :__Entity__(embedding)
 //            WITH CONFIG {\"dimension\": 768, \"capacity\": 20000};"
 //        );
-//        MemgraphClient::query("CREATE VECTOR INDEX vector_index_communities ON :Community(embedding) WITH CONFIG {\"dimension\": 768, \"capacity\": 20000}");
+//        $graphDB->run("
+//            CREATE VECTOR INDEX vector_index_communities
+//            ON :Community(embedding)
+//            WITH CONFIG {\"dimension\": 768, \"capacity\": 20000}
+//        ");
     }
 };

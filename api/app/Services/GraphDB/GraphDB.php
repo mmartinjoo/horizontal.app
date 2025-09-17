@@ -8,11 +8,12 @@ use Bolt\connection\Socket;
 use Bolt\protocol\AProtocol;
 use Bolt\protocol\Response;
 use Bolt\protocol\v5\structures\Node;
+use Bolt\protocol\V5_2;
 use Illuminate\Support\Arr;
 
 abstract class GraphDB
 {
-    protected AProtocol $protocol;
+    protected AProtocol|V5_2 $protocol;
 
     public abstract function createNode(string $label, array $attributes): ?Node;
     public abstract function createNodeWithRelation(
@@ -52,7 +53,7 @@ abstract class GraphDB
         /** @var Response $res */
         $res = $this->protocol->logon([
             'scheme' => $config['scheme'],
-            'principal' => 'user',
+            'principal' => $config['user'],
             'credentials' => $config['password'],
         ])->getResponse();
 

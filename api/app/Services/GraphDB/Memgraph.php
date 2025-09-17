@@ -4,21 +4,20 @@ namespace App\Services\GraphDB;
 
 use App\Services\GraphDB\Exceptions\InvalidCypherException;
 use Bolt\protocol\v5\structures\Node;
+use Exception;
 use Illuminate\Support\Arr;
-use Memgraph as MemgraphClient;
 
 class Memgraph extends GraphDB
 {
     public function __construct(array $config)
     {
         parent::__construct($config);
-        MemgraphClient::$auth = ['scheme' => $config['scheme']];
     }
 
     public function createNode(string $label, array $attributes): ?Node
     {
         $attributesStr = $this->arrToAttributeStr($attributes);
-        $rows = MemgraphClient::query("merge (n:$label { $attributesStr }) return n;");
+        $rows = $this->doQuery("merge (n:$label { $attributesStr }) return n;");
         return $this->parseNode($rows);
     }
 
@@ -36,14 +35,14 @@ class Memgraph extends GraphDB
         $upsertQuery .= " $set";
         $upsertQuery .= " return n";
 
-        $rows = MemgraphClient::query($upsertQuery);
+        $rows = $this->doQuery($upsertQuery);
         $node = Arr::get($rows, '0.n');
         if (!$node) {
             throw new InvalidCypherException('Unable to return node');
         }
 
         if (count($relationAttributes) === 0) {
-            $rows = MemgraphClient::query("
+            $rows = $this->doQuery("
                 merge (r:$relatedNodeLabel { id: \"$relatedNodeID\" })
                 with r
                 match (n:$newNodeLabel { id: \"$newNodeId\" })
@@ -53,7 +52,7 @@ class Memgraph extends GraphDB
             return $this->parseNode($rows);
         } else {
             $relationAttributesStr = $this->arrToAttributeStr($relationAttributes);
-            $rows = MemgraphClient::query("
+            $rows = $this->doQuery("
                 merge (r:$relatedNodeLabel { id: \"$relatedNodeID\" })
                 with r
                 match (n:$newNodeLabel { id: \"$newNodeId\" })
@@ -67,31 +66,31 @@ class Memgraph extends GraphDB
     public function getNode(string $label, array $attributes): ?Node
     {
         $attributesStr = $this->arrToAttributeStr($attributes);
-        $rows = MemgraphClient::query("match (n:$label $attributesStr) return n)");
+        $rows = $this->doQuery("match (n:$label $attributesStr) return n)");
         return $this->parseNode($rows);
     }
 
     public function query(string $query, string $nodeName = 'n'): ?Node
     {
-        $rows = MemgraphClient::query($query);
+        $rows = $this->doQuery($query);
         return $this->parseNode($rows, $nodeName);
     }
 
     public function queryMany(string $query, array $nodeNames = ['n']): array
     {
-        $rows = MemgraphClient::query($query);
+        $rows = $this->doQuery($query);
         return $this->parseNodes($rows, $nodeNames);
     }
 
     public function run(string $query): array
     {
-        return MemgraphClient::query($query);
+        return $this->doQuery($query);
     }
 
     public function vectorSearch(string $indexName, array $embedding, int $n): array
     {
         $embeddingStr = json_encode($embedding);
-        return MemgraphClient::query("
+        return $this->doQuery("
             CALL vector_search.search('$indexName', $n, $embeddingStr) YIELD * RETURN *;
         ");
     }
@@ -106,16 +105,38 @@ class Memgraph extends GraphDB
     ): void
     {
         if (count($relationAttributes) === 0) {
-            MemgraphClient::query("
+            $this->doQuery("
                 match (n1:$fromNodeLabel { id: \"$fromNodeID\" }), (n2:$toNodeLabel { id: \"$toNodeID\" })
                 merge (n1)-[:$relation]->(n2)
             ");
         } else {
             $relationAttributesStr = $this->arrToAttributeStr($relationAttributes);
-            MemgraphClient::query("
+            $this->doQuery("
                 match (n1:$fromNodeLabel { id: \"$fromNodeID\" }), (n2:$toNodeLabel { id: \"$toNodeID\" })
                 merge (n1)-[:$relation { $relationAttributesStr }]->(n2)
             ");
         }
+    }
+
+    private function doQuery(string $query): array
+    {
+        $all = [];
+        $runResponse = $this->protocol->run($query)->getResponse();
+        if ($runResponse->signature != \Bolt\enum\Signature::SUCCESS) {
+            throw new Exception(implode(' ', $runResponse->content));
+        }
+        $content = $runResponse->content;
+        foreach ($this->protocol->pull()->getResponses() as $res) {
+            if ($res->signature == \Bolt\enum\Signature::IGNORED || $res->signature == \Bolt\enum\Signature::FAILURE) {
+                throw new Exception(implode(' ', $runResponse->content));
+            }
+            $all[] = $res->content;
+        }
+
+        array_pop($all);
+
+        return !empty($all) ? array_map(function ($element) use ($content) {
+            return array_combine($content['fields'], $element);
+        }, $all) : [];
     }
 }
