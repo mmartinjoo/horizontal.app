@@ -128,7 +128,7 @@ class Memgraph extends GraphDB
         $content = $runResponse->content;
         foreach ($this->protocol->pull()->getResponses() as $res) {
             if ($res->signature == \Bolt\enum\Signature::IGNORED || $res->signature == \Bolt\enum\Signature::FAILURE) {
-                throw new Exception(implode(' ', $runResponse->content));
+                throw new Exception("Error while executing query: " . json_encode($res->content));
             }
             $all[] = $res->content;
         }
