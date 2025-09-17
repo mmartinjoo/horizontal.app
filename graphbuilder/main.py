@@ -28,9 +28,6 @@ reader = DatabaseReader(
 )
 
 async def build_graph():
-    print("build_graph")
-
-    # Run blocking database operation in thread pool
     documents = await asyncio.to_thread(
         reader.load_data,
         query="""
@@ -48,13 +45,14 @@ async def build_graph():
             "title", "source_type", "source_url", "document_chunk_id", "source_document_id",
         ],
     )
-
+    
     # Run blocking graph operations in thread pool
     def _build_graph_sync():
         graph_store = MemgraphPropertyGraphStore(
-            password="",
-            username="",
-            url=os.getenv("GRAPH_DB_URI")
+            url=os.getenv("GRAPH_DB_URI"),
+            username=os.getenv("GRAPH_DB_USER"),
+            password=os.getenv("GRAPH_DB_PASSWORD"),            
+            database="memgraph",
         )
         kg_extractor = SimpleLLMPathExtractor(
             llm=llm,
