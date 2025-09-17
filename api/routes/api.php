@@ -8,8 +8,8 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('auth/token', [\App\Http\Controllers\TestController::class, 'token']);
 Route::get('/test', [\App\Http\Controllers\TestController::class, 'index']);
+Route::get('/test/auth/token', [\App\Http\Controllers\TestController::class, 'token']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/questions/ask', [\App\Http\Controllers\QuestionController::class, 'ask']);

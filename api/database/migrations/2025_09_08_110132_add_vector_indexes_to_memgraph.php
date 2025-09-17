@@ -19,4 +19,11 @@ return new class extends Migration
             WITH CONFIG {\"dimension\": 768, \"capacity\": 20000}
         ");
     }
+
+    public function down()
+    {
+        $graphDB = app(GraphDB::class);
+        $graphDB->run("DROP VECTOR INDEX vector_index_entity");
+        $graphDB->run("DROP VECTOR INDEX vector_index_communities");
+    }
 };
