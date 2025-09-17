@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Indexing\Storage\GoogleDrive;
 
-use App\Jobs\Integration\Storage\IndexFile;
+use App\Jobs\Indexing\Storage\IndexFile;
 use App\Models\Document;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;

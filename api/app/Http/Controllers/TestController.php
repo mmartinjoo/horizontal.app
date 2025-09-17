@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\Indexing\IndexKnowledgeBase;
-use App\Jobs\Integration\Storage\GoogleDrive\IndexGoogleDrive;
-use App\Models\Team;
 use App\Services\KnowledgeGraph\GraphBuilder;
 
 class TestController extends Controller
