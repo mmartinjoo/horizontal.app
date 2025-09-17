@@ -41,7 +41,10 @@ abstract class GraphDB
 
     public function __construct(array $config)
     {
-        $conn = new Socket();
+        $conn = new Socket(
+            ip: $config['host'],
+            port: $config['port'],
+        );
         $bolt = new Bolt($conn);
         $bolt->setProtocolVersions(5.2);
         $this->protocol = $bolt->build();

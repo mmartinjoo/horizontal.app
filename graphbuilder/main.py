@@ -54,7 +54,7 @@ async def build_graph():
         graph_store = MemgraphPropertyGraphStore(
             password="",
             username="",
-            url="bolt://127.0.0.1:7687"
+            url=os.getenv("GRAPH_DB_URI")
         )
         kg_extractor = SimpleLLMPathExtractor(
             llm=llm,

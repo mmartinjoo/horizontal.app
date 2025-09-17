@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $graphDB = app(GraphDB::class);
+//        $graphDB = app(GraphDB::class);
 //        $graphDB->query("
 //            CREATE VECTOR INDEX vector_index_entity
 //            ON :__Entity__(embedding)

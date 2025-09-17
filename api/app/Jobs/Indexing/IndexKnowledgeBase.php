@@ -22,7 +22,7 @@ class IndexKnowledgeBase implements ShouldQueue
         $team = Team::where('name', 'Test Company')->firstOrFail();
 
         IndexGoogleDrive::dispatch($team);
-        IndexJira::dispatch($team);
+//        IndexJira::dispatch($team);
 
         dispatch(function() use ($graphBuilder) {
              $graphBuilder->buildKG();

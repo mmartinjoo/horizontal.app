@@ -1,2 +1,5 @@
 .DS_Store
 .idea
+postgres_data
+memgraph_data
+redis_data

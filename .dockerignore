@@ -1,0 +1,52 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+CLAUDE.md
+docs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies (will be installed in container)
+api/vendor/
+frontend/node_modules/
+
+# Build artifacts
+frontend/dist/
+api/public/build/
+
+# Environment files
+api/.env
+api/.env.local
+api/.env.testing
+
+# Storage and cache
+api/storage/logs/
+api/storage/framework/cache/
+api/storage/framework/sessions/
+api/storage/framework/views/
+api/bootstrap/cache/
+
+# Database
+*.sqlite
+*.db
+
+# Temporary files
+tmp/
+temp/

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\Indexing\IndexKnowledgeBase;
 use App\Jobs\Integration\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Models\Team;
 use App\Services\KnowledgeGraph\GraphBuilder;
@@ -10,11 +11,9 @@ class TestController extends Controller
 {
     public function index(GraphBuilder $graphBuilder)
     {
-//        $team = Team::where('name', 'Test Company')->firstOrFail();
-//        IndexJira::dispatch($team);
-//        IndexGoogleDrive::dispatch($team);
+        IndexKnowledgeBase::dispatch();
 
-//        return response('indexing...');
+        return response('indexing...');
     }
 
     public function token()
