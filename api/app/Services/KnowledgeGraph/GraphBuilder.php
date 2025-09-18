@@ -30,8 +30,8 @@ class GraphBuilder
     public function buildRelatedNodes()
     {
         $this->connectCommentsToDocuments();
-//        $this->buildParticipants();
-//        $this->buildWorklogs();
+        $this->buildParticipants();
+        $this->buildWorklogs();
     }
 
     public function buildCommunities()
