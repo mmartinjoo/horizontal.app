@@ -25,9 +25,9 @@ class IndexKnowledgeBase implements ShouldQueue
             ->delay(now()->addMinutes(2));
 
         BuildRelatedNodes::dispatch()
-            ->delay(now()->addMinutes(6));
+            ->delay(now()->addMinutes(8));
 
         BuildCommunities::dispatch()
-            ->delay(now()->addMinutes(9));
+            ->delay(now()->addMinutes(10));
     }
 }

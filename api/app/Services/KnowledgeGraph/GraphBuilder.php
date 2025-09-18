@@ -28,9 +28,9 @@ class GraphBuilder
 
     public function buildRelatedNodes()
     {
-        $this->buildComments();
-        $this->buildParticipants();
-        $this->buildWorklogs();
+        $this->connectCommentsToDocuments();
+//        $this->buildParticipants();
+//        $this->buildWorklogs();
     }
 
     public function buildCommunities()
@@ -97,6 +97,35 @@ class GraphBuilder
                 $summary,
                 $context,
             );
+        }
+    }
+
+    private function connectCommentsToDocuments()
+    {
+        /**
+         * There are :Chunk nodes for each `DocumentChunk`
+         * These have a `source_document_id` that refers to a `Document`
+         * Comments belong to a `Document`
+         * Comment nodes have a `parent_document_id` that refers to the `Document`
+         * This function connects:
+         *  - Comments with a specific `parent_document_id`
+         *  - To ALL `DocumentChunk` :Chunk nodes with the same `source_document_id`
+         *
+         * Which is not perfect but a good start.
+         */
+
+        $documents = $this->graphDB->queryMany("
+            match (n:Chunk)
+            where n.document_type = \"document\"
+            return n
+        ");
+
+        foreach ($documents as $document) {
+            $this->graphDB->queryMany("
+                match (comment:Chunk { document_type: \"comment\", parent_document_id: {$document->properties['source_document_id']} }),
+                    (doc:Chunk { source_document_id: {$document->properties['source_document_id']} })
+                merge (comment)-[:COMMENT_FOR]->(doc)
+            ");
         }
     }
 
