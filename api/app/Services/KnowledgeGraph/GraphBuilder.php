@@ -4,6 +4,7 @@ namespace App\Services\KnowledgeGraph;
 
 use App\Jobs\Indexing\IndexGraphCommunity;
 use App\Models\Document;
+use App\Models\DocumentComment;
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
 use Bolt\protocol\v5\structures\Node;
@@ -114,18 +115,35 @@ class GraphBuilder
          * Which is not perfect but a good start.
          */
 
-        $documents = $this->graphDB->queryMany("
+        $documentNodes = $this->graphDB->queryMany("
             match (n:Chunk)
             where n.document_type = \"document\"
             return n
         ");
 
-        foreach ($documents as $document) {
-            $this->graphDB->queryMany("
-                match (comment:Chunk { document_type: \"comment\", parent_document_id: {$document->properties['source_document_id']} }),
-                    (doc:Chunk { source_document_id: {$document->properties['source_document_id']} })
+        foreach ($documentNodes as $documentNode) {
+            $commentNodes = $this->graphDB->queryMany("
+                match (comment:Chunk { document_type: \"comment\", parent_document_id: {$documentNode->properties['source_document_id']} }),
+                    (doc:Chunk { source_document_id: {$documentNode->properties['source_document_id']} })
                 merge (comment)-[:COMMENT_FOR]->(doc)
-            ");
+                return comment
+            ", ['comment']);
+
+            foreach ($commentNodes as $commentNode) {
+                $comment = DocumentComment::find($commentNode->properties['comment_id']);
+                $participantNode = $this->graphDB->createNode(
+                    label: 'Participant',
+                    attributes: [
+                        'id' => $comment->author->id,
+                        'name' => $comment->author->name,
+                        'embedding' => $this->embedder->createEmbedding($comment->author->name),
+                    ],
+                );
+                $this->graphDB->run("
+                    match (p:Participant { id: \"{$participantNode->properties['id']}\" }), (c:Chunk { comment_id: {$commentNode->properties['comment_id']} })
+                    merge (p)-[:AUTHOR_OF]->(c)
+                ");
+            }
         }
     }
 
