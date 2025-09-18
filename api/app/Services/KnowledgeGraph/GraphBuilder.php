@@ -147,52 +147,6 @@ class GraphBuilder
         }
     }
 
-    private function buildComments()
-    {
-        $documents = Document::with('comments.author')->get();
-        foreach ($documents as $document) {
-            $chunkNodes = $this->graphDB->queryMany("
-                match (n:Chunk)
-                where n.source_document_id={$document->id}
-                return n
-            ");
-
-            foreach ($document->comments as $comment) {
-                $this->graphDB->createNode(
-                    label: 'Comment',
-                    attributes: [
-                        'id' => $comment->id,
-                        'embedding' => $this->embedder->createEmbedding($comment->body),
-                        'body' => $comment->body,
-                    ],
-                );
-                foreach ($chunkNodes as $chunkNode) {
-                    $this->graphDB->addRelation(
-                        fromNodeLabel: 'Comment',
-                        fromNodeID: $comment->id,
-                        relation: 'COMMENT_FOR',
-                        toNodeLabel: 'Chunk',
-                        toNodeID: $chunkNode->properties['id'],
-                        relationAttributes: [
-                            'commented_at' => $comment->commented_at,
-                        ],
-                    );
-                }
-                $this->graphDB->createNodeWithRelation(
-                    newNodeLabel: 'Participant',
-                    newNodeAttributes: [
-                        'id' => $comment->author->id,
-                        'name' => $comment->author->name,
-                        'embedding' => $this->embedder->createEmbedding($comment->author->name),
-                    ],
-                    relation: 'AUTHOR_OF',
-                    relatedNodeLabel: 'Comment',
-                    relatedNodeID: $comment->id,
-                );
-            }
-        }
-    }
-
     private function buildParticipants()
     {
         $documents = Document::with('participants')->get();
