@@ -60,13 +60,13 @@ class IndexGraphCommunity implements ShouldQueue
             ### Output Format:
             {
                 \"title\": \"A descriptive 3-7 word title for this community\",
-                \"summary\": \"A 1-2 sentence description that captures the essence of this community. Be specific about the domain, key entities, and relationships.\"
+                \"summary\": \"A 3-5 sentence description that captures the essence of this community. Be specific about the domain, key entities, and relationships.\"
             }
 
             ### Example Output:
             {
                 \"title\": \"B2B SaaS Customer Acquisition Strategy\",
-                \"summary\": \"Focuses on targeting technical decision-makers (CTOs, VPs of Engineering) at small to medium-sized companies for B2B SaaS products. It encompasses go-to-market strategies, ideal customer profiles, and specific outreach tactics.\"
+                \"summary\": \"Focuses on targeting technical decision-makers (CTOs, VPs of Engineering) at small to medium-sized companies for B2B SaaS products. It encompasses go-to-market strategies, ideal customer profiles, and specific outreach tactics. Outreach tactics includes channels like email, social media, and in-person meetings. It also includes a detailed customer acquisition process and a detailed customer acquisition strategy.\"
             }
 
             ---
