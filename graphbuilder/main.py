@@ -37,14 +37,39 @@ async def build_graph():
                 document_chunks.body as body,
                 documents.source_type as source_type,
                 documents.source_url as source_url,
-                documents.id as source_document_id
+                documents.id as source_document_id,
+                'document' as document_type
             from document_chunks
             inner join documents on documents.id = document_chunks.document_id
         """,
         metadata_cols=[
-            "title", "source_type", "source_url", "document_chunk_id", "source_document_id",
+            "title", "source_type", "source_url", "document_chunk_id", "source_document_id", "document_type",
+        ],
+        excluded_text_cols=[
+            "source_type", "source_url", "document_chunk_id", "source_document_id", "document_type",
         ],
     )
+    comments = await asyncio.to_thread(
+        reader.load_data,
+        query="""
+            select
+                document_comments.id as comment_id,
+                document_comments.body as body,
+                documents.source_type as source_type,
+                documents.source_url as source_url,
+                documents.id as parent_document_id,
+                'comment' as document_type
+            from document_comments
+            inner join documents on documents.id = document_comments.document_id
+        """,
+        metadata_cols=[
+            "source_type", "source_url", "comment_id", "parent_document_id", "document_type",
+        ],
+        excluded_text_cols=[
+            "source_type", "source_url", "comment_id", "parent_document_id", "document_type",
+        ],
+    )
+    all_documents = documents + comments
     
     # Run blocking graph operations in thread pool
     def _build_graph_sync():
@@ -60,7 +85,7 @@ async def build_graph():
             num_workers=4,
         )
         PropertyGraphIndex.from_documents(
-            documents,
+            all_documents,
             llm=llm,
             embed_kg_nodes=True,
             kg_extractors=[kg_extractor],
