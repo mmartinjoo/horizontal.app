@@ -22,12 +22,12 @@ class IndexKnowledgeBase implements ShouldQueue
 //        IndexJira::dispatch($team);
 
         BuildKnowledgeGraph::dispatch()
-            ->delay(now()->addMinutes(5));
+            ->delay(now()->addMinutes(2));
 
         BuildRelatedNodes::dispatch()
-            ->delay(now()->addMinutes(12));
+            ->delay(now()->addMinutes(6));
 
         BuildCommunities::dispatch()
-            ->delay(now()->addMinutes(15));
+            ->delay(now()->addMinutes(9));
     }
 }

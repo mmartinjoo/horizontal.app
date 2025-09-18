@@ -26,7 +26,7 @@ class SearchEngine
     public function graphRAG(Question $question): string
     {
         $embedding = $this->embedder->createEmbedding($question->question);
-        $results = $this->graphDB->vectorSearch('vector_index_community', $embedding, 10);
+        $results = $this->graphDB->vectorSearch('vector_index_communities', $embedding, 10);
         $chunkContext = [];
         $pivotCommunities = [];
         /** @var Node $node */

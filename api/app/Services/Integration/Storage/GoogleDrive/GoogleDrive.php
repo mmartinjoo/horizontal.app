@@ -11,6 +11,7 @@ use Google\Client;
 use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\LazyCollection;
 use League\Flysystem\Filesystem;
 use Masbug\Flysystem\GoogleDriveAdapter;
 
@@ -46,24 +47,26 @@ class GoogleDrive
         $this->fs = new Filesystem($adapter);
     }
 
-    public function listDirectoryContents(string $directory = ''): Generator
+    public function listDirectoryContents(string $directory = ''): LazyCollection
     {
-        $listing = $this->fs->listContents($directory, true);
-        $files = File::fromDirectoryListing($listing);
-        foreach ($files as $file) {
-            $data = $this->getMetaData($file);
-            $file->setCreatedAt($data->createdTime);
-            $file->setUpdatedAt($data->modifiedTime);
-            $file->setViewedAt($data->viewedByMeTime);
-            foreach ($data->getOwners() as $owner) {
-                $file->addOwner($owner->displayName);
+        return LazyCollection::make(function () use ($directory) {
+            $listing = $this->fs->listContents($directory, true);
+            $files = File::fromDirectoryListing($listing);
+            foreach ($files as $file) {
+                $data = $this->getMetaData($file);
+                $file->setCreatedAt($data->createdTime);
+                $file->setUpdatedAt($data->modifiedTime);
+                $file->setViewedAt($data->viewedByMeTime);
+                foreach ($data->getOwners() as $owner) {
+                    $file->addOwner($owner->displayName);
+                }
+                $sharingUser = $data->getSharingUser();
+                if ($sharingUser) {
+                    $file->setSharingUser($sharingUser->displayName);;
+                }
+                yield $file;
             }
-            $sharingUser = $data->getSharingUser();
-            if ($sharingUser) {
-                $file->setSharingUser($sharingUser->displayName);;
-            }
-            yield $file;
-        }
+        });
     }
 
     public function downloadFile(File $file)
