@@ -29,3 +29,6 @@ pandas==2.2.3
 pydantic==2.11.7
 httpx==0.28.1
 aiohttp==3.12.15
+
+# Development utilities
+watchdog==7.1.0

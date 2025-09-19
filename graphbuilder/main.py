@@ -122,5 +122,5 @@ async def api_build_graph():
 if __name__ == '__main__':
     import uvicorn
     # Enable reload for development - set reload=False for production
-    reload_mode = os.getenv('GRAPHBUILDER_RELOAD', 'true').lower() == 'true'
-    uvicorn.run(app, host='0.0.0.0', port=9998)
+    reload_mode = os.getenv('HOT_RELOAD_ENABLED', 'true').lower() == 'true'
+    uvicorn.run("main:app", host='0.0.0.0', port=9998, reload=reload_mode)

@@ -92,6 +92,9 @@ services:
         condition: service_healthy
       memgraph:
         condition: service_started
+    environment:
+      - HOT_RELOAD_ENABLED=true
+    command: python main.py
 
   memgraph:
     image: memgraph/memgraph-mage:latest
