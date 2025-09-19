@@ -2,7 +2,7 @@ import os
 import asyncio
 from fastapi import FastAPI, HTTPException
 from llama_index.core.indices.property_graph import SimpleLLMPathExtractor
-from llama_index.core import Settings, PropertyGraphIndex
+from llama_index.core import Settings, PropertyGraphIndex, Document
 from llama_index.llms.fireworks import Fireworks
 from llama_index.graph_stores.memgraph import MemgraphPropertyGraphStore
 from llama_index.readers.database import DatabaseReader
@@ -68,8 +68,22 @@ async def build_graph():
         excluded_text_cols=[
             "source_type", "source_url", "comment_id", "parent_document_id", "document_type",
         ],
+        
     )
-    all_documents = documents + comments
+    # Original comments are copied to custom documents because the LLM also received 
+    # the metadata and created graph nodes for thing like "source_url" etc
+    # I didn't find a better solution
+    transformed_comments = []
+    for comment in comments:
+        doc = Document(
+            text=comment.get_content(),
+            metadata=comment.metadata,
+            excluded_llm_metadata_keys=["source_type", "source_url", "comment_id", "parent_document_id", "document_type"],
+            excluded_embed_metadata_keys=["comment_id", "parent_document_id"],
+        )
+        transformed_comments.append(doc)
+    
+    all_documents = documents + transformed_comments
     
     # Run blocking graph operations in thread pool
     def _build_graph_sync():
@@ -107,4 +121,6 @@ async def api_build_graph():
 
 if __name__ == '__main__':
     import uvicorn
+    # Enable reload for development - set reload=False for production
+    reload_mode = os.getenv('GRAPHBUILDER_RELOAD', 'true').lower() == 'true'
     uvicorn.run(app, host='0.0.0.0', port=9998)
