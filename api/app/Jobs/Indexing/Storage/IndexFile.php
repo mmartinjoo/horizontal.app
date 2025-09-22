@@ -10,6 +10,7 @@ use App\Services\File\PdfParser;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\Storage\DataTransferObjects\File;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
+use App\Services\Memory\GraphitiService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -30,6 +31,7 @@ class IndexFile implements ShouldQueue
         GoogleDrive $drive,
         TextChunker $textChunker,
         PdfParser $pdfParser,
+        GraphitiService $graphitiService,
     ): void {
         try {
             $indexingWorkflowItem = IndexingWorkflowItem::find($this->indexingWorkflowItemId);
@@ -47,7 +49,7 @@ class IndexFile implements ShouldQueue
             ]);
 
             if ($this->file->mimeType() === 'application/pdf') {
-                $this->indexPDF($pdfParser, $textChunker, $indexingWorkflowItem);
+                $this->indexPDF($pdfParser, $textChunker, $indexingWorkflowItem, $graphitiService);
                 $indexingWorkflowItem->update([
                     'status' => 'completed',
                 ]);
@@ -93,6 +95,10 @@ class IndexFile implements ShouldQueue
             $indexingWorkflowItem->update([
                 'status' => 'prepared',
             ]);
+
+            // Add document metadata to Graphiti memory
+            $this->addToGraphitiMemory($graphitiService, $indexingWorkflowItem, $chunks->first());
+
             $indexingWorkflowItem->update([
                 'status' => 'completed',
             ]);
@@ -102,7 +108,7 @@ class IndexFile implements ShouldQueue
         }
     }
 
-    private function indexPDF(PdfParser $pdfParser, TextChunker $textChunker, IndexingWorkflowItem $indexingWorkflowItem)
+    private function indexPDF(PdfParser $pdfParser, TextChunker $textChunker, IndexingWorkflowItem $indexingWorkflowItem, GraphitiService $graphitiService)
     {
         $indexingWorkflowItem->update([
             'status' => 'parsing',
@@ -137,8 +143,48 @@ class IndexFile implements ShouldQueue
         $indexingWorkflowItem->update([
             'status' => 'prepared',
         ]);
+
+        // Add document metadata to Graphiti memory
+        $this->addToGraphitiMemory($graphitiService, $indexingWorkflowItem, $firstChunk);
     }
 
+
+    private function addToGraphitiMemory(GraphitiService $graphitiService, IndexingWorkflowItem $indexingWorkflowItem, string $preview): void
+    {
+        try {
+            $document = $indexingWorkflowItem->document;
+            $workflow = $indexingWorkflowItem->indexing_workflow;
+
+            // Create a memory entry about the indexed document
+            $memoryText = sprintf(
+                "Document '%s' was indexed from %s. Content type: %s. Preview: %s",
+                $document->title ?? $this->file->name(),
+                $this->file->name(),
+                $this->file->mimeType(),
+                substr($preview, 0, 200) . (strlen($preview) > 200 ? '...' : '')
+            );
+
+            $graphitiService->addMemory(
+                text: $memoryText,
+                teamId: $workflow->team_id,
+                context: [
+                    'type' => 'document_indexed',
+                    'document_id' => $document->id,
+                    'workflow_id' => $workflow->id,
+                    'file_name' => $this->file->name(),
+                    'mime_type' => $this->file->mimeType(),
+                    'source' => 'google_drive'
+                ]
+            );
+        } catch (\Exception $e) {
+            // Log the error but don't fail the indexing job
+            logger()->error('Failed to add document to Graphiti memory', [
+                'error' => $e->getMessage(),
+                'document_id' => $indexingWorkflowItem->document->id,
+                'file' => $this->file->name()
+            ]);
+        }
+    }
 
     private function updateWorkflowStatus(IndexingWorkflowItem $indexingWorkflowItem)
     {
