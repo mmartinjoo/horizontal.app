@@ -12,6 +12,7 @@ class DocumentChunk extends Model
 
     protected $hidden = [
         'search_vector',
+        'embedding',
     ];
 
     public function document()

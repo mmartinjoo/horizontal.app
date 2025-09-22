@@ -64,4 +64,8 @@ return [
         'client_secret' => env('JIRA_CLIENT_SECRET'),
         'redirect_uri' => env('JIRA_REDIRECT_URI'),
     ],
+
+    'graphiti' => [
+        'base_url' => env('GRAPHITI_BASE_URL', 'http://graphiti:9995'),
+    ],
 ];

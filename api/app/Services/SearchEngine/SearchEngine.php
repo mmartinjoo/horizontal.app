@@ -7,6 +7,7 @@ use App\Models\Question;
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
 use App\Services\LLM\LLM;
+use App\Services\Memory\GraphitiService;
 use App\Services\SearchEngine\DataTransferObjects\Path;
 use App\Services\SearchEngine\DataTransferObjects\SearchResult;
 use Bolt\protocol\v1\structures\Path as BoltPath;
@@ -20,7 +21,9 @@ class SearchEngine
         private GraphDB $graphDB,
         private LLM $llm,
         private string $cosineSimilarityThreshold,
+        private ?GraphitiService $graphitiService = null,
     ) {
+        $this->graphitiService = $graphitiService ?? app(GraphitiService::class);
     }
 
     public function graphRAG(Question $question): string
@@ -198,5 +201,129 @@ class SearchEngine
             }
         }
         return $results;
+    }
+
+    /**
+     * Enhanced search with Graphiti memory integration
+     *
+     * @return Collection<SearchResult>
+     */
+    public function searchWithMemory(
+        string $question,
+        int $teamId,
+        ?int $userId = null,
+        array $clickedResults = []
+    ): Collection {
+        // Track search pattern in Graphiti
+        if ($userId) {
+            $this->graphitiService->trackSearchPattern(
+                userId: $userId,
+                searchQuery: $question,
+                teamId: $teamId,
+                clickedResults: $clickedResults,
+                searchContext: 'hybrid_search'
+            );
+        }
+
+        // Get user's historical patterns to personalize search
+        $userPatterns = $userId ?
+            $this->graphitiService->getUserPatterns($userId, $teamId, 5) : [];
+
+        // Search Graphiti memory for relevant context
+        $memoryResults = $this->graphitiService->searchMemory($question, $teamId, $userId, 5);
+
+        // Enhance question with memory context
+        $enhancedQuestion = $this->enhanceQueryWithMemory($question, $memoryResults, $userPatterns);
+
+        // Perform hybrid search with enhanced query
+        $semanticResults = $this->semanticSearch($enhancedQuestion);
+        $keywordResults = $this->keywordSearch(explode(' ', $enhancedQuestion));
+        $results = $this->combineResults($semanticResults, $keywordResults);
+
+        // Add memory to Graphiti for future searches
+        $searchContext = [
+            'user_id' => $userId,
+            'results_count' => $results->count(),
+            'search_type' => 'hybrid_with_memory'
+        ];
+
+        $this->graphitiService->addMemory(
+            text: "Search performed: '{$question}' returned {$results->count()} results",
+            teamId: $teamId,
+            context: $searchContext
+        );
+
+        return $results;
+    }
+
+    /**
+     * Enhance search query with memory context
+     */
+    private function enhanceQueryWithMemory(
+        string $originalQuery,
+        array $memoryResults,
+        array $userPatterns
+    ): string {
+        if (empty($memoryResults) && empty($userPatterns)) {
+            return $originalQuery;
+        }
+
+        $enhancedTerms = [$originalQuery];
+
+        // Add terms from relevant memory
+        foreach ($memoryResults as $memory) {
+            if (isset($memory['content']) && $memory['score'] > 0.7) {
+                // Extract keywords from high-scoring memory content
+                $keywords = $this->extractKeywords($memory['content']);
+                $enhancedTerms = array_merge($enhancedTerms, $keywords);
+            }
+        }
+
+        // Add terms from user patterns
+        foreach ($userPatterns as $pattern) {
+            if (isset($pattern['content'])) {
+                $keywords = $this->extractKeywords($pattern['content']);
+                $enhancedTerms = array_merge($enhancedTerms, array_slice($keywords, 0, 2));
+            }
+        }
+
+        return implode(' ', array_unique($enhancedTerms));
+    }
+
+    /**
+     * Extract meaningful keywords from text
+     */
+    private function extractKeywords(string $text): array
+    {
+        // Simple keyword extraction - in production, use more sophisticated NLP
+        $words = str_word_count(strtolower($text), 1);
+        $stopWords = ['the', 'is', 'at', 'which', 'on', 'and', 'a', 'to', 'are', 'as', 'was', 'with', 'for'];
+
+        $keywords = array_filter($words, function($word) use ($stopWords) {
+            return strlen($word) > 3 && !in_array($word, $stopWords);
+        });
+
+        return array_slice(array_unique($keywords), 0, 5);
+    }
+
+    /**
+     * Track successful search result clicks for learning
+     */
+    public function trackResultClick(
+        string $documentId,
+        string $searchQuery,
+        int $userId,
+        int $teamId
+    ): void {
+        $this->graphitiService->addMemory(
+            text: "User clicked on document {$documentId} for search '{$searchQuery}'",
+            teamId: $teamId,
+            context: [
+                'user_id' => $userId,
+                'document_id' => $documentId,
+                'search_query' => $searchQuery,
+                'type' => 'result_click'
+            ]
+        );
     }
 }
