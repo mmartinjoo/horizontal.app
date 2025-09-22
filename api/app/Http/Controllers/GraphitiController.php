@@ -194,4 +194,5 @@ class GraphitiController extends Controller
             'total' => count($patterns),
         ]);
     }
+
 }

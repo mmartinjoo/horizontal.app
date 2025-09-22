@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\GraphitiController;
+use App\Http\Controllers\GraphitiDemoController;
 use App\Http\Controllers\JiraIntegrationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -34,5 +35,13 @@ Route::prefix('/graphiti')->group(function () {
         Route::post('/search/enhanced', [GraphitiController::class, 'searchWithMemory']);
         Route::post('/track/click', [GraphitiController::class, 'trackClick']);
         Route::get('/patterns/user/{userId}', [GraphitiController::class, 'getUserPatterns']);
+    });
+
+    // Demo endpoints (separate controller for better organization)
+    Route::prefix('/demo')->middleware('auth:sanctum')->group(function () {
+        Route::get('/info', [GraphitiDemoController::class, 'getDemoInfo']);
+        Route::post('/run', [GraphitiDemoController::class, 'runDemo']);
+        Route::get('/memories', [GraphitiDemoController::class, 'viewMemories']);
+        Route::delete('/clear', [GraphitiDemoController::class, 'clearMemories']);
     });
 });
