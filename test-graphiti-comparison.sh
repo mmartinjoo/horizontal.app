@@ -10,7 +10,7 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-API_BASE="http://localhost:9999/api"
+API_BASE="http://localhost:9995/api"
 TEAM_ID=1
 USER_ID=1
 
@@ -30,7 +30,7 @@ make_request() {
 }
 
 echo -e "${BLUE}1. Testing Graphiti Service Health${NC}"
-health_response=$(make_request GET "/graphiti/health")
+health_response=$(make_request GET "/health")
 if echo "$health_response" | grep -q "healthy"; then
     echo -e "${GREEN}✅ Graphiti service is healthy${NC}"
 else
@@ -51,7 +51,7 @@ memories=(
 
 added_count=0
 for memory in "${memories[@]}"; do
-    response=$(make_request POST "/graphiti/memory" "$memory")
+    response=$(make_request POST "/memory/add" "$memory")
     if echo "$response" | grep -q "success.*true"; then
         ((added_count++))
     fi
@@ -60,7 +60,7 @@ done
 echo -e "${GREEN}✅ Added $added_count/${#memories[@]} memory entries${NC}"
 
 echo -e "\n${BLUE}3. Testing Memory Search${NC}"
-search_response=$(make_request POST "/graphiti/memory/search" '{"query": "authentication documentation", "team_id": '$TEAM_ID', "limit": 3}')
+search_response=$(make_request POST "/memory/search" '{"query": "authentication documentation", "team_id": '$TEAM_ID', "limit": 3}')
 result_count=$(echo "$search_response" | grep -o '"total":[0-9]*' | cut -d':' -f2)
 echo -e "${GREEN}✅ Memory search returned $result_count results${NC}"
 
