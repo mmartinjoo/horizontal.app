@@ -2,6 +2,7 @@
 
 namespace App\Services\SearchEngine;
 
+use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\Question;
 use App\Services\GraphDB\GraphDB;
@@ -23,7 +24,7 @@ class SearchEngine
     ) {
     }
 
-    public function graphRAG(Question $question): string
+    public function graphRAG(Question $question): array
     {
         $embedding = $this->embedder->createEmbedding($question->question);
         $results = $this->graphDB->vectorSearch('vector_index_communities', $embedding, 10);
@@ -55,6 +56,7 @@ class SearchEngine
             $pivotCommunity['paths'] = $paths;
             $pivotCommunity['chunks'] = $chunks;
         }
+        $relevantDocument = $this->collectRelevantDocuments($pivotCommunities);
         $pathStrings = [];
         foreach ($pivotCommunities as $pivotCommunity) {
             /** @var Path $path */
@@ -88,7 +90,11 @@ class SearchEngine
             Based on the context, answer the question:
             {$question->question}
         ");
-        return $answer;
+
+        return [
+            'answer' => $answer,
+            'relevant_documents' => $relevantDocument->pluck('title')->toArray(),
+        ];
     }
 
     /**
@@ -104,6 +110,36 @@ class SearchEngine
         ", ['path']);
 
         return Path::fromArray($paths);
+    }
+
+    /**
+     * @return Collection<Document>
+     */
+    private function collectRelevantDocuments(array $pivotCommunities): Collection
+    {
+        /** @var Collection<Node> $chunks */
+        $chunks = collect();
+        foreach ($pivotCommunities as $pivotCommunity) {
+            /** @var Node $chunk */
+            foreach ($pivotCommunity['chunks'] as $chunk) {
+                if ($chunks->contains('id', $chunk->id)) {
+                    continue;
+                }
+                $chunks[] = $chunk;
+            }
+        }
+
+        $documentChunks = DocumentChunk::with('document')
+            ->find($chunks->pluck('properties.document_chunk_id')->toArray());
+
+        $documents = collect();
+        foreach ($documentChunks as $documentChunk) {
+            if ($documents->contains('id', $documentChunk->document->id)) {
+                continue;
+            }
+            $documents->push($documentChunk->document);
+        }
+        return $documents;
     }
 
     /**
