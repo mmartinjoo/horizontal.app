@@ -2,7 +2,6 @@
 
 namespace App\Services\SearchEngine;
 
-use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\Question;
 use App\Services\GraphDB\GraphDB;
@@ -56,7 +55,6 @@ class SearchEngine
             $pivotCommunity['paths'] = $paths;
             $pivotCommunity['chunks'] = $chunks;
         }
-        $relevantDocument = $this->collectRelevantDocuments($pivotCommunities);
         $pathStrings = [];
         foreach ($pivotCommunities as $pivotCommunity) {
             /** @var Path $path */
@@ -67,7 +65,11 @@ class SearchEngine
         $pathJSON = json_encode($pathStrings);
         $chunkContext = collect($chunkContext)
             ->unique('id')
-            ->pluck('properties.text')
+            ->map(fn (Node $node) => [
+                'id' => $node->properties['document_chunk_id'],
+                'title' => $node->properties['title'],
+                'text' => $node->properties['text'],
+            ])
             ->values()
             ->toArray();
         $chunkJSON = json_encode($chunkContext);
@@ -89,11 +91,34 @@ class SearchEngine
 
             Based on the context, answer the question:
             {$question->question}
+
+            In the document context you are given a title and a text for each document.
+            When you use a text chunk from a document, keep track of the document title, and use in the response.
+
+            You MUST respond with a JSON object with the following keys:
+            - answer: the answer to the question
+            - relevant_documents: an array of document titles that are relevant to the question with the following keys:
+                - document_chunk_id: the document id
+                - title: the document title
         ");
 
+        $answerData = json_decode($answer, true);
+        $documents = collect();
+        foreach ($answerData['relevant_documents'] as $relevantDocument) {
+            $document = DocumentChunk::with('document')
+                ->find($relevantDocument['document_chunk_id'])
+                ->document;
+
+            if ($documents->contains('id', $document->id)) {
+                continue;
+            }
+
+            $documents->push($document);
+        }
+
         return [
-            'answer' => $answer,
-            'relevant_documents' => $relevantDocument->pluck('title')->toArray(),
+            'answer' => $answerData['answer'],
+            'relevant_documents' => $documents->pluck('title')->toArray(),
         ];
     }
 
@@ -110,36 +135,6 @@ class SearchEngine
         ", ['path']);
 
         return Path::fromArray($paths);
-    }
-
-    /**
-     * @return Collection<Document>
-     */
-    private function collectRelevantDocuments(array $pivotCommunities): Collection
-    {
-        /** @var Collection<Node> $chunks */
-        $chunks = collect();
-        foreach ($pivotCommunities as $pivotCommunity) {
-            /** @var Node $chunk */
-            foreach ($pivotCommunity['chunks'] as $chunk) {
-                if ($chunks->contains('id', $chunk->id)) {
-                    continue;
-                }
-                $chunks[] = $chunk;
-            }
-        }
-
-        $documentChunks = DocumentChunk::with('document')
-            ->find($chunks->pluck('properties.document_chunk_id')->toArray());
-
-        $documents = collect();
-        foreach ($documentChunks as $documentChunk) {
-            if ($documents->contains('id', $documentChunk->document->id)) {
-                continue;
-            }
-            $documents->push($documentChunk->document);
-        }
-        return $documents;
     }
 
     /**
