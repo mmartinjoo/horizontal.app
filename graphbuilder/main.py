@@ -49,6 +49,20 @@ async def build_graph():
             "source_type", "source_url", "document_chunk_id", "source_document_id", "document_type",
         ],
     )
+    # Original comments are copied to custom documents because the LLM also received 
+    # the metadata and created graph nodes for thing like "source_url" etc
+    # I didn't find a better solution
+    transformed_documents = []
+    for document in documents:
+        doc = Document(
+            text=document.get_content(),
+            metadata=document.metadata,
+            excluded_llm_metadata_keys=["source_type", "source_url", "document_chunk_id", "source_document_id", "document_type"],
+            excluded_embed_metadata_keys=["source_url", "document_chunk_id", "source_document_id", "document_type"],
+        )
+        transformed_documents.append(doc)
+    
+    
     comments = await asyncio.to_thread(
         reader.load_data,
         query="""
@@ -68,7 +82,6 @@ async def build_graph():
         excluded_text_cols=[
             "source_type", "source_url", "comment_id", "parent_document_id", "document_type",
         ],
-        
     )
     # Original comments are copied to custom documents because the LLM also received 
     # the metadata and created graph nodes for thing like "source_url" etc
@@ -83,7 +96,7 @@ async def build_graph():
         )
         transformed_comments.append(doc)
     
-    all_documents = documents + transformed_comments
+    all_documents = transformed_documents + transformed_comments
     
     # Run blocking graph operations in thread pool
     def _build_graph_sync():

@@ -57,8 +57,6 @@ class IndexGoogleDrive implements ShouldQueue
                 ->where('source_id', $file->extraMetadata()['id'])
                 ->delete();
 
-            // TODO: delete related graph nodes
-
             $indexing->increment('deleted_items', $count);
             $document = Document::create([
                 'team_id' => $this->team->id,

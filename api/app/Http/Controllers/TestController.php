@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\Indexing\IndexKnowledgeBase;
-use App\Services\KnowledgeGraph\GraphBuilder;
 
 class TestController extends Controller
 {
-    public function index(GraphBuilder $graphBuilder)
+    public function index()
     {
         IndexKnowledgeBase::dispatch();
 
