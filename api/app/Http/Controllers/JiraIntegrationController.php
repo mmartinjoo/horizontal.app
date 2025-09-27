@@ -19,13 +19,10 @@ class JiraIntegrationController extends Controller
 
     public function authorize(JiraOAuthAuthorizeRequest $request): JsonResponse
     {
-        $team = $this->getUserTeam($request);
-
-        // Check if team already has a Jira integration
-        $existingIntegration = JiraIntegration::where('team_id', $team->id)->first();
+        $existingIntegration = JiraIntegration::first();
         if ($existingIntegration) {
             return response()->json([
-                'error' => 'Team already has a Jira integration. Please disconnect first.',
+                'error' => 'You already have a Jira integration. Please disconnect first.',
             ], 409);
         }
 
@@ -37,7 +34,6 @@ class JiraIntegrationController extends Controller
             // Store the state and jira_base_url temporarily in session/cache for validation
             Cache::set('jira_oauth_state-' . $authData['state'], $authData['state']);
             Cache::set('jira_base_url-' . $authData['state'], $authData['jira_base_url']);
-            Cache::set('team_id-' . $authData['state'], $team->id);
 
             return response()->json([
                 'authorization_url' => $authData['authorization_url'],
@@ -62,7 +58,6 @@ class JiraIntegrationController extends Controller
         // Validate OAuth state to prevent CSRF attacks
         $cacheState = Cache::get('jira_oauth_state-' . $state);
         $jiraBaseUrl = Cache::get('jira_base_url-' . $state);
-        $teamId = Cache::get('team_id-' . $state);
 
         if (!$cacheState || !$this->jiraOAuthService->validateState($state, $cacheState)) {
             return response()->json([
@@ -70,7 +65,7 @@ class JiraIntegrationController extends Controller
             ], 400);
         }
 
-        if (!$teamId || !$jiraBaseUrl) {
+        if (!$jiraBaseUrl) {
             return response()->json([
                 'error' => 'Session expired. Please restart the authorization process.',
             ], 400);
@@ -101,7 +96,6 @@ class JiraIntegrationController extends Controller
 
             // Create the Jira integration record
             $integration = JiraIntegration::create([
-                'team_id' => $teamId,
                 'jira_base_url' => $jiraBaseUrl,
                 'cloud_id' => $cloudId,
                 'access_token' => $tokenData['access_token'],
@@ -112,7 +106,6 @@ class JiraIntegrationController extends Controller
 
             Cache::forget('jira_oauth_state-' . $state);
             Cache::forget('jira_base_url-' . $state);
-            Cache::forget('team_id-' . $state);
 
             return response()->json([
                 'message' => 'Jira integration successfully connected',
@@ -127,7 +120,6 @@ class JiraIntegrationController extends Controller
             // Clear session data on error
             Cache::forget('jira_oauth_state-' . $state);
             Cache::forget('jira_base_url-' . $state);
-            Cache::forget('team_id-' . $state);
 
             return response()->json([
                 'error' => 'Failed to complete OAuth authorization: ' . $e->getMessage(),
@@ -137,13 +129,12 @@ class JiraIntegrationController extends Controller
 
     public function status(Request $request): JsonResponse
     {
-        $team = $this->getUserTeam($request);
-        $integration = JiraIntegration::where('team_id', $team->id)->first();
+        $integration = JiraIntegration::first();
 
         if (!$integration) {
             return response()->json([
                 'connected' => false,
-                'message' => 'No Jira integration found for this team',
+                'message' => 'No Jira integration found',
             ]);
         }
 
@@ -168,12 +159,11 @@ class JiraIntegrationController extends Controller
 
     public function disconnect(Request $request): JsonResponse
     {
-        $team = $this->getUserTeam($request);
-        $integration = JiraIntegration::where('team_id', $team->id)->first();
+        $integration = JiraIntegration::first();
 
         if (!$integration) {
             return response()->json([
-                'error' => 'No Jira integration found for this team',
+                'error' => 'No Jira integration found',
             ], 404);
         }
 
@@ -197,10 +187,5 @@ class JiraIntegrationController extends Controller
                 'error' => 'Failed to disconnect Jira integration: ' . $e->getMessage(),
             ], 500);
         }
-    }
-
-    private function getUserTeam(Request $request)
-    {
-        return $request->user()->team;
     }
 }

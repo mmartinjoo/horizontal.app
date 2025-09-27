@@ -87,7 +87,6 @@ DELETE /api/integrations/jira/oauth/disconnect
 ```sql
 jira_integrations table:
 - id
-- team_id (foreign key)
 - jira_base_url (e.g., "https://company.atlassian.net")
 - access_token (encrypted)
 - refresh_token (encrypted)  

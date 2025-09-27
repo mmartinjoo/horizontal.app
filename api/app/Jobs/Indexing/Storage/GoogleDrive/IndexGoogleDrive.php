@@ -7,7 +7,6 @@ use App\Models\Document;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
-use App\Models\Team;
 use App\Services\Integration\Storage\DataTransferObjects\File;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,11 +17,6 @@ class IndexGoogleDrive implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(
-        private Team $team,
-    ) {
-    }
-
     public function handle(
         GoogleDrive $drive,
     ): void {
@@ -30,7 +24,6 @@ class IndexGoogleDrive implements ShouldQueue
         $indexing = IndexingWorkflow::create([
             'integration' => 'google_drive',
             'status' => 'downloading',
-            'team_id' => $this->team->id,
             'job_id' => $this->job->payload()['uuid'],
         ]);
 
@@ -52,14 +45,12 @@ class IndexGoogleDrive implements ShouldQueue
             }
 
             $count = Document::query()
-                ->where('team_id', $this->team->id)
                 ->where('source_type', 'google_drive')
                 ->where('source_id', $file->extraMetadata()['id'])
                 ->delete();
 
             $indexing->increment('deleted_items', $count);
             $document = Document::create([
-                'team_id' => $this->team->id,
                 'source_type' => 'google_drive',
                 'source_id' => $file->extraMetadata()['id'],
                 'title' => $file->path(),
