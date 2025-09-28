@@ -12,7 +12,7 @@ class Fireworks extends LLM implements Embedder
     public function completion(string $prompt, $maxTokens = 1024): string
     {
         $res = Http::withHeaders([
-            'Authorization' => 'Bearer '.$this->apiKey,
+            'Authorization' => 'Bearer ' . $this->apiKey,
         ])
             ->timeout(300)
             ->post('https://api.fireworks.ai/inference/v1/completions', [

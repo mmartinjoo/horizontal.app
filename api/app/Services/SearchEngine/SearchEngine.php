@@ -23,7 +23,7 @@ class SearchEngine
     ) {
     }
 
-    public function graphRAG(Question $question): string
+    public function graphRAG(Question $question): array
     {
         $embedding = $this->embedder->createEmbedding($question->question);
         $results = $this->graphDB->vectorSearch('vector_index_communities', $embedding, 10);
@@ -65,7 +65,11 @@ class SearchEngine
         $pathJSON = json_encode($pathStrings);
         $chunkContext = collect($chunkContext)
             ->unique('id')
-            ->pluck('properties.text')
+            ->map(fn (Node $node) => [
+                'id' => $node->properties['document_chunk_id'],
+                'title' => $node->properties['title'],
+                'text' => $node->properties['text'],
+            ])
             ->values()
             ->toArray();
         $chunkJSON = json_encode($chunkContext);
@@ -87,8 +91,35 @@ class SearchEngine
 
             Based on the context, answer the question:
             {$question->question}
+
+            In the document context you are given a title and a text for each document.
+            When you use a text chunk from a document, keep track of the document title, and use in the response.
+
+            You MUST respond with a JSON object with the following keys:
+            - answer: the answer to the question
+            - relevant_documents: an array of document titles that are relevant to the question with the following keys:
+                - document_chunk_id: the document id
+                - title: the document title
         ");
-        return $answer;
+
+        $answerData = json_decode($answer, true);
+        $documents = collect();
+        foreach ($answerData['relevant_documents'] as $relevantDocument) {
+            $document = DocumentChunk::with('document')
+                ->find($relevantDocument['document_chunk_id'])
+                ->document;
+
+            if ($documents->contains('id', $document->id)) {
+                continue;
+            }
+
+            $documents->push($document);
+        }
+
+        return [
+            'answer' => $answerData['answer'],
+            'relevant_documents' => $documents->pluck('title')->toArray(),
+        ];
     }
 
     /**
