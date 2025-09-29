@@ -2,8 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Document;
-use App\Models\Team;
+use App\Models\Tenant;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -16,11 +15,17 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Admin',
+            'email' => 'admin@horizontal.app',
         ]);
-        Team::factory()->create([
-            'name' => 'Test Company',
+
+        $tenant1 = Tenant::create();
+        $tenant1->createDomain('tenant1.localhost');
+        tenancy()->initialize($tenant1);
+        User::create([
+            'name' => 'Tenant1 User',
+            'email' => 'user@tenant1.com',
+            'password' => bcrypt('password'),
         ]);
     }
 }

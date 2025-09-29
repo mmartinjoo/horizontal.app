@@ -5,10 +5,12 @@ namespace App\Services\KnowledgeGraph;
 use App\Jobs\Indexing\IndexGraphCommunity;
 use App\Models\Document;
 use App\Models\DocumentComment;
+use App\Models\Tenant;
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
 use Bolt\protocol\v5\structures\Node;
 use Illuminate\Support\Facades\Http;
+use Stancl\Tenancy\Tenancy;
 use Symfony\Component\HttpFoundation\Response;
 
 class GraphBuilder
@@ -21,7 +23,9 @@ class GraphBuilder
 
     public function buildKG(): bool
     {
-        $response = Http::post($this->baseUrl . '/api/build')
+        $response = Http::post($this->baseUrl . '/api/build', [
+            'tenant_id' => tenancy()->tenant->id,
+        ])
             ->throw();
 
         return $response->status() === Response::HTTP_ACCEPTED;

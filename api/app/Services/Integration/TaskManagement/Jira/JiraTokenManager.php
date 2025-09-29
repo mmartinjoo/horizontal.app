@@ -20,7 +20,6 @@ class JiraTokenManager
         if (!$integration->refresh_token) {
             Log::warning('Jira integration missing refresh token', [
                 'integration_id' => $integration->id,
-                'team_id' => $integration->team_id,
             ]);
             return false;
         }
@@ -33,7 +32,6 @@ class JiraTokenManager
         if (!$integration->refresh_token) {
             Log::error('Cannot refresh token: missing refresh token', [
                 'integration_id' => $integration->id,
-                'team_id' => $integration->team_id,
             ]);
             return false;
         }
@@ -41,7 +39,6 @@ class JiraTokenManager
         try {
             Log::info('Refreshing Jira access token', [
                 'integration_id' => $integration->id,
-                'team_id' => $integration->team_id,
             ]);
 
             $tokenData = $this->jiraOAuthService->refreshAccessToken($integration->refresh_token);
@@ -50,7 +47,6 @@ class JiraTokenManager
 
             Log::info('Jira access token refreshed successfully', [
                 'integration_id' => $integration->id,
-                'team_id' => $integration->team_id,
                 'expires_at' => $integration->expires_at,
             ]);
 
@@ -58,7 +54,6 @@ class JiraTokenManager
         } catch (\Exception $e) {
             Log::error('Failed to refresh Jira access token', [
                 'integration_id' => $integration->id,
-                'team_id' => $integration->team_id,
                 'error' => $e->getMessage(),
             ]);
             return false;
@@ -178,7 +173,6 @@ class JiraTokenManager
         if (!$integration->access_token) {
             Log::warning('No access token to revoke', [
                 'integration_id' => $integration->id,
-                'team_id' => $integration->team_id,
             ]);
             return true; // Already revoked/missing
         }
@@ -188,21 +182,18 @@ class JiraTokenManager
             // So we'll clear the tokens from our database
             Log::info('Revoking Jira access token', [
                 'integration_id' => $integration->id,
-                'team_id' => $integration->team_id,
             ]);
 
             $this->clearTokens($integration);
 
             Log::info('Jira access token revoked successfully', [
                 'integration_id' => $integration->id,
-                'team_id' => $integration->team_id,
             ]);
 
             return true;
         } catch (\Exception $e) {
             Log::error('Failed to revoke Jira access token', [
                 'integration_id' => $integration->id,
-                'team_id' => $integration->team_id,
                 'error' => $e->getMessage(),
             ]);
             return false;
@@ -223,7 +214,6 @@ class JiraTokenManager
             try {
                 Log::info('Cleaning up expired integration', [
                     'integration_id' => $integration->id,
-                    'team_id' => $integration->team_id,
                     'expired_since' => $integration->expires_at,
                 ]);
 
@@ -260,7 +250,6 @@ class JiraTokenManager
             try {
                 Log::info('Cleaning up invalid integration', [
                     'integration_id' => $integration->id,
-                    'team_id' => $integration->team_id,
                 ]);
 
                 $integration->delete();

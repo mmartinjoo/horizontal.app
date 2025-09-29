@@ -79,7 +79,6 @@ This is a **knowledge search platform** with AI-powered content indexing and sem
 ### Database Architecture
 
 **Core Models**:
-- `Team` - Multi-tenant scoping
 - `IndexedContent` - Main content entities with embeddings
 - `IndexedContentChunk` - Text chunks for semantic search
 - `IndexingWorkflow` / `IndexingWorkflowItem` - Async processing tracking

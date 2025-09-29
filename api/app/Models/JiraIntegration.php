@@ -23,11 +23,6 @@ class JiraIntegration extends Model
         'scope' => 'array',
     ];
 
-    public function team(): BelongsTo
-    {
-        return $this->belongsTo(Team::class);
-    }
-
     public function getAccessTokenAttribute($value): ?string
     {
         return $value ? Crypt::decryptString($value) : null;
