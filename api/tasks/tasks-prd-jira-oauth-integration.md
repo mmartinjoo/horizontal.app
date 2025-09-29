@@ -16,7 +16,6 @@
 - [ ] 1.0 Database Setup and Migration
   - [x] 1.1 Create JiraIntegration model with fillable fields and relationships
   - [x] 1.2 Create migration for jira_integrations table with encrypted token fields
-  - [x] 1.3 Add team_id foreign key constraint and indexes
   - [x] 1.4 Add model factory for testing purposes
   - [x] 1.5 Run migration and verify table structure
 

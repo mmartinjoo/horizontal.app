@@ -1,6 +1,6 @@
 import os
 import asyncio
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from llama_index.core.indices.property_graph import SimpleLLMPathExtractor
 from llama_index.core import Settings, PropertyGraphIndex, Document
 from llama_index.llms.fireworks import Fireworks
@@ -23,11 +23,7 @@ embed_model = FireworksEmbedding()
 Settings.llm = llm
 Settings.embed_model = embed_model
 
-reader = DatabaseReader(
-    uri=os.getenv("DB_URI")
-)
-
-async def build_graph():
+async def build_graph(reader: DatabaseReader):
     documents = await asyncio.to_thread(
         reader.load_data,
         query="""
@@ -124,10 +120,19 @@ async def build_graph():
 
 app = FastAPI()
 
+def create_db_reader(tenant_id: str):
+    uri = os.getenv("DB_BASE_URI")+"tenant"+tenant_id
+    reader = DatabaseReader(
+        uri=uri
+    )
+    return reader
+
 @app.post("/api/build", status_code=202)
-async def api_build_graph():
+async def api_build_graph(req: Request):
     try:
-        asyncio.create_task(build_graph())
+        body = await req.json()
+        reader = create_db_reader(body["tenant_id"])
+        asyncio.create_task(build_graph(reader))
         return {"status": "accepted"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

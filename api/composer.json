@@ -14,6 +14,7 @@
         "openai-php/client": "^0.15.0",
         "predis/predis": "^3.2",
         "prinsfrank/pdfparser": "^2.3",
+        "stancl/tenancy": "v3.9.1",
         "stefanak-michal/bolt": "^7.2",
         "stefanak-michal/memgraph-bolt-wrapper": "^3.0"
     },
