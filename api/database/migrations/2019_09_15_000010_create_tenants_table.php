@@ -16,7 +16,6 @@ class CreateTenantsTable extends Migration
             $table->string('company');
             $table->string('country');
 
-            $table->string('graph_db_connection')->nullable();
             $table->string('graph_db_host')->nullable();
             $table->integer('graph_db_port')->nullable();
             $table->string('graph_db_user')->nullable();

@@ -19,7 +19,6 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'id',
             'company',
             'country',
-            'graph_db_connection',
             'graph_db_host',
             'graph_db_port',
             'graph_db_user',
