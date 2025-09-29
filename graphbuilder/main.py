@@ -8,6 +8,7 @@ from llama_index.graph_stores.memgraph import MemgraphPropertyGraphStore
 from llama_index.readers.database import DatabaseReader
 from dotenv import load_dotenv
 from fireworks_embedding import FireworksEmbedding
+import requests
 
 load_dotenv()
 
@@ -23,7 +24,7 @@ embed_model = FireworksEmbedding()
 Settings.llm = llm
 Settings.embed_model = embed_model
 
-async def build_graph(reader: DatabaseReader):
+async def build_graph(reader: DatabaseReader, graph_store: MemgraphPropertyGraphStore):
     documents = await asyncio.to_thread(
         reader.load_data,
         query="""
@@ -96,12 +97,6 @@ async def build_graph(reader: DatabaseReader):
     
     # Run blocking graph operations in thread pool
     def _build_graph_sync():
-        graph_store = MemgraphPropertyGraphStore(
-            url=os.getenv("GRAPH_DB_URI"),
-            username=os.getenv("GRAPH_DB_USER"),
-            password=os.getenv("GRAPH_DB_PASSWORD"),            
-            database="memgraph",
-        )
         kg_extractor = SimpleLLMPathExtractor(
             llm=llm,
             max_paths_per_chunk=20,
@@ -127,12 +122,34 @@ def create_db_reader(tenant_id: str):
     )
     return reader
 
+def create_graph_store(tenant_id: str) -> MemgraphPropertyGraphStore:
+    connection_info = get_graph_db_connection_info(tenant_id)
+    return MemgraphPropertyGraphStore(
+        url=connection_info["url"],
+        username=connection_info["user"],
+        password=connection_info["password"],            
+        database="memgraph"
+    )
+    
+def get_graph_db_connection_info(tenant_id: str):
+    resp = requests.get(f"{os.getenv("HORIZONTAL_API_URL")}/api/tenants/{tenant_id}")
+    if resp.status_code != 200:
+        raise HTTPException(status_code=500, detail="")
+    
+    data = resp.json()
+    return {
+        "url": f"bolt://{data["graph_db_connection"]["host"]}:{data["graph_db_connection"]["port"]}",
+        "user": data["graph_db_connection"]["user"],
+        "password": data["graph_db_connection"]["password"],
+    }
+    
 @app.post("/api/build", status_code=202)
 async def api_build_graph(req: Request):
     try:
         body = await req.json()
         reader = create_db_reader(body["tenant_id"])
-        asyncio.create_task(build_graph(reader))
+        graph_store = create_graph_store(body["tenant_id"])
+        asyncio.create_task(build_graph(reader, graph_store))
         return {"status": "accepted"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

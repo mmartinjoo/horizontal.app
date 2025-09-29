@@ -18,6 +18,8 @@ return [
      */
     'central_domains' => [
         'localhost',
+        'http://api',
+        'horizontal.app'
     ],
 
     /**
