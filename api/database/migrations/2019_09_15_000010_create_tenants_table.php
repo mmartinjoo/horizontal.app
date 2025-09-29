@@ -8,20 +8,23 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateTenantsTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up(): void
     {
         Schema::create('tenants', function (Blueprint $table) {
             $table->string('id')->primary();
 
-            // your custom columns may go here
+            $table->string('company');
+            $table->string('country');
 
-            $table->timestamps();
+            $table->string('graph_db_connection')->nullable();
+            $table->string('graph_db_host')->nullable();
+            $table->integer('graph_db_port')->nullable();
+            $table->string('graph_db_user')->nullable();
+            $table->string('graph_db_password')->nullable();
+            $table->string('graph_db_scheme')->nullable();
+
             $table->json('data')->nullable();
+            $table->timestamps();
         });
     }
 
