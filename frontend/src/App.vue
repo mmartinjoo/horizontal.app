@@ -12,7 +12,7 @@ const showError = ref(false)
 // 1. Create a Google Form with one email field
 // 2. Get the form URL and replace 'viewform' with 'formResponse'
 // 3. Inspect the email field to find the entry number (e.g., entry.123456789)
-const GOOGLE_FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSetR_y-zsdlNpIyqz6u8E5Se5vCOmgOuMnjjEre0brwd2ufnw/viewform'
+const GOOGLE_FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSetR_y-zsdlNpIyqz6u8E5Se5vCOmgOuMnjjEre0brwd2ufnw/formResponse'
 const EMAIL_FIELD_NAME = 'entry.1357691604'
 
 const submitToGoogleForms = async () => {
