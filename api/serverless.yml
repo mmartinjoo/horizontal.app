@@ -42,9 +42,6 @@ functions:
         handler: public/index.php
         runtime: php-84-fpm
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-#        layers:
-#          - !Ref VendorLambdaLayer
-#          - !Ref GoogleLambdaLayer
         events:
             - httpApi: '*'
 
@@ -52,9 +49,6 @@ functions:
         handler: artisan
         runtime: php-84-console
         timeout: 720 # in seconds
-#        layers:
-#          - !Ref VendorLambdaLayer
-#          - !Ref GoogleLambdaLayer
         # Uncomment to also run the scheduler every minute
         #events:
         #    - schedule:
