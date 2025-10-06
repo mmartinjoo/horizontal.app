@@ -6,8 +6,7 @@ provider:
   environment:
     DB_HOST: !ImportValue horizontal-test-shared-dev-Database-Endpoint
     DB_PORT: !ImportValue horizontal-test-shared-dev-Database-Port
-    DB_NAME: horizontal
-    DB_USER: horizontal
+    DB_USERNAME: horizontal
     DB_PASSWORD: !Sub
       - '{{resolve:secretsmanager:${SecretArn}::password}}'
       - SecretArn: !ImportValue horizontal-test-shared-dev-Database-Secret-ARN

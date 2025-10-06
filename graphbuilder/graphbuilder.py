@@ -30,7 +30,16 @@ class GraphBuilder:
         Settings.embed_model = self.embed_model
 
     def create_db_reader(self, tenant_id: str) -> DatabaseReader:
-        uri = os.getenv("DB_BASE_URI") + "tenant" + tenant_id
+        base_uri = os.getenv("DB_BASE_URI")
+        if base_uri is not None:
+            uri = os.getenv("DB_BASE_URI") + "tenant" + tenant_id
+        else:
+            host = os.getenv("DB_HOST")
+            port = os.getenv("DB_PORT")        
+            username = os.getenv("DB_USERNAME")
+            password = os.getenv("DB_PASSWORD")
+            database = "tenant" + tenant_id
+            uri = f"postgres+psycopg2://{username}:{password}@{host}:{port}/{database}"
         return DatabaseReader(uri=uri)
 
     def create_graph_store(self, tenant_id: str) -> MemgraphPropertyGraphStore:
