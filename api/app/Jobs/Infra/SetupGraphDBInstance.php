@@ -33,6 +33,18 @@ class SetupGraphDBInstance implements ShouldQueue
                 'graph_db_scheme' => 'basic',
             ]);
         }
+        if (config('graphdb.test_memgraph_cluster_host')) {
+            $port = Str::contains(Str::lower($this->tenant->company), 'tenant1')
+                ? 7687
+                : 7688;
+            $this->tenant->update([
+                'graph_db_host' => config('graphdb.test_memgraph_cluster_host'),
+                'graph_db_port' => $port,
+                'graph_db_user' => 'horizontal',
+                'graph_db_password' => config('graphdb.test_memgraph_cluster_password'),
+                'graph_db_scheme' => 'basic',
+            ]);
+        }
         // TODO: Schedule new ECS task in prod
     }
 }

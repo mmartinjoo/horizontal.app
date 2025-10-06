@@ -49,6 +49,9 @@ provider:
     JIRA_CLIENT_SECRET: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/JiraCredentials-WEUKwz::ClientSecret}}'
     JIRA_REDIRECT_URI: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/JiraCredentials-WEUKwz::RedirectURI}}'
 
+    TEST_MEMGRAPH_CLUSTER_HOST: 143.198.75.213
+    TEST_MEMGRAPH_CLUSTER_PASSWORD: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/TestMemgraphClusterCredentials-VeLg1d::Password}}'
+
   vpc:
     securityGroupIds:
       - !ImportValue horizontal-test-shared-dev-LambdaSecurityGroup-ID
