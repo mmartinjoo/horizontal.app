@@ -4,14 +4,25 @@ provider:
   name: aws
   region: us-east-1
   environment:
+    APP_NAME: Horizontal
     APP_ENV: production
+    APP_KEY: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/AppKey-fnlqJG::key}}'
+    APP_URL: http://localhost
+    APP_LOCALE: en
+    APP_FALLBACK_LOCALE: en
+    APP_FAKER_LOCALE: en_US
+
+    LOG_CHANNEL: stderr
+    LOG_LEVEL: error
+
     SESSION_DRIVER: cookie
     FILESYSTEM_DISK: s3
     AWS_BUCKET: !ImportValue horizontal-test-shared-dev-SharedStorage-Name
     QUEUE_CONNECTION: sqs
     SQS_QUEUE: ${construct:jobQueue.queueUrl}
     LOG_STDERR_FORMATTER: Bref\Monolog\CloudWatchFormatter
-    DB_CONNECTION: pgsql
+
+    DB_CONNECTION: central
     DB_HOST: !ImportValue horizontal-test-shared-dev-Database-Endpoint
     DB_PORT: !ImportValue horizontal-test-shared-dev-Database-Port
     DB_DATABASE: horizontal
@@ -19,7 +30,24 @@ provider:
     DB_PASSWORD: !Sub
       - '{{resolve:secretsmanager:${SecretArn}::password}}'
       - SecretArn: !ImportValue horizontal-test-shared-dev-Database-Secret-ARN
+
+    FIREWORKS_API_KEY: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/FireworksAPIKey-KTVvZt::key}}'
     GRAPH_BUILDER_BASE_URL: !ImportValue horizontal-graphbuilder-test-dev-ApiUrl
+    EMBEDDER_MODEL: nomic-ai/nomic-embed-text-v1.5
+    LLM_PROVIDER: fireworks
+    LLM_MODEL: accounts/fireworks/models/deepseek-v3-0324
+
+    CACHE_STORE: database
+
+    GOOGLE_DRIVE_CLIENT_ID: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/GoogleDriveCredentials-NlOhmM::ClientID}}'
+    GOOGLE_DRIVE_CLIENT_SECRET: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/GoogleDriveCredentials-NlOhmM::ClientSecret}}'
+    GOOGLE_DRIVE_REFRESH_TOKEN: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/GoogleDriveCredentials-NlOhmM::RefreshToken}}'
+    GOOGLE_DRIVE_ACCESS_TOKEN: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/GoogleDriveCredentials-NlOhmM::AccessToken}}'
+
+    JIRA_APP_ID: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/JiraCredentials-WEUKwz::AppID}}'
+    JIRA_CLIENT_ID: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/JiraCredentials-WEUKwz::ClientID}}'
+    JIRA_CLIENT_SECRET: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/JiraCredentials-WEUKwz::ClientSecret}}'
+    JIRA_REDIRECT_URI: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/JiraCredentials-WEUKwz::RedirectURI}}'
 
   vpc:
     securityGroupIds:
@@ -88,6 +116,14 @@ package:
     - '!.junie'
     - '!tasks/**'
     - '!CLAUDE.md'
+
+resources:
+  Outputs:
+    ApiUrl:
+      Description: API Gateway URL
+      Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+      Export:
+        Name: !Sub "${AWS::StackName}-ApiUrl"
 
 plugins:
   - ./vendor/bref/bref
