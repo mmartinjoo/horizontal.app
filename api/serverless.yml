@@ -1,260 +1,71 @@
-service: horizontal-test
+service: horizontal-test-api
 
 provider:
-    name: aws
-    region: us-east-1
-    environment:
-        APP_ENV: production
-        SESSION_DRIVER: cookie
-        FILESYSTEM_DISK: s3
-        AWS_BUCKET: !Ref Storage
-        QUEUE_CONNECTION: sqs
-        SQS_QUEUE: ${construct:jobQueue.queueUrl}
-        LOG_STDERR_FORMATTER: Bref\Monolog\CloudWatchFormatter
-        DB_CONNECTION: pgsql
-        DB_HOST: !GetAtt PostgresDatabase.Endpoint.Address
-        DB_PORT: !GetAtt PostgresDatabase.Endpoint.Port
-        DB_DATABASE: horizontal
-        DB_USERNAME: horizontal
-        DB_PASSWORD: !Sub '{{resolve:secretsmanager:${DatabaseSecret}::password}}'
+  name: aws
+  region: us-east-1
+  environment:
+    APP_ENV: production
+    SESSION_DRIVER: cookie
+    FILESYSTEM_DISK: s3
+    AWS_BUCKET: !ImportValue horizontal-test-shared-dev-SharedStorage-Name
+    QUEUE_CONNECTION: sqs
+    SQS_QUEUE: ${construct:jobQueue.queueUrl}
+    LOG_STDERR_FORMATTER: Bref\Monolog\CloudWatchFormatter
+    DB_CONNECTION: pgsql
+    DB_HOST: !ImportValue horizontal-test-shared-dev-Database-Endpoint
+    DB_PORT: !ImportValue horizontal-test-shared-dev-Database-Port
+    DB_DATABASE: horizontal
+    DB_USERNAME: horizontal
+    DB_PASSWORD: !Sub
+      - '{{resolve:secretsmanager:${SecretArn}::password}}'
+      - SecretArn: !ImportValue horizontal-test-shared-dev-Database-Secret-ARN
 
-    vpc:
-        securityGroupIds:
-            - !Ref LambdaSecurityGroup
-        subnetIds:
-            - !Ref PrivateSubnetA
-            - !Ref PrivateSubnetB
+  vpc:
+    securityGroupIds:
+      - !ImportValue horizontal-test-shared-dev-LambdaSecurityGroup-ID
+    subnetIds:
+      - !ImportValue horizontal-test-shared-dev-PrivateSubnetA-ID
+      - !ImportValue horizontal-test-shared-dev-PrivateSubnetB-ID
 
-    iam:
-        role:
-            statements:
-                - Effect: Allow
-                  Action: s3:*
-                  Resource:
-                      - !Sub '${Storage.Arn}'
-                      - !Sub '${Storage.Arn}/*'
-                - Effect: Allow
-                  Action: secretsmanager:GetSecretValue
-                  Resource: !Ref DatabaseSecret
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: s3:*
+          Resource:
+            - !ImportValue horizontal-test-shared-dev-SharedStorage-ARN
+            - !Sub
+              - '${BucketArn}/*'
+              - BucketArn: !ImportValue horizontal-test-shared-dev-SharedStorage-ARN
+        - Effect: Allow
+          Action: secretsmanager:GetSecretValue
+          Resource: !ImportValue horizontal-test-shared-dev-Database-Secret-ARN
 
 functions:
-    web:
-        handler: public/index.php
-        runtime: php-84-fpm
-        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-        events:
-            - httpApi: '*'
+  web:
+    handler: public/index.php
+    runtime: php-84-fpm
+    timeout: 28
+    events:
+      - httpApi: '*'
 
-    artisan:
-        handler: artisan
-        runtime: php-84-console
-        timeout: 720 # in seconds
-        # Uncomment to also run the scheduler every minute
-        #events:
-        #    - schedule:
-        #          rate: rate(1 minute)
-        #          input: '"schedule:run"'
+  artisan:
+    handler: artisan
+    runtime: php-84-console
+    timeout: 720
 
 constructs:
-    jobQueue:
-        type: queue
-        worker:
-            handler: Bref\LaravelBridge\Queue\QueueHandler
-            runtime: php-84
-            timeout: 60
+  jobQueue:
+    type: queue
+    worker:
+      handler: Bref\LaravelBridge\Queue\QueueHandler
+      runtime: php-84
+      timeout: 60
 
-resources:
-    Resources:
-        Storage:
-            Type: AWS::S3::Bucket
-
-        VPC:
-            Type: AWS::EC2::VPC
-            Properties:
-                CidrBlock: 10.0.0.0/16
-                EnableDnsHostnames: true
-                EnableDnsSupport: true
-
-        InternetGateway:
-            Type: AWS::EC2::InternetGateway
-
-        VPCGatewayAttachment:
-            Type: AWS::EC2::VPCGatewayAttachment
-            Properties:
-                VpcId: !Ref VPC
-                InternetGatewayId: !Ref InternetGateway
-
-        NATGatewayEIP:
-            Type: AWS::EC2::EIP
-            Properties:
-                Domain: vpc
-
-        NATGateway:
-            Type: AWS::EC2::NatGateway
-            Properties:
-                AllocationId: !GetAtt NATGatewayEIP.AllocationId
-                SubnetId: !Ref SubnetA
-
-        SubnetA:
-            Type: AWS::EC2::Subnet
-            Properties:
-                VpcId: !Ref VPC
-                CidrBlock: 10.0.1.0/24
-                AvailabilityZone: !Select [ 0, !GetAZs '' ]
-                MapPublicIpOnLaunch: true
-
-        SubnetB:
-            Type: AWS::EC2::Subnet
-            Properties:
-                VpcId: !Ref VPC
-                CidrBlock: 10.0.2.0/24
-                AvailabilityZone: !Select [ 1, !GetAZs '' ]
-                MapPublicIpOnLaunch: true
-
-        PrivateSubnetA:
-            Type: AWS::EC2::Subnet
-            Properties:
-                VpcId: !Ref VPC
-                CidrBlock: 10.0.3.0/24
-                AvailabilityZone: !Select [ 0, !GetAZs '' ]
-                MapPublicIpOnLaunch: false
-
-        PrivateSubnetB:
-            Type: AWS::EC2::Subnet
-            Properties:
-                VpcId: !Ref VPC
-                CidrBlock: 10.0.4.0/24
-                AvailabilityZone: !Select [ 1, !GetAZs '' ]
-                MapPublicIpOnLaunch: false
-
-        RouteTable:
-            Type: AWS::EC2::RouteTable
-            Properties:
-                VpcId: !Ref VPC
-
-        InternetRoute:
-            Type: AWS::EC2::Route
-            Properties:
-                RouteTableId: !Ref RouteTable
-                DestinationCidrBlock: 0.0.0.0/0
-                GatewayId: !Ref InternetGateway
-
-        SubnetARouteTableAssociation:
-            Type: AWS::EC2::SubnetRouteTableAssociation
-            Properties:
-                SubnetId: !Ref SubnetA
-                RouteTableId: !Ref RouteTable
-
-        SubnetBRouteTableAssociation:
-            Type: AWS::EC2::SubnetRouteTableAssociation
-            Properties:
-                SubnetId: !Ref SubnetB
-                RouteTableId: !Ref RouteTable
-
-        PrivateRouteTable:
-            Type: AWS::EC2::RouteTable
-            Properties:
-                VpcId: !Ref VPC
-
-        PrivateRoute:
-            Type: AWS::EC2::Route
-            Properties:
-                RouteTableId: !Ref PrivateRouteTable
-                DestinationCidrBlock: 0.0.0.0/0
-                NatGatewayId: !Ref NATGateway
-
-        PrivateSubnetARouteTableAssociation:
-            Type: AWS::EC2::SubnetRouteTableAssociation
-            Properties:
-                SubnetId: !Ref PrivateSubnetA
-                RouteTableId: !Ref PrivateRouteTable
-
-        PrivateSubnetBRouteTableAssociation:
-            Type: AWS::EC2::SubnetRouteTableAssociation
-            Properties:
-                SubnetId: !Ref PrivateSubnetB
-                RouteTableId: !Ref PrivateRouteTable
-
-        DatabaseSecurityGroup:
-            Type: AWS::EC2::SecurityGroup
-            Properties:
-                GroupDescription: Security group for RDS database
-                VpcId: !Ref VPC
-                SecurityGroupIngress:
-                    - IpProtocol: tcp
-                      FromPort: 5432
-                      ToPort: 5432
-                      SourceSecurityGroupId: !Ref LambdaSecurityGroup
-
-
-        LambdaSecurityGroup:
-            Type: AWS::EC2::SecurityGroup
-            Properties:
-                GroupDescription: Security group for Lambda functions
-                VpcId: !Ref VPC
-                SecurityGroupEgress:
-                    - IpProtocol: -1
-                      CidrIp: 0.0.0.0/0
-
-        DatabaseSubnetGroup:
-            Type: AWS::RDS::DBSubnetGroup
-            Properties:
-                DBSubnetGroupDescription: Subnet group for PostgreSQL RDS
-                SubnetIds:
-                    - !Ref SubnetA
-                    - !Ref SubnetB
-
-        DatabaseSecret:
-            Type: AWS::SecretsManager::Secret
-            Properties:
-                Description: Database credentials
-                GenerateSecretString:
-                    SecretStringTemplate: '{"username": "horizontal"}'
-                    GenerateStringKey: "password"
-                    PasswordLength: 32
-                    ExcludeCharacters: "\"@/\\ "
-
-        PostgresDatabase:
-            Type: AWS::RDS::DBInstance
-            Properties:
-                Engine: postgres
-                EngineVersion: '16.3'
-                DBInstanceClass: db.t4g.micro
-                AllocatedStorage: 20
-                StorageType: gp3
-                DBName: horizontal
-                MasterUsername: horizontal
-                MasterUserPassword: !Sub '{{resolve:secretsmanager:${DatabaseSecret}::password}}'
-                DBSubnetGroupName: !Ref DatabaseSubnetGroup
-                VPCSecurityGroups:
-                    - !Ref DatabaseSecurityGroup
-                BackupRetentionPeriod: 7
-                PreferredBackupWindow: "03:00-04:00"
-                PreferredMaintenanceWindow: "mon:04:00-mon:05:00"
-                PubliclyAccessible: false
-                StorageEncrypted: true
-                DeletionProtection: false
-
-        SecretRDSAttachment:
-            Type: AWS::SecretsManager::SecretTargetAttachment
-            Properties:
-                SecretId: !Ref DatabaseSecret
-                TargetId: !Ref PostgresDatabase
-                TargetType: AWS::RDS::DBInstance
-
-    Outputs:
-        DatabaseEndpoint:
-            Description: Database endpoint
-            Value: !GetAtt PostgresDatabase.Endpoint.Address
-        DatabasePort:
-            Description: Database port
-            Value: !GetAtt PostgresDatabase.Endpoint.Port
-
-# custom scripts and hooks by serverless-plugin-scripts
 custom:
-    scripts:
-        hooks:
-            'after:deploy:deploy': serverless invoke -f artisan --data '"migrate --force"'
+  scripts:
+    hooks:
+      'after:deploy:deploy': serverless invoke -f artisan --data '"migrate --force"'
 
 package:
   patterns:
@@ -278,6 +89,6 @@ package:
     - '!CLAUDE.md'
 
 plugins:
-    - ./vendor/bref/bref
-    - serverless-lift
-    - serverless-plugin-scripts
+  - ./vendor/bref/bref
+  - serverless-lift
+  - serverless-plugin-scripts
