@@ -37,3 +37,11 @@ functions:
           path: /api/build
           method: post
 
+resources:
+  Outputs:
+    GraphBuilderApiUrl:
+      Description: GraphBuilder API Gateway URL
+      Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+      Export:
+        Name: !Sub "${AWS::StackName}-ApiUrl"
+

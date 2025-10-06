@@ -19,6 +19,7 @@ provider:
     DB_PASSWORD: !Sub
       - '{{resolve:secretsmanager:${SecretArn}::password}}'
       - SecretArn: !ImportValue horizontal-test-shared-dev-Database-Secret-ARN
+    GRAPH_BUILDER_BASE_URL: !ImportValue horizontal-graphbuilder-test-dev-ApiUrl
 
   vpc:
     securityGroupIds:
