@@ -1,0 +1,245 @@
+service: horizontal-test-shared
+
+provider:
+  name: aws
+  region: us-east-1
+
+resources:
+  Resources:
+    # VPC and Networking
+    VPC:
+      Type: AWS::EC2::VPC
+      Properties:
+        CidrBlock: 10.0.0.0/16
+        EnableDnsHostnames: true
+        EnableDnsSupport: true
+
+    InternetGateway:
+      Type: AWS::EC2::InternetGateway
+
+    VPCGatewayAttachment:
+      Type: AWS::EC2::VPCGatewayAttachment
+      Properties:
+        VpcId: !Ref VPC
+        InternetGatewayId: !Ref InternetGateway
+
+    NATGatewayEIP:
+      Type: AWS::EC2::EIP
+      Properties:
+        Domain: vpc
+
+    NATGateway:
+      Type: AWS::EC2::NatGateway
+      Properties:
+        AllocationId: !GetAtt NATGatewayEIP.AllocationId
+        SubnetId: !Ref SubnetA
+
+    # Public Subnets
+    SubnetA:
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId: !Ref VPC
+        CidrBlock: 10.0.1.0/24
+        AvailabilityZone: !Select [ 0, !GetAZs '' ]
+        MapPublicIpOnLaunch: true
+
+    SubnetB:
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId: !Ref VPC
+        CidrBlock: 10.0.2.0/24
+        AvailabilityZone: !Select [ 1, !GetAZs '' ]
+        MapPublicIpOnLaunch: true
+
+    # Private Subnets
+    PrivateSubnetA:
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId: !Ref VPC
+        CidrBlock: 10.0.3.0/24
+        AvailabilityZone: !Select [ 0, !GetAZs '' ]
+        MapPublicIpOnLaunch: false
+
+    PrivateSubnetB:
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId: !Ref VPC
+        CidrBlock: 10.0.4.0/24
+        AvailabilityZone: !Select [ 1, !GetAZs '' ]
+        MapPublicIpOnLaunch: false
+
+    # Route Tables
+    RouteTable:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref VPC
+
+    InternetRoute:
+      Type: AWS::EC2::Route
+      Properties:
+        RouteTableId: !Ref RouteTable
+        DestinationCidrBlock: 0.0.0.0/0
+        GatewayId: !Ref InternetGateway
+
+    SubnetARouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId: !Ref SubnetA
+        RouteTableId: !Ref RouteTable
+
+    SubnetBRouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId: !Ref SubnetB
+        RouteTableId: !Ref RouteTable
+
+    PrivateRouteTable:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref VPC
+
+    PrivateRoute:
+      Type: AWS::EC2::Route
+      Properties:
+        RouteTableId: !Ref PrivateRouteTable
+        DestinationCidrBlock: 0.0.0.0/0
+        NatGatewayId: !Ref NATGateway
+
+    PrivateSubnetARouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId: !Ref PrivateSubnetA
+        RouteTableId: !Ref PrivateRouteTable
+
+    PrivateSubnetBRouteTableAssociation:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId: !Ref PrivateSubnetB
+        RouteTableId: !Ref PrivateRouteTable
+
+    # Security Groups
+    DatabaseSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Security group for RDS database
+        VpcId: !Ref VPC
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 5432
+            ToPort: 5432
+            SourceSecurityGroupId: !Ref LambdaSecurityGroup
+
+    LambdaSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Security group for Lambda functions
+        VpcId: !Ref VPC
+        SecurityGroupEgress:
+          - IpProtocol: -1
+            CidrIp: 0.0.0.0/0
+
+    # Database
+    DatabaseSubnetGroup:
+      Type: AWS::RDS::DBSubnetGroup
+      Properties:
+        DBSubnetGroupDescription: Subnet group for PostgreSQL RDS
+        SubnetIds:
+          - !Ref SubnetA
+          - !Ref SubnetB
+
+    DatabaseSecret:
+      Type: AWS::SecretsManager::Secret
+      Properties:
+        Description: Database credentials
+        GenerateSecretString:
+          SecretStringTemplate: '{"username": "horizontal"}'
+          GenerateStringKey: "password"
+          PasswordLength: 32
+          ExcludeCharacters: "\"@/\\ "
+
+    PostgresDatabase:
+      Type: AWS::RDS::DBInstance
+      Properties:
+        Engine: postgres
+        EngineVersion: '16.3'
+        DBInstanceClass: db.t4g.micro
+        AllocatedStorage: 20
+        StorageType: gp3
+        DBName: horizontal
+        MasterUsername: horizontal
+        MasterUserPassword: !Sub '{{resolve:secretsmanager:${DatabaseSecret}::password}}'
+        DBSubnetGroupName: !Ref DatabaseSubnetGroup
+        VPCSecurityGroups:
+          - !Ref DatabaseSecurityGroup
+        BackupRetentionPeriod: 7
+        PreferredBackupWindow: "03:00-04:00"
+        PreferredMaintenanceWindow: "mon:04:00-mon:05:00"
+        PubliclyAccessible: false
+        StorageEncrypted: true
+        DeletionProtection: false
+
+    SecretRDSAttachment:
+      Type: AWS::SecretsManager::SecretTargetAttachment
+      Properties:
+        SecretId: !Ref DatabaseSecret
+        TargetId: !Ref PostgresDatabase
+        TargetType: AWS::RDS::DBInstance
+
+    # Shared Storage
+    SharedStorage:
+      Type: AWS::S3::Bucket
+
+  Outputs:
+    VPCId:
+      Description: VPC ID
+      Value: !Ref VPC
+      Export:
+        Name: !Sub "${AWS::StackName}-VPC-ID"
+
+    PrivateSubnetAId:
+      Description: Private Subnet A ID
+      Value: !Ref PrivateSubnetA
+      Export:
+        Name: !Sub "${AWS::StackName}-PrivateSubnetA-ID"
+
+    PrivateSubnetBId:
+      Description: Private Subnet B ID
+      Value: !Ref PrivateSubnetB
+      Export:
+        Name: !Sub "${AWS::StackName}-PrivateSubnetB-ID"
+
+    LambdaSecurityGroupId:
+      Description: Lambda Security Group ID
+      Value: !Ref LambdaSecurityGroup
+      Export:
+        Name: !Sub "${AWS::StackName}-LambdaSecurityGroup-ID"
+
+    DatabaseEndpoint:
+      Description: Database endpoint
+      Value: !GetAtt PostgresDatabase.Endpoint.Address
+      Export:
+        Name: !Sub "${AWS::StackName}-Database-Endpoint"
+
+    DatabasePort:
+      Description: Database port
+      Value: !GetAtt PostgresDatabase.Endpoint.Port
+      Export:
+        Name: !Sub "${AWS::StackName}-Database-Port"
+
+    DatabaseSecretArn:
+      Description: Database secret ARN
+      Value: !Ref DatabaseSecret
+      Export:
+        Name: !Sub "${AWS::StackName}-Database-Secret-ARN"
+
+    SharedStorageArn:
+      Description: Shared S3 bucket ARN
+      Value: !GetAtt SharedStorage.Arn
+      Export:
+        Name: !Sub "${AWS::StackName}-SharedStorage-ARN"
+
+    SharedStorageName:
+      Description: Shared S3 bucket name
+      Value: !Ref SharedStorage
+      Export:
+        Name: !Sub "${AWS::StackName}-SharedStorage-Name"

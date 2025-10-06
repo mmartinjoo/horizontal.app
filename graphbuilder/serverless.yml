@@ -1,0 +1,39 @@
+service: horizontal-graphbuilder-test
+
+provider:
+  name: aws
+  region: us-east-1
+  environment:
+    DB_HOST: !ImportValue horizontal-test-shared-dev-Database-Endpoint
+    DB_PORT: !ImportValue horizontal-test-shared-dev-Database-Port
+    DB_NAME: horizontal
+    DB_USER: horizontal
+    DB_PASSWORD: !Sub
+      - '{{resolve:secretsmanager:${SecretArn}::password}}'
+      - SecretArn: !ImportValue horizontal-test-shared-dev-Database-Secret-ARN
+    FIREWORKS_API_KEY: asdf
+    LLM_MODEL: accounts/fireworks/models/deepseek-v3
+
+  vpc:
+    securityGroupIds:
+      - !ImportValue horizontal-test-shared-dev-LambdaSecurityGroup-ID
+    subnetIds:
+      - !ImportValue horizontal-test-shared-dev-PrivateSubnetA-ID
+      - !ImportValue horizontal-test-shared-dev-PrivateSubnetB-ID
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: secretsmanager:GetSecretValue
+          Resource: !ImportValue horizontal-test-shared-dev-Database-Secret-ARN
+
+functions:
+  build:
+    image: 325384049248.dkr.ecr.us-east-1.amazonaws.com/serverless-horizontal-graphbuilder-test-dev:latest
+    timeout: 28
+    events:
+      - httpApi:
+          path: /api/build
+          method: post
+

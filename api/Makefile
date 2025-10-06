@@ -10,7 +10,7 @@ deploy:
 	find vendor/google/apiclient-services/src -maxdepth 1 -type f ! -name "Drive*" -delete
 	php artisan config:clear
 	php artisan route:clear
-	serverless deploy --verbose
+	serverless deploy --debug 2>&1 | tee deploy.log
 
 run:
 	serverless invoke -f artisan --data '"$(CMD)"'
