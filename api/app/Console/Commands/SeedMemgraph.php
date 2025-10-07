@@ -57,7 +57,8 @@ class SeedMemgraph extends Command
 
         $graphDB = app(GraphDB::class);
 
-        // Clear existing data
+        // Switch to analytical mode and clear existing data
+        $graphDB->run('STORAGE MODE IN_MEMORY_ANALYTICAL;');
         $graphDB->run('DROP GRAPH;');
 
         // Split the export into individual statements and execute each one
@@ -78,6 +79,9 @@ class SeedMemgraph extends Command
                 }
             }
         }
+
+        // Switch back to transactional mode
+        $graphDB->run('STORAGE MODE IN_MEMORY_TRANSACTIONAL;');
 
         $this->info('Memgraph seeded successfully from Cypher export');
 

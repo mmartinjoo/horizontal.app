@@ -9,9 +9,6 @@ use Illuminate\Support\Facades\Artisan;
 
 class MemgraphSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $tenants = Tenant::all();
