@@ -1,4 +1,4 @@
-service: horizontal-test-api
+service: horizontal-staging2-api
 
 provider:
   name: aws
@@ -17,22 +17,22 @@ provider:
 
     SESSION_DRIVER: cookie
     FILESYSTEM_DISK: s3
-    AWS_BUCKET: !ImportValue horizontal-test-shared-dev-SharedStorage-Name
+    AWS_BUCKET: !ImportValue horizontal-staging2-shared-dev-SharedStorage-Name
     QUEUE_CONNECTION: sqs
     SQS_QUEUE: ${construct:jobQueue.queueUrl}
     LOG_STDERR_FORMATTER: Bref\Monolog\CloudWatchFormatter
 
     DB_CONNECTION: central
-    DB_HOST: !ImportValue horizontal-test-shared-dev-Database-Endpoint
-    DB_PORT: !ImportValue horizontal-test-shared-dev-Database-Port
+    DB_HOST: !ImportValue horizontal-staging2-shared-dev-Database-Endpoint
+    DB_PORT: !ImportValue horizontal-staging2-shared-dev-Database-Port
     DB_DATABASE: horizontal
     DB_USERNAME: horizontal
     DB_PASSWORD: !Sub
       - '{{resolve:secretsmanager:${SecretArn}::password}}'
-      - SecretArn: !ImportValue horizontal-test-shared-dev-Database-Secret-ARN
+      - SecretArn: !ImportValue horizontal-staging2-shared-dev-Database-Secret-ARN
 
     FIREWORKS_API_KEY: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/FireworksAPIKey-KTVvZt::key}}'
-    GRAPH_BUILDER_BASE_URL: !ImportValue horizontal-graphbuilder-test-dev-ApiUrl
+    GRAPH_BUILDER_BASE_URL: https://0vn1ssanw0.execute-api.us-east-1.amazonaws.com
     EMBEDDER_MODEL: nomic-ai/nomic-embed-text-v1.5
     LLM_PROVIDER: fireworks
     LLM_MODEL: accounts/fireworks/models/deepseek-v3-0324
@@ -54,10 +54,10 @@ provider:
 
   vpc:
     securityGroupIds:
-      - !ImportValue horizontal-test-shared-dev-LambdaSecurityGroup-ID
+      - !ImportValue horizontal-staging2-shared-dev-LambdaSecurityGroup-ID
     subnetIds:
-      - !ImportValue horizontal-test-shared-dev-PrivateSubnetA-ID
-      - !ImportValue horizontal-test-shared-dev-PrivateSubnetB-ID
+      - !ImportValue horizontal-staging2-shared-dev-PrivateSubnetA-ID
+      - !ImportValue horizontal-staging2-shared-dev-PrivateSubnetB-ID
 
   iam:
     role:
@@ -65,13 +65,13 @@ provider:
         - Effect: Allow
           Action: s3:*
           Resource:
-            - !ImportValue horizontal-test-shared-dev-SharedStorage-ARN
+            - !ImportValue horizontal-staging2-shared-dev-SharedStorage-ARN
             - !Sub
               - '${BucketArn}/*'
-              - BucketArn: !ImportValue horizontal-test-shared-dev-SharedStorage-ARN
+              - BucketArn: !ImportValue horizontal-staging2-shared-dev-SharedStorage-ARN
         - Effect: Allow
           Action: secretsmanager:GetSecretValue
-          Resource: !ImportValue horizontal-test-shared-dev-Database-Secret-ARN
+          Resource: !ImportValue horizontal-staging2-shared-dev-Database-Secret-ARN
 
 functions:
   web:

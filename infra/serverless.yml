@@ -1,4 +1,4 @@
-service: horizontal-test-shared
+service: horizontal-staging2-shared
 
 provider:
   name: aws
@@ -157,35 +157,33 @@ resources:
           PasswordLength: 32
           ExcludeCharacters: "\"@/\\ "
 
-    AuroraCluster:
-      Type: AWS::RDS::DBCluster
+    PostgresDatabase:
+      Type: AWS::RDS::DBInstance
       Properties:
-        Engine: aurora-postgresql
-        EngineVersion: '16.1'
-        DBClusterIdentifier: horizontal-aurora-cluster
-        DatabaseName: horizontal
+        Engine: postgres
+        EngineVersion: '16.3'
+        DBInstanceClass: db.t4g.micro
+        AllocatedStorage: 20
+        StorageType: gp3
+        DBName: horizontal
         MasterUsername: horizontal
         MasterUserPassword: !Sub '{{resolve:secretsmanager:${DatabaseSecret}::password}}'
         DBSubnetGroupName: !Ref DatabaseSubnetGroup
-        VpcSecurityGroupIds:
+        VPCSecurityGroups:
           - !Ref DatabaseSecurityGroup
         BackupRetentionPeriod: 7
         PreferredBackupWindow: "03:00-04:00"
         PreferredMaintenanceWindow: "mon:04:00-mon:05:00"
+        PubliclyAccessible: false
         StorageEncrypted: true
         DeletionProtection: false
-        ServerlessV2ScalingConfiguration:
-          MinCapacity: 0.5
-          MaxCapacity: 4
-        EnableCloudwatchLogsExports:
-          - postgresql
 
     SecretRDSAttachment:
       Type: AWS::SecretsManager::SecretTargetAttachment
       Properties:
         SecretId: !Ref DatabaseSecret
-        TargetId: !Ref AuroraCluster
-        TargetType: AWS::RDS::DBCluster
+        TargetId: !Ref PostgresDatabase
+        TargetType: AWS::RDS::DBInstance
 
     # Shared Storage
     SharedStorage:
@@ -217,14 +215,14 @@ resources:
         Name: !Sub "${AWS::StackName}-LambdaSecurityGroup-ID"
 
     DatabaseEndpoint:
-      Description: Aurora cluster endpoint
-      Value: !GetAtt AuroraCluster.Endpoint.Address
+      Description: Database endpoint
+      Value: !GetAtt PostgresDatabase.Endpoint.Address
       Export:
         Name: !Sub "${AWS::StackName}-Database-Endpoint"
 
     DatabasePort:
       Description: Database port
-      Value: !GetAtt AuroraCluster.Endpoint.Port
+      Value: !GetAtt PostgresDatabase.Endpoint.Port
       Export:
         Name: !Sub "${AWS::StackName}-Database-Port"
 
@@ -233,12 +231,6 @@ resources:
       Value: !Ref DatabaseSecret
       Export:
         Name: !Sub "${AWS::StackName}-Database-Secret-ARN"
-
-    DatabaseReaderEndpoint:
-      Description: Aurora cluster reader endpoint
-      Value: !GetAtt AuroraCluster.ReadEndpoint.Address
-      Export:
-        Name: !Sub "${AWS::StackName}-Database-Reader-Endpoint"
 
     SharedStorageArn:
       Description: Shared S3 bucket ARN
