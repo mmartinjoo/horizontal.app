@@ -1,16 +1,12 @@
 deploy:
 	rm -rf ./bootstrap/packages.php
 	rm -rf ./bootstrap/services.php
-	composer install --prefer-dist --optimize-autoloader --no-dev
-	# Lambda has a 262MB limit
-	# unfortunately, the flysystem google extension requires the entire google SDK which is 150+ MB by default
-	# we only use Drive so we delete non Drive-related folders
-	find ./vendor/google/apiclient-services/src -maxdepth 1 -type d ! -name "Drive*" ! -name "src" -exec rm -rf {} +
-	# delete not Drive-related files
-	find vendor/google/apiclient-services/src -maxdepth 1 -type f ! -name "Drive*" -delete
+	rm ./bootstrap/cache/*.php
 	php artisan config:clear
 	php artisan route:clear
+	docker buildx build --target api --push --platform linux/amd64 --provenance=false -f Dockerfile.prod -t 325384049248.dkr.ecr.us-east-1.amazonaws.com/horizontal/api:latest .
+	docker buildx build --target console --push --platform linux/amd64 --provenance=false -f Dockerfile.prod -t 325384049248.dkr.ecr.us-east-1.amazonaws.com/horizontal/console:latest .
 	serverless deploy --debug 2>&1 | tee deploy.log
 
 run:
-	serverless invoke -f artisan --data '"$(CMD)"'
+	serverless invoke -f console --data '"$(CMD)"'

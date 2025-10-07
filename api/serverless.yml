@@ -14,13 +14,13 @@ provider:
 
     LOG_CHANNEL: stderr
     LOG_LEVEL: error
+    LOG_STDERR_FORMATTER: Bref\Monolog\CloudWatchFormatter
 
     SESSION_DRIVER: cookie
     FILESYSTEM_DISK: s3
     AWS_BUCKET: !ImportValue horizontal-staging2-shared-dev-SharedStorage-Name
     QUEUE_CONNECTION: sqs
     SQS_QUEUE: ${construct:jobQueue.queueUrl}
-    LOG_STDERR_FORMATTER: Bref\Monolog\CloudWatchFormatter
 
     DB_CONNECTION: central
     DB_HOST: !ImportValue horizontal-staging2-shared-dev-Database-Endpoint
@@ -74,16 +74,14 @@ provider:
           Resource: !ImportValue horizontal-staging2-shared-dev-Database-Secret-ARN
 
 functions:
-  web:
-    handler: public/index.php
-    runtime: php-84-fpm
+  api:
+    image: 325384049248.dkr.ecr.us-east-1.amazonaws.com/horizontal/api:latest
     timeout: 28
     events:
       - httpApi: '*'
 
-  artisan:
-    handler: artisan
-    runtime: php-84-console
+  console:
+    image: 325384049248.dkr.ecr.us-east-1.amazonaws.com/horizontal/console:latest
     timeout: 720
 
 constructs:
@@ -97,7 +95,7 @@ constructs:
 custom:
   scripts:
     hooks:
-      'after:deploy:deploy': serverless invoke -f artisan --data '"migrate --force"'
+      'after:deploy:deploy': serverless invoke -f console --data '"migrate --force"'
 
 package:
   patterns:

@@ -24,7 +24,7 @@ WORKDIR /var/www
 COPY . /var/www
 COPY --chown=www-data:www-data . /var/www
 
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --optimize-autoloader
 
 RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
 RUN chown -R www-data:www-data /var/www \
