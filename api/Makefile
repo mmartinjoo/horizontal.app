@@ -10,3 +10,6 @@ deploy:
 
 run:
 	serverless invoke -f console --data '"$(CMD)"'
+
+copy-vendor:
+	docker compose cp api:/var/www/vendor ./
