@@ -1,0 +1,132 @@
+service: horizontal-staging2-api
+
+provider:
+  name: aws
+  region: us-east-1
+  environment:
+    APP_NAME: Horizontal
+    APP_ENV: production
+    APP_KEY: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/AppKey-fnlqJG::key}}'
+    APP_URL: http://localhost
+    APP_LOCALE: en
+    APP_FALLBACK_LOCALE: en
+    APP_FAKER_LOCALE: en_US
+
+    LOG_CHANNEL: stderr
+    LOG_LEVEL: error
+    LOG_STDERR_FORMATTER: Bref\Monolog\CloudWatchFormatter
+
+    SESSION_DRIVER: cookie
+    FILESYSTEM_DISK: s3
+    AWS_BUCKET: !ImportValue horizontal-staging2-shared-dev-SharedStorage-Name
+    QUEUE_CONNECTION: sqs
+    SQS_QUEUE: ${construct:jobQueue.queueUrl}
+
+    DB_CONNECTION: central
+    DB_HOST: !ImportValue horizontal-staging2-shared-dev-Database-Endpoint
+    DB_PORT: !ImportValue horizontal-staging2-shared-dev-Database-Port
+    DB_DATABASE: horizontal
+    DB_USERNAME: horizontal
+    DB_PASSWORD: !Sub
+      - '{{resolve:secretsmanager:${SecretArn}::password}}'
+      - SecretArn: !ImportValue horizontal-staging2-shared-dev-Database-Secret-ARN
+
+    FIREWORKS_API_KEY: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/FireworksAPIKey-KTVvZt::key}}'
+    GRAPH_BUILDER_BASE_URL: https://0vn1ssanw0.execute-api.us-east-1.amazonaws.com
+    EMBEDDER_MODEL: nomic-ai/nomic-embed-text-v1.5
+    LLM_PROVIDER: fireworks
+    LLM_MODEL: accounts/fireworks/models/deepseek-v3-0324
+
+    CACHE_STORE: database
+
+    GOOGLE_DRIVE_CLIENT_ID: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/GoogleDriveCredentials-NlOhmM::ClientID}}'
+    GOOGLE_DRIVE_CLIENT_SECRET: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/GoogleDriveCredentials-NlOhmM::ClientSecret}}'
+    GOOGLE_DRIVE_REFRESH_TOKEN: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/GoogleDriveCredentials-NlOhmM::RefreshToken}}'
+    GOOGLE_DRIVE_ACCESS_TOKEN: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/GoogleDriveCredentials-NlOhmM::AccessToken}}'
+
+    JIRA_APP_ID: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/JiraCredentials-WEUKwz::AppID}}'
+    JIRA_CLIENT_ID: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/JiraCredentials-WEUKwz::ClientID}}'
+    JIRA_CLIENT_SECRET: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/JiraCredentials-WEUKwz::ClientSecret}}'
+    JIRA_REDIRECT_URI: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/JiraCredentials-WEUKwz::RedirectURI}}'
+
+    TEST_MEMGRAPH_CLUSTER_HOST: 143.198.75.213
+    TEST_MEMGRAPH_CLUSTER_PASSWORD: !Sub '{{resolve:secretsmanager:arn:aws:secretsmanager:us-east-1:325384049248:secret:Horizontal/prod/TestMemgraphClusterCredentials-VeLg1d::Password}}'
+
+  vpc:
+    securityGroupIds:
+      - !ImportValue horizontal-staging2-shared-dev-LambdaSecurityGroup-ID
+    subnetIds:
+      - !ImportValue horizontal-staging2-shared-dev-PrivateSubnetA-ID
+      - !ImportValue horizontal-staging2-shared-dev-PrivateSubnetB-ID
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: s3:*
+          Resource:
+            - !ImportValue horizontal-staging2-shared-dev-SharedStorage-ARN
+            - !Sub
+              - '${BucketArn}/*'
+              - BucketArn: !ImportValue horizontal-staging2-shared-dev-SharedStorage-ARN
+        - Effect: Allow
+          Action: secretsmanager:GetSecretValue
+          Resource: !ImportValue horizontal-staging2-shared-dev-Database-Secret-ARN
+
+functions:
+  api:
+    image: 325384049248.dkr.ecr.us-east-1.amazonaws.com/horizontal/api:latest
+    timeout: 28
+    events:
+      - httpApi: '*'
+
+  console:
+    image: 325384049248.dkr.ecr.us-east-1.amazonaws.com/horizontal/console:latest
+    timeout: 720
+
+constructs:
+  jobQueue:
+    type: queue
+    worker:
+      handler: Bref\LaravelBridge\Queue\QueueHandler
+      runtime: php-84
+      timeout: 60
+
+custom:
+  scripts:
+    hooks:
+      'after:deploy:deploy': serverless invoke -f console --data '"migrate --force"'
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!public/storage'
+    - '!resources/assets/**'
+    - '!resources/css/**'
+    - '!resources/images/**'
+    - '!resources/js/**'
+    - '!storage/**'
+    - '!tests/**'
+    - '!database/*.sqlite'
+    - '!public/build/**'
+    - '!.env'
+    - '!.env.example'
+    - '!.claude'
+    - '!.cursor'
+    - '!.vscode'
+    - '!.junie'
+    - '!tasks/**'
+    - '!CLAUDE.md'
+
+resources:
+  Outputs:
+    ApiUrl:
+      Description: API Gateway URL
+      Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+      Export:
+        Name: !Sub "${AWS::StackName}-ApiUrl"
+
+plugins:
+  - ./vendor/bref/bref
+  - serverless-lift
+  - serverless-plugin-scripts

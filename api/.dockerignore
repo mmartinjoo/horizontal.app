@@ -52,3 +52,10 @@ bootstrap/cache/*
 # Temporary files
 tmp/
 temp/
+
+.claude
+.cursor
+.junie
+.vscode
+.serverless
+deploy.log

@@ -1,0 +1,27 @@
+FROM bref/php-84-fpm:2 AS base
+
+COPY --from=bref/extra-pgsql-php-84:1 /opt /opt
+COPY --from=bref/extra-gd-php-84:1 /opt /opt
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+COPY . .
+
+RUN composer run-script post-autoload-dump --no-dev || true
+#RUN php artisan config:clear
+#RUN php artisan route:clear
+#RUN php artisan view:clear
+
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
+
+FROM bref/php-84-fpm:2 AS api
+COPY --from=base /var/task /var/task
+WORKDIR /var/task
+CMD ["public/index.php"]
+
+FROM bref/php-84-console:2 AS console
+COPY --from=base /var/task /var/task
+WORKDIR /var/task
+CMD ["artisan"]

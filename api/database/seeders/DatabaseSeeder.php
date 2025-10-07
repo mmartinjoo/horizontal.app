@@ -14,11 +14,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
+        User::create([
             'name' => 'Admin',
             'email' => 'admin@horizontal.app',
+            'password' => bcrypt('password'),
         ]);
-
         $tenant1 = Tenant::create([
             'company' => 'Tenant1 Ltd.',
             'country' => 'US',
