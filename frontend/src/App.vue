@@ -1,11 +1,22 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import UseCaseShowcase from './components/UseCaseShowcase.vue'
 
 const email = ref('')
 const isSubmitting = ref(false)
 const showSuccess = ref(false)
 const showError = ref(false)
+const scriptContainer = ref(null)
+let scriptElement = null
+
+onMounted(() => {
+  scriptElement = document.createElement('script')
+  scriptElement.async = true
+  scriptElement.src = 'https://r3.minicrm.hu/api/loader.js?81824-21g7uultg516jaje4ae805zvyxnreo'
+
+  // Append it to the container
+  scriptContainer.value.appendChild(scriptElement)
+});
 
 // Replace these with your actual Google Form details
 // Instructions:
@@ -579,6 +590,8 @@ const goToWaitlist = () => {
           <p class="text-xl lg:text-2xl text-gray-600 max-w-4xl mx-auto mb-12 leading-relaxed">
             Be among the first engineering teams to experience the future of connected productivity.
           </p>
+
+          <div ref="scriptContainer"></div>
 
           <!-- Signup Form -->
           <div class="max-w-2xl mx-auto mb-12">
