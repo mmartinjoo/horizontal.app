@@ -87,5 +87,4 @@ class SeedMemgraph extends Command
 
         return Command::SUCCESS;
     }
-
 }
