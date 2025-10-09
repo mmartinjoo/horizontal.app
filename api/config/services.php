@@ -64,4 +64,8 @@ return [
         'client_secret' => env('JIRA_CLIENT_SECRET'),
         'redirect_uri' => env('JIRA_REDIRECT_URI'),
     ],
+
+    'github' => [
+        'token' => env('GITHUB_ACCESS_TOKEN'),
+    ],
 ];
