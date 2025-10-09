@@ -15,8 +15,6 @@ class TestController extends Controller
 
     public function token()
     {
-        $team = \App\Models\Team::where(['name' => 'Test Company'])->firstOrFail();
-
         $user = \App\Models\User::updateOrCreate(
             [
                 'email' => 'jira1@example.com',
@@ -25,7 +23,6 @@ class TestController extends Controller
                 'name' => 'Test User',
                 'email' => 'jira1@example.com',
                 'password' => bcrypt('password'),
-                'team_id' => $team->id
             ],
         );
 

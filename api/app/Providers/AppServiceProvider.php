@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Services\GraphDB\GraphDB;
-use App\Services\GraphDB\Memgraph;
+use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use App\Services\KnowledgeGraph\GraphBuilder;
 use App\Services\LLM\Anthropic;
@@ -70,7 +70,7 @@ class AppServiceProvider extends ServiceProvider
             ->give(config('services.jira.redirect_uri'));
 
         $this->app->bind(GraphDB::class, function () {
-            return new Memgraph(config('graphdb.connections.memgraph'));
+            return GraphDBFactory::create();
         });
 
         $this->app

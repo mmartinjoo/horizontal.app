@@ -17,7 +17,6 @@ class JiraIntegrationFactory extends Factory
     public function definition(): array
     {
         return [
-            'team_id' => \App\Models\Team::factory(),
             'jira_base_url' => $this->faker->randomElement([
                 'https://company.atlassian.net',
                 'https://acme-corp.atlassian.net',

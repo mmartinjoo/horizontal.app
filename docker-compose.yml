@@ -13,7 +13,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      memgraph:
+      memgraph-tenant1:
+        condition: service_started
+      memgraph-tenant2:
         condition: service_started
     command: >
       sh -c "
@@ -39,7 +41,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      memgraph:
+      memgraph-tenant1:
+        condition: service_started
+      memgraph-tenant2:
         condition: service_started
     command: >
       sh -c "
@@ -90,19 +94,32 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      memgraph:
+      memgraph-tenant1:
+        condition: service_started
+      memgraph-tenant2:
         condition: service_started
     environment:
       - HOT_RELOAD_ENABLED=true
-    command: python main.py
 
-  memgraph:
+  memgraph-tenant1:
     image: memgraph/memgraph-mage:latest
     volumes:
-      - memgraph_data:/var/lib/memgraph
+      - memgraph_tenant1_data:/var/lib/memgraph
     ports:
       - "7687:7687"
       - "7444:7444"
+    command: [ "--log-level=TRACE" ]
+    environment:
+      - MEMGRAPH_USER=horizontal
+      - MEMGRAPH_PASSWORD=password
+
+  memgraph-tenant2:
+    image: memgraph/memgraph-mage:latest
+    volumes:
+      - memgraph_tenant2_data:/var/lib/memgraph
+    ports:
+      - "7688:7687"
+      - "7445:7444"
     command: [ "--log-level=TRACE" ]
     environment:
       - MEMGRAPH_USER=horizontal
@@ -113,11 +130,14 @@ services:
     ports:
       - "9997:3000"
     depends_on:
-      memgraph:
+      memgraph-tenant1:
+        condition: service_started
+      memgraph-tenant2:
         condition: service_started
     environment:
-      - QUICK_CONNECT_MG_HOST=memgraph
+      - QUICK_CONNECT_MG_HOST=memgraph_tenant1
       - QUICK_CONNECT_MG_PORT=7687
 
 volumes:
-  memgraph_data:
+  memgraph_tenant1_data:
+  memgraph_tenant2_data:
