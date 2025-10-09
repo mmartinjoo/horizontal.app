@@ -6,16 +6,22 @@ use App\Models\Tenant;
 use App\Services\GraphDB\GraphDB;
 use Illuminate\Console\Command;
 
-class SeedMemgraph extends Command
+class MemgraphImport extends Command
 {
     /** @var string */
-    protected $signature = 'memgraph:seed {--tenant= : Tenant ID to seed}';
+    protected $signature = 'memgraph:import {--tenant= : Tenant ID to import}';
 
     /** @var string */
-    protected $description = 'Seed Memgraph database from snapshot';
+    protected $description = 'Import Memgraph database from Cypher export file';
 
     public function handle()
     {
+        if (! app()->environment('local')) {
+            $this->error('This command can only be run in local environment.');
+
+            return Command::FAILURE;
+        }
+
         $cypherPath = database_path('memgraph/memgraph-export.cypherl');
 
         if (!file_exists($cypherPath)) {
@@ -42,7 +48,7 @@ class SeedMemgraph extends Command
 
         tenancy()->initialize($tenant);
 
-        $this->info("Seeding Memgraph for tenant {$tenant->id}...");
+        $this->info("Importing Memgraph data for tenant {$tenant->id}...");
         $this->info('Loading Cypher export file...');
 
         $cypher = file_get_contents($cypherPath);
@@ -83,7 +89,7 @@ class SeedMemgraph extends Command
         // Switch back to transactional mode
         $graphDB->run('STORAGE MODE IN_MEMORY_TRANSACTIONAL;');
 
-        $this->info('Memgraph seeded successfully from Cypher export');
+        $this->info('Memgraph data imported successfully from Cypher export');
 
         return Command::SUCCESS;
     }

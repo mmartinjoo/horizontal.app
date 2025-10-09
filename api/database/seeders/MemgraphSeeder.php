@@ -16,7 +16,7 @@ class MemgraphSeeder extends Seeder
         foreach ($tenants as $tenant) {
             $this->command->info("Seeding Memgraph for tenant {$tenant->id}...");
 
-            Artisan::call('memgraph:seed', ['--tenant' => $tenant->id]);
+            Artisan::call('memgraph:import', ['--tenant' => $tenant->id]);
 
             $this->command->info(Artisan::output());
         }
