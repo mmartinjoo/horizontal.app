@@ -100,7 +100,6 @@ services:
         condition: service_started
     environment:
       - HOT_RELOAD_ENABLED=true
-    command: python main.py
 
   memgraph-tenant1:
     image: memgraph/memgraph-mage:latest
