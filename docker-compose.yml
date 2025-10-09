@@ -135,7 +135,7 @@ services:
       memgraph-tenant2:
         condition: service_started
     environment:
-      - QUICK_CONNECT_MG_HOST=memgraph_tenant1
+      - QUICK_CONNECT_MG_HOST=memgraph-tenant1
       - QUICK_CONNECT_MG_PORT=7687
 
 volumes:
