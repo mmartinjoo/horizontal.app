@@ -10,6 +10,7 @@ use App\Services\File\PdfParser;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\Storage\DataTransferObjects\File;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
+use Exception;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -31,8 +32,8 @@ class IndexFile implements ShouldQueue
         TextChunker $textChunker,
         PdfParser $pdfParser,
     ): void {
+        $indexingWorkflowItem = IndexingWorkflowItem::find($this->indexingWorkflowItemId);
         try {
-            $indexingWorkflowItem = IndexingWorkflowItem::find($this->indexingWorkflowItemId);
             $jobIds = $indexingWorkflowItem->job_ids;
             $jobIds[] = $this->job->payload()['uuid'];
 
@@ -97,7 +98,13 @@ class IndexFile implements ShouldQueue
                 'status' => 'completed',
             ]);
             $this->updateWorkflowStatus($indexingWorkflowItem);
-        } finally {
+        } catch (Exception $e) {
+            $indexingWorkflowItem->update([
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+            ]);
+        }
+        finally {
             Storage::delete($this->file->path());
         }
     }

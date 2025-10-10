@@ -1,7 +1,8 @@
 import json
 import asyncio
 from graphbuilder import GraphBuilder
-
+import logging
+import sys
 
 def handler(event, context):
     """
@@ -13,6 +14,8 @@ def handler(event, context):
     }
     """
     try:
+        logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+        
         # Parse the input
         if 'body' in event:
             # API Gateway event format
@@ -46,6 +49,7 @@ def handler(event, context):
         }
 
     except Exception as e:
+        logging.error(f"ERROR: Graph building failed for tenant: {body.get('tenant_id', 'unknown')}", exc_info=True)
         return {
             'statusCode': 500,
             'body': json.dumps({

@@ -1,6 +1,7 @@
 import os
 import asyncio
 import requests
+import logging
 from llama_index.core.indices.property_graph import SimpleLLMPathExtractor
 from llama_index.core import Settings, PropertyGraphIndex, Document
 from llama_index.llms.fireworks import Fireworks
@@ -14,7 +15,28 @@ from fastapi import HTTPException
 class GraphBuilder:
     def __init__(self):
         load_dotenv()
+        self._setup_cache_directories()
         self._setup_llm_and_embeddings()
+
+    def _setup_cache_directories(self):
+        """Create cache directories in /tmp to prevent writes to read-only filesystem"""
+        
+        logging.info("setting up cache directories")
+        
+        if os.getenv("APP_ENV", "development") != "production":
+            return
+        
+        cache_dirs = [
+            "/tmp/.cache",
+            "/tmp/.cache/huggingface",
+            "/tmp/.cache/tiktoken",
+            "/tmp/nltk_data"
+        ]
+
+        for cache_dir in cache_dirs:
+            os.makedirs(cache_dir, exist_ok=True)
+            
+        logging.info("cache directories set up")
 
     def _setup_llm_and_embeddings(self):
         os.environ["OPENAI_API_KEY"] = os.getenv("FIREWORKS_API_KEY")
@@ -35,11 +57,11 @@ class GraphBuilder:
             uri = os.getenv("DB_BASE_URI") + "tenant" + tenant_id
         else:
             host = os.getenv("DB_HOST")
-            port = os.getenv("DB_PORT")        
+            port = os.getenv("DB_PORT")
             username = os.getenv("DB_USERNAME")
             password = os.getenv("DB_PASSWORD")
             database = "tenant" + tenant_id
-            uri = f"postgres+psycopg2://{username}:{password}@{host}:{port}/{database}"
+            uri = f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database}"
         return DatabaseReader(uri=uri)
 
     def create_graph_store(self, tenant_id: str) -> MemgraphPropertyGraphStore:
@@ -147,7 +169,7 @@ class GraphBuilder:
                 llm=self.llm,
                 embed_kg_nodes=True,
                 kg_extractors=[kg_extractor],
-                show_progress=True,
+                show_progress=False,
                 property_graph_store=graph_store,
             )
 
