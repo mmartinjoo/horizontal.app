@@ -1,6 +1,7 @@
 import os
 import requests
 import psycopg2
+import logging
 from typing import List
 from dotenv import load_dotenv
 from llama_index.core.indices.property_graph import SimpleLLMPathExtractor
@@ -11,15 +12,23 @@ from llama_index.readers.database import DatabaseReader
 from src.fireworks_embedding import FireworksEmbedding
 
 class GraphBuilder:
-    def __init__(self):
+    def __init__(self, tenant_id: str):
         load_dotenv()
+        logging.basicConfig(level=logging.INFO)
+        
+        self.tenant_id = tenant_id
         self._setup_llm_and_embeddings()
         
-    def build_graph_for_tenant(self, tenant_id: str):
-        reader = self.create_db_reader(tenant_id)
-        graph_store = self.create_graph_store(tenant_id)
-        count = self.get_documents_count(reader, tenant_id)       
-        self.build_graph(reader, graph_store, count)
+    def build_graph_for_tenant(self):
+        uri = self._build_db_uri(self.tenant_id, protocol="postgresql")
+        conn = psycopg2.connect(uri)
+        conn.autocommit = True
+        cursor = conn.cursor()
+        
+        reader = self.create_db_reader()
+        graph_store = self.create_graph_store()        
+                 
+        self.build_graph(reader, graph_store, cursor)
 
     def _setup_llm_and_embeddings(self):
         os.environ["OPENAI_API_KEY"] = os.getenv("FIREWORKS_API_KEY")
@@ -34,12 +43,12 @@ class GraphBuilder:
         Settings.llm = self.llm
         Settings.embed_model = self.embed_model
 
-    def create_db_reader(self, tenant_id: str) -> DatabaseReader:
-        uri = self._build_db_uri(tenant_id, protocol="postgresql+psycopg2")
+    def create_db_reader(self) -> DatabaseReader:
+        uri = self._build_db_uri(self.tenant_id, protocol="postgresql+psycopg2")
         return DatabaseReader(uri=uri)
 
-    def create_graph_store(self, tenant_id: str) -> MemgraphPropertyGraphStore:
-        connection_info = self._get_graph_db_connection_info(tenant_id)
+    def create_graph_store(self) -> MemgraphPropertyGraphStore:
+        connection_info = self._get_graph_db_connection_info(self.tenant_id)
         return MemgraphPropertyGraphStore(
             url=connection_info["url"],
             username=connection_info["user"],
@@ -72,6 +81,7 @@ class GraphBuilder:
                     'document' as document_type
                 from document_chunks
                 inner join documents on documents.id = document_chunks.document_id
+                where processed = FALSE
                 limit {limit}
                 offset {offset}
             """,
@@ -96,35 +106,70 @@ class GraphBuilder:
             )
             transformed_documents.append(doc)
             
-        return documents
+        return transformed_documents
 
     def build_graph(self, 
                     reader: DatabaseReader, 
-                    graph_store: MemgraphPropertyGraphStore, 
-                    document_count: int): 
+                    graph_store: MemgraphPropertyGraphStore,
+                    cursor): 
         
-           
-        num_of_batches = int(document_count/100)+1
+        logging.info(f"---- BUILDING GRAPH ----")    
+        
+        document_count = self.get_document_chunks_count(cursor)       
+        limit = 5
+        num_of_batches = int(document_count/limit)+1
+        
+        logging.info(f"Number of documents to process: {document_count}")
+        logging.info(f"Number of batches: {num_of_batches}")
+        
         for i in range(num_of_batches):
-            offset = i*100
+            logging.info(f"Processing batch {i+1}/{num_of_batches}...")
+            offset = i*limit
             
+            logging.info("Loading documents...")
             documents = self._load_documents(reader=reader,
-                                             limit=100,
+                                             limit=limit,
                                              offset=offset)
+            
+            if len(documents) == 0:
+                logging.info("All documents are processed")
+                break
         
+            logging.info(f"Loaded {len(documents)} from offset {offset}")
+
+            logging.info("Running LLM Path Extractor with settings...")
+            logging.info(Settings)
             kg_extractor = SimpleLLMPathExtractor(llm=self.llm,
                                                   max_paths_per_chunk=20,
                                                   num_workers=4)
             
+            logging.info("LLM Path Extractor finished...")
+            
+            
+            show_progress = False
+            if os.getenv("APP_ENV") == "development":
+                show_progress = True
+            
+            logging.info("Creating graph index...")    
             index = PropertyGraphIndex.from_documents(documents,
                                                       llm=self.llm,
                                                       embed_kg_nodes=True,
+                                                      embed_model=self.embed_model,
                                                       kg_extractors=[kg_extractor],
-                                                      show_progress=False,
+                                                      show_progress=show_progress,
                                                       property_graph_store=graph_store)
+            logging.info("Graph index created")
         
-            for document in documents:
+            logging.info(f"Inserting {len(documents)} documents")
+            for n, document in enumerate(documents):
                 index.insert(document)
+                logging.info(f"Inserting to index: {n+1}/{len(documents)}")
+            
+            logging.info(f"Updating documents...")
+            self.update_documents(documents, cursor)
+            logging.info(f"Documents updated")
+            
+            logging.info(f"batch {i+1}/{num_of_batches} processed")
         
         # comments = reader.load_data(
         #     query="""
@@ -161,14 +206,29 @@ class GraphBuilder:
 
         # all_documents = transformed_documents + transformed_comments
 
-    def get_documents_count(self, reader: DatabaseReader, tenant_id: str) -> int:
-        """Get the total count of documents in the documents table for a tenant."""
-        uri = self._build_db_uri(tenant_id, protocol="postgresql")
-        conn = psycopg2.connect(uri)
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM documents")
-        count = cursor.fetchone()[0]
-        return count
+    def get_document_chunks_count(self, cursor) -> int:
+        cursor.execute("select count(*) from document_chunks")
+        return cursor.fetchone()[0]
+    
+    def update_documents(self, documents: List[Document], cursor):
+        if len(documents) == 0:
+            return
+        
+        doc_ids = [doc.metadata["document_chunk_id"] for doc in documents]
+        doc_ids_str = ",".join([str(id) for id in doc_ids])
+        
+        cursor.execute(f"""
+                       update document_chunks
+                       set processed = TRUE
+                       where id in ({doc_ids_str})                    
+                       """)
+        
+        cursor.connection.commit()
+        
+        logging.info(f"{cursor.rowcount} rows updated")
+        
+        if cursor.rowcount != len(documents):
+            logging.warning(f"Graph building: not all document_chunk rows were processed succesfuly. Expected: {len(documents)}. Actual: {cursor.rowcount}")
   
     def _build_db_uri(self, tenant_id: str, protocol: str) -> str:
         host = os.getenv("DB_HOST")

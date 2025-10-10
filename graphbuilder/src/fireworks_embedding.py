@@ -12,7 +12,7 @@ class FireworksEmbedding(BaseEmbedding):
         self,
         **kwargs: Any,
     ) -> None:
-        super().__init__(**kwargs)        
+        super().__init__(model_name="nomic-ai/nomic-embed-text-v1.5", **kwargs) 
         self._client = OpenAI(
             base_url="https://api.fireworks.ai/inference/v1",
             api_key=os.getenv("FIREWORKS_API_KEY"),
