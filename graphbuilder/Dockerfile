@@ -25,4 +25,3 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 EXPOSE 9998
-CMD ["python", "api.py"]

@@ -66,3 +66,6 @@ output/
 # Temporary files
 tmp/
 temp/
+.serverless
+.claude
+deploy.log

@@ -98,8 +98,7 @@ services:
         condition: service_started
       memgraph-tenant2:
         condition: service_started
-    environment:
-      - HOT_RELOAD_ENABLED=true
+    command: gunicorn api:app --bind 0.0.0.0:9998 --log-level info
 
   memgraph-tenant1:
     image: memgraph/memgraph-mage:latest

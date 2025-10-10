@@ -5,7 +5,6 @@ from llama_index.core.embeddings import BaseEmbedding
 from openai import OpenAI
 import os
 
-
 class FireworksEmbedding(BaseEmbedding):
     _client: OpenAI
     

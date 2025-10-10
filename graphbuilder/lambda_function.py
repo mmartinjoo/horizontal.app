@@ -1,6 +1,6 @@
 import json
 import asyncio
-from graphbuilder import GraphBuilder
+from src.graphbuilder import GraphBuilder
 import logging
 import sys
 
