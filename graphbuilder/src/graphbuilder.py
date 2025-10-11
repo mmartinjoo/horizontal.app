@@ -68,7 +68,7 @@ class GraphBuilder:
             "password": data["graph_db_connection"]["password"],
         }
         
-    def _load_documents(self, reader: DatabaseReader, limit: int, offset: int) -> List[Document]:
+    def _load_documents(self, reader: DatabaseReader, limit: int) -> List[Document]:
         documents = reader.load_data(
             query=f"""
                 select
@@ -82,8 +82,8 @@ class GraphBuilder:
                 from document_chunks
                 inner join documents on documents.id = document_chunks.document_id
                 where processed = FALSE
+                order by document_chunks.id
                 limit {limit}
-                offset {offset}
             """,
             metadata_cols=[
                 "title", "source_type", "source_url", "document_chunk_id", "source_document_id", "document_type",
@@ -124,27 +124,21 @@ class GraphBuilder:
         
         for i in range(num_of_batches):
             logging.info(f"Processing batch {i+1}/{num_of_batches}...")
-            offset = i*limit
-            
             logging.info("Loading documents...")
-            documents = self._load_documents(reader=reader,
-                                             limit=limit,
-                                             offset=offset)
+            documents = self._load_documents(reader=reader, limit=limit)
             
             if len(documents) == 0:
                 logging.info("All documents are processed")
                 break
         
-            logging.info(f"Loaded {len(documents)} from offset {offset}")
+            logging.info(f"Loaded {len(documents)}")
 
-            logging.info("Running LLM Path Extractor with settings...")
-            logging.info(Settings)
+            logging.info("Running LLM Path Extractor")
             kg_extractor = SimpleLLMPathExtractor(llm=self.llm,
                                                   max_paths_per_chunk=20,
                                                   num_workers=4)
             
             logging.info("LLM Path Extractor finished...")
-            
             
             show_progress = False
             if os.getenv("APP_ENV") == "development":
@@ -156,7 +150,7 @@ class GraphBuilder:
                                                       embed_kg_nodes=True,
                                                       embed_model=self.embed_model,
                                                       kg_extractors=[kg_extractor],
-                                                      show_progress=show_progress,
+                                                      show_progress=False,
                                                       property_graph_store=graph_store)
             logging.info("Graph index created")
         
@@ -207,7 +201,7 @@ class GraphBuilder:
         # all_documents = transformed_documents + transformed_comments
 
     def get_document_chunks_count(self, cursor) -> int:
-        cursor.execute("select count(*) from document_chunks")
+        cursor.execute("select count(*) from document_chunks where processed = FALSE")
         return cursor.fetchone()[0]
     
     def update_documents(self, documents: List[Document], cursor):
@@ -223,12 +217,10 @@ class GraphBuilder:
                        where id in ({doc_ids_str})                    
                        """)
         
-        cursor.connection.commit()
-        
         logging.info(f"{cursor.rowcount} rows updated")
         
         if cursor.rowcount != len(documents):
-            logging.warning(f"Graph building: not all document_chunk rows were processed succesfuly. Expected: {len(documents)}. Actual: {cursor.rowcount}")
+            logging.info(f"Graph building: not all document_chunk rows were processed succesfuly. Expected: {len(documents)}. Actual: {cursor.rowcount}")
   
     def _build_db_uri(self, tenant_id: str, protocol: str) -> str:
         host = os.getenv("DB_HOST")
