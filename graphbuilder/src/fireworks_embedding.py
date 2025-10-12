@@ -1,6 +1,5 @@
 from typing import Any, List
 
-from llama_index.core.bridge.pydantic import PrivateAttr
 from llama_index.core.embeddings import BaseEmbedding
 from openai import OpenAI
 import os
