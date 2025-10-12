@@ -28,15 +28,21 @@ class GraphBuilder:
         reader = self.create_db_reader()
         graph_store = self.create_graph_store()        
                  
-        self.build_graph(reader, graph_store, cursor)
+        # self.build_graph(reader=reader, 
+        #                  type="document_chunk",
+        #                  graph_store=graph_store, 
+        #                  cursor=cursor)
+
+        self.build_graph(reader=reader, 
+                         type="comment",
+                         graph_store=graph_store, 
+                         cursor=cursor)
 
     def _setup_llm_and_embeddings(self):
         os.environ["OPENAI_API_KEY"] = os.getenv("FIREWORKS_API_KEY")
-        self.llm = Fireworks(
-            api_key=os.getenv("FIREWORKS_API_KEY"),
-            temperature=0,
-            model=os.getenv("LLM_MODEL"),
-        )
+        self.llm = Fireworks(api_key=os.getenv("FIREWORKS_API_KEY"),
+                             temperature=0,
+                             model=os.getenv("LLM_MODEL"))
 
         self.embed_model = FireworksEmbedding()
 
@@ -49,12 +55,10 @@ class GraphBuilder:
 
     def create_graph_store(self) -> MemgraphPropertyGraphStore:
         connection_info = self._get_graph_db_connection_info(self.tenant_id)
-        return MemgraphPropertyGraphStore(
-            url=connection_info["url"],
-            username=connection_info["user"],
-            password=connection_info["password"],
-            database="memgraph"
-        )
+        return MemgraphPropertyGraphStore(url=connection_info["url"],
+                                          username=connection_info["user"],
+                                          password=connection_info["password"],
+                                          database="memgraph")
 
     def _get_graph_db_connection_info(self, tenant_id: str):
         resp = requests.get(f"{os.getenv('HORIZONTAL_API_URL')}/api/tenants/{tenant_id}")
@@ -81,8 +85,7 @@ class GraphBuilder:
                     'document' as document_type
                 from document_chunks
                 inner join documents on documents.id = document_chunks.document_id
-                where processed = FALSE
-                order by document_chunks.id
+                where document_chunks.processed = FALSE                
                 limit {limit}
             """,
             metadata_cols=[
@@ -107,8 +110,91 @@ class GraphBuilder:
             transformed_documents.append(doc)
             
         return transformed_documents
+    
+    def build_graph(self,
+                    type: str,
+                    reader: DatabaseReader, 
+                    graph_store: MemgraphPropertyGraphStore,
+                    cursor):
+        if type == "document_chunk":
+            count_fn = self.get_document_chunks_count
+            load_fn = self._load_documents
+            update_fn = self.update_documents
+        if type == "comment":
+            count_fn = self.get_comments_count
+            load_fn = self._load_comments
+            update_fn = self.update_comments
+            
+        self.build_graph_from(type=type,
+                              reader=reader,
+                              graph_store=graph_store,
+                              cursor=cursor,
+                              count_fn=count_fn,
+                              load_fn=load_fn,
+                              update_fn=update_fn)
+            
+    def build_graph_from(self, 
+                         type: str,
+                         reader: DatabaseReader, 
+                         graph_store: MemgraphPropertyGraphStore,
+                         cursor,
+                         count_fn,
+                         load_fn,
+                         update_fn):
+        
+        logging.info(f"---- BUILDING GRAPH FROM {type}s BATCH ----")    
+        
+        count = count_fn(cursor)       
+        limit = 5
+        num_of_batches = int(count/limit)+1
+        
+        logging.info(f"Number of {type}s to process: {count}")
+        logging.info(f"Number of batches: {num_of_batches}")
+        
+        for i in range(num_of_batches):
+            logging.info(f"Processing batch {i+1}/{num_of_batches}...")
+            logging.info(f"Loading {type}s...")
+            documents = load_fn(reader=reader, limit=limit)
+            
+            if len(documents) == 0:
+                logging.info("All {type}s are processed")
+                break
+        
+            logging.info(f"Loaded {len(documents)}")
 
-    def build_graph(self, 
+            logging.info("Running LLM Path Extractor")
+            kg_extractor = SimpleLLMPathExtractor(llm=self.llm,
+                                                  max_paths_per_chunk=20,
+                                                  num_workers=4)
+            
+            logging.info("LLM Path Extractor finished...")
+            
+            show_progress = False
+            if os.getenv("APP_ENV") == "development":
+                show_progress = True
+            
+            logging.info("Creating graph index...")    
+            index = PropertyGraphIndex.from_documents(documents,
+                                                      llm=self.llm,
+                                                      embed_kg_nodes=True,
+                                                      embed_model=self.embed_model,
+                                                      kg_extractors=[kg_extractor],
+                                                      show_progress=False,
+                                                      property_graph_store=graph_store)
+            logging.info("Graph index created")
+        
+            logging.info(f"Inserting {len(documents)} {type}s")
+            for n, document in enumerate(documents):
+                index.insert(document)
+                logging.info(f"Inserting to index: {n+1}/{len(documents)}")
+            
+            logging.info(f"Updating {type}s...")
+            update_fn(documents, cursor)
+            logging.info(f"{type}s updated")
+            
+            logging.info(f"batch {i+1}/{num_of_batches} processed")
+
+    def build_graph_from_documents(self, 
                     reader: DatabaseReader, 
                     graph_store: MemgraphPropertyGraphStore,
                     cursor): 
@@ -164,44 +250,51 @@ class GraphBuilder:
             logging.info(f"Documents updated")
             
             logging.info(f"batch {i+1}/{num_of_batches} processed")
-        
-        # comments = reader.load_data(
-        #     query="""
-        #         select
-        #             document_comments.id as comment_id,
-        #             document_comments.body as body,
-        #             documents.source_type as source_type,
-        #             documents.source_url as source_url,
-        #             documents.id as parent_document_id,
-        #             'comment' as document_type
-        #         from document_comments
-        #         inner join documents on documents.id = document_comments.document_id
-        #     """,
-        #     metadata_cols=[
-        #         "source_type", "source_url", "comment_id", "parent_document_id", "document_type",
-        #     ],
-        #     excluded_text_cols=[
-        #         "source_type", "source_url", "comment_id", "parent_document_id", "document_type",
-        #     ],
-        # )
+            
+    def _load_comments(self, reader: DatabaseReader, limit: int) -> List[Document]:
+        comments = reader.load_data(
+            query=f"""
+                select
+                    document_comments.id as comment_id,
+                    document_comments.body as body,
+                    documents.source_type as source_type,
+                    documents.source_url as source_url,
+                    documents.id as parent_document_id,
+                    'comment' as document_type
+                from document_comments
+                inner join documents on documents.id = document_comments.document_id
+                where document_comments.processed = FALSE                
+                limit {limit}
+            """,
+            metadata_cols=[
+                "source_type", "source_url", "comment_id", "parent_document_id", "document_type",
+            ],
+            excluded_text_cols=[
+                "source_type", "source_url", "comment_id", "parent_document_id", "document_type",
+            ],
+        )
 
-        # # Original comments are copied to custom documents because the LLM also received
-        # # the metadata and created graph nodes for thing like "source_url" etc
-        # # I didn't find a better solution
-        # transformed_comments = []
-        # for comment in comments:
-        #     doc = Document(
-        #         text=comment.get_content(),
-        #         metadata=comment.metadata,
-        #         excluded_llm_metadata_keys=["source_type", "source_url", "comment_id", "parent_document_id", "document_type"],
-        #         excluded_embed_metadata_keys=["comment_id", "parent_document_id"],
-        #     )
-        #     transformed_comments.append(doc)
+        # Original comments are copied to custom documents because the LLM also received
+        # the metadata and created graph nodes for thing like "source_url" etc
+        # I didn't find a better solution
+        transformed_comments = []
+        for comment in comments:
+            doc = Document(
+                text=comment.get_content(),
+                metadata=comment.metadata,
+                excluded_llm_metadata_keys=["source_type", "source_url", "comment_id", "parent_document_id", "document_type"],
+                excluded_embed_metadata_keys=["comment_id", "parent_document_id"],
+            )
+            transformed_comments.append(doc)
 
-        # all_documents = transformed_documents + transformed_comments
+        return transformed_comments
 
     def get_document_chunks_count(self, cursor) -> int:
         cursor.execute("select count(*) from document_chunks where processed = FALSE")
+        return cursor.fetchone()[0]
+    
+    def get_comments_count(self, cursor) -> int:
+        cursor.execute("select count(*) from document_comments where processed = FALSE")
         return cursor.fetchone()[0]
     
     def update_documents(self, documents: List[Document], cursor):
@@ -220,7 +313,25 @@ class GraphBuilder:
         logging.info(f"{cursor.rowcount} rows updated")
         
         if cursor.rowcount != len(documents):
-            logging.info(f"Graph building: not all document_chunk rows were processed succesfuly. Expected: {len(documents)}. Actual: {cursor.rowcount}")
+            logging.warning(f"Graph building: not all document_chunk rows were processed succesfuly. Expected: {len(documents)}. Actual: {cursor.rowcount}")
+            
+    def update_comments(self, comments: List[Document], cursor):
+        if len(comments) == 0:
+            return
+        
+        comm_id = [doc.metadata["comment_id"] for doc in comments]
+        comm_id_str = ",".join([str(id) for id in comm_id])
+        
+        cursor.execute(f"""
+                       update document_comments
+                       set processed = TRUE
+                       where id in ({comm_id_str})                    
+                       """)
+        
+        logging.info(f"{cursor.rowcount} rows updated")
+        
+        if cursor.rowcount != len(comments):
+            logging.warning(f"Graph building: not all comments rows were processed succesfuly. Expected: {len(comments)}. Actual: {cursor.rowcount}")
   
     def _build_db_uri(self, tenant_id: str, protocol: str) -> str:
         host = os.getenv("DB_HOST")

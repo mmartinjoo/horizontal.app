@@ -2,16 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class Participant extends Model
 {
-    protected $guarded = [];
+    use HasFactory;
 
-    protected $casts = [
-        'embedding' => 'array',
-    ];
+    protected $guarded = [];
 
     public function document_chunks(): MorphToMany
     {
