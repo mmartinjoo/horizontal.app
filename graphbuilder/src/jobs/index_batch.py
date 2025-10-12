@@ -29,6 +29,8 @@ def index_batch(type: str,
     if len(documents) == 0:
         logging.info(f"All {type}s are processed")
         return
+    
+    update_fn(documents, "processing", cursor)
 
     logging.info(f"Loaded {len(documents)}")
 
@@ -59,7 +61,7 @@ def index_batch(type: str,
         logging.info(f"Inserting to index: {n+1}/{len(documents)}")
     
     logging.info(f"Updating {type}s...")
-    update_fn(documents, cursor)
+    update_fn(documents, "processed", cursor)
     logging.info(f"{type}s updated")
     
     logging.info(f"batch {batch_serial}/{num_of_batches} processed")

@@ -8,6 +8,7 @@ from llama_index.core import Settings, Document
 from llama_index.llms.fireworks import Fireworks
 from llama_index.graph_stores.memgraph import MemgraphPropertyGraphStore
 from llama_index.readers.database import DatabaseReader
+from psycopg2.extensions import cursor as Cursor
 from src.fireworks_embedding import FireworksEmbedding
 from .jobs.index_batch import index_batch
 
@@ -46,12 +47,12 @@ class GraphBuilder:
         if type == "document_chunk":
             count_fn = self.get_document_chunks_count
             load_fn = self._load_documents
-            update_fn = self.update_documents
+            update_fn = self.mark_documents
             
         if type == "comment":
             count_fn = self.get_comments_count
             load_fn = self._load_comments
-            update_fn = self.update_comments
+            update_fn = self.mark_comments
             
         self.build_graph_from(type=type,
                               reader=reader,
@@ -122,7 +123,7 @@ class GraphBuilder:
                     'document' as document_type
                 from document_chunks
                 inner join documents on documents.id = document_chunks.document_id
-                where document_chunks.processed = FALSE                
+                where document_chunks.processing_status = 'waiting'
                 limit {limit}
             """,
             metadata_cols=[
@@ -160,7 +161,7 @@ class GraphBuilder:
                     'comment' as document_type
                 from document_comments
                 inner join documents on documents.id = document_comments.document_id
-                where document_comments.processed = FALSE                
+                where document_comments.processing_status = 'waiting'
                 limit {limit}
             """,
             metadata_cols=[
@@ -187,14 +188,14 @@ class GraphBuilder:
         return transformed_comments
 
     def get_document_chunks_count(self, cursor) -> int:
-        cursor.execute("select count(*) from document_chunks where processed = FALSE")
+        cursor.execute("select count(*) from document_chunks where processing_status = 'waiting'")
         return cursor.fetchone()[0]
     
     def get_comments_count(self, cursor) -> int:
-        cursor.execute("select count(*) from document_comments where processed = FALSE")
+        cursor.execute("select count(*) from document_comments where processing_status = 'waiting'")
         return cursor.fetchone()[0]
     
-    def update_documents(self, documents: List[Document], cursor):
+    def mark_documents(self, documents: List[Document], status: str, cursor: Cursor):
         if len(documents) == 0:
             return
         
@@ -203,16 +204,16 @@ class GraphBuilder:
         
         cursor.execute(f"""
                        update document_chunks
-                       set processed = TRUE
+                       set processing_status = '{status}'
                        where id in ({doc_ids_str})                    
                        """)
         
-        logging.info(f"{cursor.rowcount} rows updated")
+        logging.info(f"{cursor.rowcount} rows marked as {status}")
         
         if cursor.rowcount != len(documents):
             logging.warning(f"Graph building: not all document_chunk rows were processed succesfuly. Expected: {len(documents)}. Actual: {cursor.rowcount}")
             
-    def update_comments(self, comments: List[Document], cursor):
+    def mark_comments(self, comments: List[Document], status: str, cursor):
         if len(comments) == 0:
             return
         
@@ -221,11 +222,11 @@ class GraphBuilder:
         
         cursor.execute(f"""
                        update document_comments
-                       set processed = TRUE
+                       set processing_status = '{status}'
                        where id in ({comm_id_str})                    
                        """)
         
-        logging.info(f"{cursor.rowcount} rows updated")
+        logging.info(f"{cursor.rowcount} rows marked as {status}")
         
         if cursor.rowcount != len(comments):
             logging.warning(f"Graph building: not all comments rows were processed succesfuly. Expected: {len(comments)}. Actual: {cursor.rowcount}")
