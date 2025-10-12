@@ -1,29 +1,31 @@
 import os
 import logging
-from typing import Callable, List
 from llama_index.core.indices.property_graph import SimpleLLMPathExtractor
-from llama_index.core import PropertyGraphIndex, Document
-from llama_index.readers.database import DatabaseReader
-from llama_index.core.embeddings import BaseEmbedding
-from llama_index.llms.fireworks import Fireworks
-from llama_index.graph_stores.memgraph import MemgraphPropertyGraphStore
-from psycopg2.extensions import cursor as Cursor
+from llama_index.core import PropertyGraphIndex
+from src.factories import create_db_reader, create_graph_store, create_llm, create_embed_model, create_db_cursor
+from src.services import get_comment_batch, get_document_chunk_batch, mark_comments, mark_document_chunks
 
-def index_batch(type: str,                
-                reader: DatabaseReader,
+def index_batch(type: str,
                 limit: int,
-                load_fn: Callable[[DatabaseReader, int], List[Document]],
-                update_fn: Callable[[List[Document], Cursor], any],
-                llm: Fireworks,
-                embed_model: BaseEmbedding,
-                graph_store: MemgraphPropertyGraphStore,
-                cursor: Cursor,
                 num_of_batches: int,
                 batch_serial: int,
                 tenant_id: str):
     
     logging.info(f"Processing batch {batch_serial}/{num_of_batches}... for tenant {tenant_id}")
     logging.info(f"Loading {type}s...")
+    
+    if type == "document_chunk":
+        load_fn = get_document_chunk_batch
+        update_fn = mark_document_chunks
+        
+    if type == "comment":
+        load_fn = get_comment_batch
+        update_fn = mark_comments
+    
+    reader = create_db_reader(tenant_id=tenant_id)
+    cursor = create_db_cursor(tenant_id=tenant_id)
+    llm = create_llm()
+    embed_model = create_embed_model()
     documents = load_fn(reader=reader, limit=limit)
     
     if len(documents) == 0:
@@ -46,6 +48,7 @@ def index_batch(type: str,
         show_progress = True
     
     logging.info("Creating graph index...")    
+    graph_store = create_graph_store(tenant_id=tenant_id)
     index = PropertyGraphIndex.from_documents(documents,
                                               llm=llm,
                                               embed_kg_nodes=True,

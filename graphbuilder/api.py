@@ -1,6 +1,11 @@
+import os
 import logging
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from src.graphbuilder import GraphBuilder
+
+load_dotenv()
+os.environ["OPENAI_API_KEY"] = os.getenv("FIREWORKS_API_KEY")
 
 app = Flask(__name__)
     
