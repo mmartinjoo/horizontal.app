@@ -4,3 +4,4 @@ postgres_data
 memgraph_data
 redis_data
 .serverless
+redisdata

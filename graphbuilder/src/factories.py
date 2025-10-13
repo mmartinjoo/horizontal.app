@@ -1,5 +1,6 @@
 import os
 import psycopg2
+import logging
 from redis import Redis
 from rq import Queue
 from llama_index.readers.database import DatabaseReader

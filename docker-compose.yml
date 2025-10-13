@@ -10,6 +10,12 @@ services:
       - ./api/storage:/var/www/storage
       - /var/www/vendor  # Anonymous volume for vendor to avoid host conflicts
       - /var/www/node_modules  # Anonymous volume for node_modules
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+#      interval: 30s
+#      timeout: 5s
+#      retries: 3
+#      start_period: 40s
     depends_on:
       db:
         condition: service_healthy
@@ -83,10 +89,11 @@ services:
 #    depends_on:
 #      - api
 #
-  graphbuilder:
+  graphbuilder-api:
     build:
       context: ./graphbuilder
       dockerfile: Dockerfile
+      target: api
     ports:
       - "9998:9998"
     volumes:
@@ -94,15 +101,43 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      api:
+        condition: service_started
       memgraph-tenant1:
         condition: service_started
       memgraph-tenant2:
         condition: service_started
-    command: gunicorn api:app --bind 0.0.0.0:9998 --log-level info --timeout 600
+
+  graphbuilder-worker:
+    build:
+      context: ./graphbuilder
+      dockerfile: Dockerfile
+      target: worker
+#    deploy:
+#      replicas: 4
+    volumes:
+      - ./graphbuilder:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      memgraph-tenant1:
+        condition: service_started
+      memgraph-tenant2:
+        condition: service_started
 
   redis:
     image: redis:7.4.2-alpine
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     ports:
       - "63791:6379"
     volumes:

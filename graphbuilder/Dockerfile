@@ -1,4 +1,4 @@
-FROM python:3.12.8-slim
+FROM python:3.12.8-slim AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -21,7 +21,11 @@ RUN pip install --upgrade pip
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+FROM base AS api
 COPY . .
-
 EXPOSE 9998
+CMD [ "gunicorn", "api:app", "--bind", "0.0.0.0:9998", "--log-level", "info", "--timeout", "600" ]
+
+FROM base AS worker
+COPY . .
+CMD [ "rq", "worker", "--url", "redis://redis:6379", "high", "default", "low" ]

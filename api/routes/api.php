@@ -9,5 +9,8 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::get('/tenants', function () {
             return \App\Models\Tenant::all();
         });
+        Route::get('/health', function() {
+            return response()->json(['status' => 'ok']);
+        });
     });
 }
