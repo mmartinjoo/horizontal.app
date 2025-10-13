@@ -5,8 +5,8 @@ namespace App\Services\Integration\Communication\DataTransferObjects;
 class Channel
 {
     public function __construct(
-        protected string $externalId,
-        protected string $name,
+        public string $externalId,
+        public string $name,
     ) {
     }
 
