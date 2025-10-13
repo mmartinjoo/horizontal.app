@@ -43,6 +43,6 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('password'),
         ]);
 
-        $this->call(MemgraphSeeder::class);
+//        $this->call(MemgraphSeeder::class);
     }
 }
