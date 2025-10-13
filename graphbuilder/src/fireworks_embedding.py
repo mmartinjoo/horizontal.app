@@ -1,10 +1,8 @@
 from typing import Any, List
 
-from llama_index.core.bridge.pydantic import PrivateAttr
 from llama_index.core.embeddings import BaseEmbedding
 from openai import OpenAI
 import os
-
 
 class FireworksEmbedding(BaseEmbedding):
     _client: OpenAI
@@ -13,7 +11,7 @@ class FireworksEmbedding(BaseEmbedding):
         self,
         **kwargs: Any,
     ) -> None:
-        super().__init__(**kwargs)        
+        super().__init__(model_name="nomic-ai/nomic-embed-text-v1.5", **kwargs) 
         self._client = OpenAI(
             base_url="https://api.fireworks.ai/inference/v1",
             api_key=os.getenv("FIREWORKS_API_KEY"),

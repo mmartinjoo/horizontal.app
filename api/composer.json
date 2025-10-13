@@ -7,19 +7,22 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "bref/bref": "^2.4",
+        "bref/laravel-bridge": "^2.7",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
+        "league/flysystem-aws-s3-v3": "^3.0",
         "masbug/flysystem-google-drive-ext": "^2.4",
         "openai-php/client": "^0.15.0",
         "predis/predis": "^3.2",
         "prinsfrank/pdfparser": "^2.3",
+        "stancl/tenancy": "v3.9.1",
         "stefanak-michal/bolt": "^7.2",
         "stefanak-michal/memgraph-bolt-wrapper": "^3.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
-        "laravel/boost": "^1.0",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.41",
@@ -40,6 +43,10 @@
         }
     },
     "scripts": {
+        "pre-autoload-dump": [
+            "Google\\Task\\Composer::cleanup",
+            "Aws\\Script\\Composer\\Composer::removeUnusedServices"
+        ],
         "post-autoload-dump": [
             "@php artisan config:clear",
             "@php artisan clear-compiled",
@@ -68,7 +75,13 @@
     "extra": {
         "laravel": {
             "dont-discover": []
-        }
+        },
+        "google/apiclient-services": [
+            "Drive"
+        ],
+        "aws/aws-sdk-php": [
+            "Sqs"
+        ]
     },
     "config": {
         "optimize-autoloader": true,

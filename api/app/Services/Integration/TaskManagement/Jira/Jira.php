@@ -3,7 +3,6 @@
 namespace App\Services\Integration\TaskManagement\Jira;
 
 use App\Models\JiraIntegration;
-use App\Models\Team;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use Carbon\Carbon;
 use Exception;
@@ -17,9 +16,9 @@ class Jira
         private JiraTokenManager $tokenManager
     ) {}
 
-    public function makeRequest(Team $team, string $endpoint): Response
+    public function makeRequest(string $endpoint): Response
     {
-        $integration = $this->getValidIntegration($team);
+        $integration = $this->getValidIntegration();
 
         $url = $this->buildApiUrl($integration, $endpoint);
 
@@ -31,7 +30,6 @@ class Jira
         // If token is invalid, try to refresh and retry once
         if ($response->status() === 401) {
             Log::info('Jira API returned 401, attempting token refresh', [
-                'team_id' => $team->id,
                 'integration_id' => $integration->id,
             ]);
 
@@ -47,9 +45,9 @@ class Jira
         return $response;
     }
 
-    public function getProjects(Team $team): array
+    public function getProjects(): array
     {
-        $response = $this->makeRequest($team, '/rest/api/3/project');
+        $response = $this->makeRequest('/rest/api/3/project');
 
         if (!$response->successful()) {
             throw new Exception('Failed to fetch Jira projects: ' . $response->body());
@@ -58,7 +56,7 @@ class Jira
         return $response->json();
     }
 
-    public function getIssues(Team $team, string $projectKey, Carbon $from, Carbon $to): array
+    public function getIssues(string $projectKey, Carbon $from, Carbon $to): array
     {
         $fromDate = $from->format('Y-m-d');
         $toDate = $to->format('Y-m-d');
@@ -71,7 +69,7 @@ class Jira
         ];
 
         $endpoint = '/rest/api/3/search/jql?' . http_build_query($queryParams);
-        $response = $this->makeRequest($team, $endpoint);
+        $response = $this->makeRequest($endpoint);
 
         if (!$response->successful()) {
             throw new Exception('Failed to fetch Jira issues: ' . $response->body());
@@ -80,9 +78,9 @@ class Jira
         return $response->json('issues');
     }
 
-    public function getIssueComments(Team $team, Issue $issue): array
+    public function getIssueComments(Issue $issue): array
     {
-        $response = $this->makeRequest($team, "/rest/api/3/issue/{$issue->id}/comment");
+        $response = $this->makeRequest("/rest/api/3/issue/{$issue->id}/comment");
 
         if (!$response->successful()) {
             throw new Exception('Failed to fetch issue comments: ' . $response->body());
@@ -91,9 +89,9 @@ class Jira
         return $response->json('comments');
     }
 
-    public function getWorklogs(Team $team, Issue $issue): array
+    public function getWorklogs(Issue $issue): array
     {
-        $response = $this->makeRequest($team, "/rest/api/3/issue/{$issue->id}/worklog");
+        $response = $this->makeRequest("/rest/api/3/issue/{$issue->id}/worklog");
 
         if (!$response->successful()) {
             throw new Exception('Failed to fetch worklogs: ' . $response->body());
@@ -102,9 +100,9 @@ class Jira
         return $response->json('worklogs');
     }
 
-    public function getWatchers(Team $team, Issue $issue): array
+    public function getWatchers(Issue $issue): array
     {
-        $response = $this->makeRequest($team, "/rest/api/3/issue/{$issue->id}/watchers");
+        $response = $this->makeRequest("/rest/api/3/issue/{$issue->id}/watchers");
 
         if (!$response->successful()) {
             throw new Exception('Failed to fetch worklogs: ' . $response->body());
@@ -113,9 +111,9 @@ class Jira
         return $response->json('watchers');
     }
 
-    public function getVoters(Team $team, Issue $issue): array
+    public function getVoters(Issue $issue): array
     {
-        $response = $this->makeRequest($team, "/rest/api/3/issue/{$issue->id}/votes");
+        $response = $this->makeRequest("/rest/api/3/issue/{$issue->id}/votes");
 
         if (!$response->successful()) {
             throw new Exception('Failed to fetch votes: ' . $response->body());
@@ -126,12 +124,12 @@ class Jira
     }
 
 
-    private function getValidIntegration(Team $team): JiraIntegration
+    private function getValidIntegration(): JiraIntegration
     {
-        $integration = JiraIntegration::where('team_id', $team->id)->first();
+        $integration = JiraIntegration::first();
 
         if (!$integration) {
-            throw new Exception('No Jira integration found for team');
+            throw new Exception('No Jira integration found');
         }
 
         // Ensure token is valid (refresh if needed)

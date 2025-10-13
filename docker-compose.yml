@@ -10,10 +10,18 @@ services:
       - ./api/storage:/var/www/storage
       - /var/www/vendor  # Anonymous volume for vendor to avoid host conflicts
       - /var/www/node_modules  # Anonymous volume for node_modules
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+#      interval: 30s
+#      timeout: 5s
+#      retries: 3
+#      start_period: 40s
     depends_on:
       db:
         condition: service_healthy
-      memgraph:
+      memgraph-tenant1:
+        condition: service_started
+      memgraph-tenant2:
         condition: service_started
     command: >
       sh -c "
@@ -29,8 +37,8 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-    deploy:
-      replicas: 4
+#    deploy:
+#      replicas: 4
     volumes:
       - ./api:/var/www
       - ./api/storage:/var/www/storage
@@ -39,7 +47,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      memgraph:
+      memgraph-tenant1:
+        condition: service_started
+      memgraph-tenant2:
         condition: service_started
     command: >
       sh -c "
@@ -79,10 +89,11 @@ services:
 #    depends_on:
 #      - api
 #
-  graphbuilder:
+  graphbuilder-api:
     build:
       context: ./graphbuilder
       dockerfile: Dockerfile
+      target: api
     ports:
       - "9998:9998"
     volumes:
@@ -90,19 +101,67 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      memgraph:
+      api:
         condition: service_started
-    environment:
-      - HOT_RELOAD_ENABLED=true
-    command: python main.py
+      memgraph-tenant1:
+        condition: service_started
+      memgraph-tenant2:
+        condition: service_started
 
-  memgraph:
+  graphbuilder-worker:
+    build:
+      context: ./graphbuilder
+      dockerfile: Dockerfile
+      target: worker
+    deploy:
+      replicas: 4
+    volumes:
+      - ./graphbuilder:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      memgraph-tenant1:
+        condition: service_started
+      memgraph-tenant2:
+        condition: service_started
+
+  redis:
+    image: redis:7.4.2-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    ports:
+      - "63791:6379"
+    volumes:
+      - ./redisdata:/data
+
+  memgraph-tenant1:
     image: memgraph/memgraph-mage:latest
     volumes:
-      - ./memgraph_data:/var/lib/memgraph
+      - memgraph_tenant1_data:/var/lib/memgraph
     ports:
       - "7687:7687"
       - "7444:7444"
+    command: [ "--log-level=TRACE" ]
+    environment:
+      - MEMGRAPH_USER=horizontal
+      - MEMGRAPH_PASSWORD=password
+
+  memgraph-tenant2:
+    image: memgraph/memgraph-mage:latest
+    volumes:
+      - memgraph_tenant2_data:/var/lib/memgraph
+    ports:
+      - "7688:7687"
+      - "7445:7444"
     command: [ "--log-level=TRACE" ]
     environment:
       - MEMGRAPH_USER=horizontal
@@ -113,11 +172,17 @@ services:
     ports:
       - "9997:3000"
     depends_on:
-      memgraph:
+      memgraph-tenant1:
+        condition: service_started
+      memgraph-tenant2:
         condition: service_started
     environment:
-      - QUICK_CONNECT_MG_HOST=memgraph
+      - QUICK_CONNECT_MG_HOST=memgraph-tenant1
       - QUICK_CONNECT_MG_PORT=7687
+
+volumes:
+  memgraph_tenant1_data:
+  memgraph_tenant2_data:
 
   graphiti:
     build:

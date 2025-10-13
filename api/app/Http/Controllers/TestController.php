@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\Indexing\IndexKnowledgeBase;
-use App\Services\KnowledgeGraph\GraphBuilder;
 
 class TestController extends Controller
 {
-    public function index(GraphBuilder $graphBuilder)
+    public function index()
     {
         IndexKnowledgeBase::dispatch();
 
@@ -16,8 +15,6 @@ class TestController extends Controller
 
     public function token()
     {
-        $team = \App\Models\Team::where(['name' => 'Test Company'])->firstOrFail();
-
         $user = \App\Models\User::updateOrCreate(
             [
                 'email' => 'jira1@example.com',
@@ -26,7 +23,6 @@ class TestController extends Controller
                 'name' => 'Test User',
                 'email' => 'jira1@example.com',
                 'password' => bcrypt('password'),
-                'team_id' => $team->id
             ],
         );
 

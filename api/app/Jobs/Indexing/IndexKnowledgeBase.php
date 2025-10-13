@@ -6,7 +6,7 @@ use App\Jobs\Indexing\KnowledgeGraph\BuildCommunities;
 use App\Jobs\Indexing\KnowledgeGraph\BuildKnowledgeGraph;
 use App\Jobs\Indexing\KnowledgeGraph\BuildRelatedNodes;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
-use App\Models\Team;
+use App\Services\GraphDB\GraphDB;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -14,20 +14,20 @@ class IndexKnowledgeBase implements ShouldQueue
 {
     use Queueable;
 
-    public function handle()
+    public function handle(GraphDB $graphDB)
     {
-        $team = Team::where('name', 'Test Company')->firstOrFail();
+        $graphDB->run('MATCH (n) DETACH DELETE n');
 
-        IndexGoogleDrive::dispatch($team);
-//        IndexJira::dispatch($team);
+        IndexGoogleDrive::dispatch();
+//        IndexJira::dispatch();
 
         BuildKnowledgeGraph::dispatch()
-            ->delay(now()->addMinutes(2));
+            ->delay(now()->addMinutes(5));
 
         BuildRelatedNodes::dispatch()
-            ->delay(now()->addMinutes(8));
+            ->delay(now()->addMinutes(10));
 
         BuildCommunities::dispatch()
-            ->delay(now()->addMinutes(10));
+            ->delay(now()->addMinutes(17));
     }
 }
