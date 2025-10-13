@@ -42,5 +42,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'user@tenant2.com',
             'password' => bcrypt('password'),
         ]);
+
+        $this->call(MemgraphSeeder::class);
     }
 }
