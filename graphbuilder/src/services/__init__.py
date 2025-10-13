@@ -1,2 +1,2 @@
-from .document import count_waiting_comments, count_waiting_document_chunks, mark_comments, mark_document_chunks, get_comment_batch, get_document_chunk_batch
+from .document import count_waiting_comments, count_waiting_document_chunks, get_comment_batch, get_document_chunk_batch, mark_comments_as_processed, mark_comments_as_processing, mark_document_chunks_as_processed, mark_document_chunks_as_processing
 from .horizontal_api import get_graph_db_connection_info
