@@ -50,7 +50,7 @@ def create_graph_client(tenant_id: str) -> neo4j.Driver:
 
 def create_queue() -> Queue:
     redis = Redis(host=os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT"))
-    return Queue(connection=redis, name="default")
+    return Queue(connection=redis, name="default", default_timeout="30m")
 
 def create_llm() -> Fireworks:
     return Fireworks(api_key=os.getenv("FIREWORKS_API_KEY"),

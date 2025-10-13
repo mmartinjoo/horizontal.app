@@ -15,8 +15,6 @@ def index_batch(type: str,
     logging.info(f"Processing batch {batch_serial}/{num_of_batches}... for tenant {tenant_id}")
     logging.info(f"Loading {type}s...")
     
-    
-    
     if type == "document_chunk":
         get_batch_fn = get_document_chunk_batch
         mark_as_processing_fn = mark_document_chunks_as_processing
@@ -31,7 +29,7 @@ def index_batch(type: str,
     cursor = create_db_cursor(tenant_id=tenant_id)
     llm = create_llm()
     embed_model = create_embed_model()
-    documents = get_batch_fn(reader=reader, limit=limit)
+    documents = get_batch_fn(reader=reader, limit=limit, offset=limit*(batch_serial-1))
     
     if len(documents) == 0:
         logging.info(f"All {type}s are processed")

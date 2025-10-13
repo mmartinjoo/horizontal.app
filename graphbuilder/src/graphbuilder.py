@@ -20,11 +20,10 @@ class GraphBuilder:
             session.run("STORAGE MODE IN_MEMORY_ANALYTICAL")
             
         cursor = create_db_cursor(tenant_id=self.tenant_id)
+        self.build_graph(type="document_chunk",
+                         cursor=cursor)
         self.build_graph(type="comment",
                          cursor=cursor)
-        
-        # self.build_graph(type="document_chunk",
-                        #  cursor=cursor)
     
     def build_graph(self, 
                     type: str,
@@ -54,7 +53,8 @@ class GraphBuilder:
                                5,   # limit
                                num_of_batches,
                                i+1, # batch serial
-                               self.tenant_id)
+                               self.tenant_id,
+                               job_timeout="30m")
 
             job_ids.append(job.id)
             

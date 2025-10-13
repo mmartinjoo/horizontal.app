@@ -4,7 +4,7 @@ from psycopg2.extensions import cursor as Cursor
 from llama_index.core import Document
 from llama_index.readers.database import DatabaseReader
 
-def get_document_chunk_batch(reader: DatabaseReader, limit: int) -> List[Document]:
+def get_document_chunk_batch(reader: DatabaseReader, limit: int, offset: int) -> List[Document]:
     documents = reader.load_data(
         query=f"""
             select
@@ -18,7 +18,9 @@ def get_document_chunk_batch(reader: DatabaseReader, limit: int) -> List[Documen
             from document_chunks
             inner join documents on documents.id = document_chunks.document_id
             where document_chunks.processing_status = 'waiting'
+            order by document_chunks.id
             limit {limit}
+            offset {offset}
         """,
         metadata_cols=[
             "title", "source_type", "source_url", "document_chunk_id", "source_document_id", "document_type",
@@ -43,7 +45,7 @@ def get_document_chunk_batch(reader: DatabaseReader, limit: int) -> List[Documen
         
     return transformed_documents
 
-def get_comment_batch(reader: DatabaseReader, limit: int) -> List[Document]:
+def get_comment_batch(reader: DatabaseReader, limit: int, offset: int) -> List[Document]:
         comments = reader.load_data(
             query=f"""
                 select
@@ -56,7 +58,9 @@ def get_comment_batch(reader: DatabaseReader, limit: int) -> List[Document]:
                 from document_comments
                 inner join documents on documents.id = document_comments.document_id
                 where document_comments.processing_status = 'waiting'
+                order by document_comments.id
                 limit {limit}
+                offset {offset}
             """,
             metadata_cols=[
                 "source_type", "source_url", "comment_id", "parent_document_id", "document_type",

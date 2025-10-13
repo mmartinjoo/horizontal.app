@@ -37,8 +37,9 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-#    deploy:
-#      replicas: 4
+    restart: unless-stopped
+    deploy:
+      replicas: 4
     volumes:
       - ./api:/var/www
       - ./api/storage:/var/www/storage
@@ -55,7 +56,7 @@ services:
       sh -c "
         sleep 10 &&
         composer install &&
-        php artisan queue:listen
+        php artisan queue:listen --timeout=300
       "
 
   db:
@@ -115,6 +116,7 @@ services:
       target: worker
     deploy:
       replicas: 4
+    restart: unless-stopped
     volumes:
       - ./graphbuilder:/app
     depends_on:
