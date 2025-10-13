@@ -113,8 +113,8 @@ services:
       context: ./graphbuilder
       dockerfile: Dockerfile
       target: worker
-#    deploy:
-#      replicas: 4
+    deploy:
+      replicas: 4
     volumes:
       - ./graphbuilder:/app
     depends_on:
