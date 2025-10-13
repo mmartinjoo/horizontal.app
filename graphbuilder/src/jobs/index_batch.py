@@ -14,6 +14,8 @@ def index_batch(type: str,
     logging.info(f"Processing batch {batch_serial}/{num_of_batches}... for tenant {tenant_id}")
     logging.info(f"Loading {type}s...")
     
+    
+    
     if type == "document_chunk":
         load_fn = get_document_chunk_batch
         update_fn = mark_document_chunks
