@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\IndexKnowledgeBase;
 
 class TestController extends Controller
 {
     public function index()
     {
-        IndexKnowledgeBase::dispatch();
+        IndexSlack::dispatch();
+//        IndexKnowledgeBase::dispatch();
 
         return response('indexing...');
     }
