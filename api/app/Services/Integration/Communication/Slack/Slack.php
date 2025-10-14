@@ -11,8 +11,10 @@ use App\Services\Integration\Communication\Exceptions\UserNotFoundException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Throwable;
 
 class Slack
 {
@@ -88,8 +90,8 @@ class Slack
             if (Arr::get($message, 'thread_ts') === $message['ts']) {
                 // this is a thread. it's processed in a dedicated function
                 continue;
-            }
-            $messages[] = Message::fromSlack($channel, $message);
+            }            
+            $messages[] = $this->makeMessageWithMentions($channel, $message);
         }
         return collect($messages);
     }
@@ -132,7 +134,7 @@ class Slack
                 // this is an individual message without replies. it's processed in a dedicated function
                 continue;
             }
-            $messages[] = Message::fromSlack($channel, $message);
+            $messages[] = $this->makeMessageWithMentions($channel, $message);
         }
         foreach ($messages as $message) {
             $message->replies = $this->replies($channel, $message);
@@ -164,7 +166,7 @@ class Slack
             if ($message['ts'] === $thread->externalId) {
                 continue;
             }
-            $replies[] = Message::fromSlack($channel, $message);
+            $replies[] = $this->makeMessageWithMentions($channel, $message);
         }
         return collect($replies);
     }
@@ -202,16 +204,63 @@ class Slack
         return $users;
     }
 
-    public function user(string $username): User
+    public function userByID(string $id): User
     {
         $user = $this->users()
-            ->filter(fn (User $user) => $user->username === $username)
+            ->filter(fn (User $user) => $user->externalId === $id)
             ->first();
 
         if (!$user) {
-            throw new UserNotFoundException("User not found with username: $username");
+            throw new UserNotFoundException("User not found with ID: $id");
         }
 
         return $user;
+    }
+
+    private function makeMessageWithMentions(Channel $channel, array $data): Message
+    {
+        $message = Message::fromSlack($channel, $data);
+        return $this->swapMentions($message);
+    }
+
+    private function swapMentions(Message $message): Message
+    {
+        try {
+            $userIDs = $this->getMentionIDs($message);
+            $users = [];
+            foreach ($userIDs as $id) {
+                $users[] = $this->userByID($id);
+            }
+
+            foreach ($userIDs as $i => $id) {
+                if (isset($users[$i])) {
+                    $message->message = str_replace("<@$id>", $users[$i]->realName, $message->message);
+                }
+            }
+            return $message;
+        } catch (Throwable $ex) {
+            return $message;
+        }
+    }
+
+    /**
+     * @return Collection<string> The mentioned user IDs in a given message
+     */
+    private function getMentionIDs(Message $message): Collection
+    {
+        $pattern = '/<@([A-Z0-9]{11})>/';
+        preg_match_all($pattern, $message->message, $matches);
+
+        // Contains strings like this: <@U09ED7YES5B>
+        $mentions = $matches[0];
+        $ids = [];
+        foreach ($mentions as $mention) {
+            // Transforming into raw ID: U09ED7YES5B
+            $id = Str::replaceFirst('<', '', $mention);
+            $id = Str::replaceFirst('@', '', $id);
+            $id = Str::replaceLast('>', '', $id);
+            $ids[] = $id;
+        }
+        return collect($ids);
     }
 }
