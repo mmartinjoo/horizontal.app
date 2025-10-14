@@ -219,7 +219,13 @@ class Slack
 
     private function makeMessageWithMentions(Channel $channel, array $data): Message
     {
-        $message = Message::fromSlack($channel, $data);
+        try {
+            $author = $this->userByID($data['user']);
+        } catch (UserNotFoundException) {
+            $author = null;
+        }
+        
+        $message = Message::fromSlack($channel, $data, $author);
         return $this->swapMentions($message);
     }
 

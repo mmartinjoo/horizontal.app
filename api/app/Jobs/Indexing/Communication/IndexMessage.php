@@ -5,6 +5,7 @@ namespace App\Jobs\Indexing\Communication;
 use App\Exceptions\NoContentToIndexException;
 use App\Models\Document;
 use App\Models\DocumentChunk;
+use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -36,6 +37,12 @@ class IndexMessage implements ShouldQueue
             'priority' => 'high',
             'metadata' => $this->message,
         ]);
+        if ($this->message->author) {
+            $author = Participant::getOrCreate($this->message->author?->realName);
+            $document->participants()->attach($author->id, [
+                'context' => 'author',
+            ]);
+        }
 
         foreach ($chunks as $i => $chunk) {
             DocumentChunk::create([

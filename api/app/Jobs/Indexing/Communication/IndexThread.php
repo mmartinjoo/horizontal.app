@@ -24,17 +24,19 @@ class IndexThread implements ShouldQueue
             ->where('source_id', $this->thread->externalId)
             ->firstOrFail();
 
+        /** @var Message $reply */
         foreach ($this->thread->replies as $reply) {
-            // TODO: get usernames
-            $p = Participant::getOrCreate($reply->externalUserId);
-            $document->comments()->create([
-                'author_id' => $p->id,
-                'body' => $reply->message,
-                'commented_at' => now(),
-                'comment_id' => $reply->externalId,
-                'metadata' => $reply,
-                'commented_at' => $reply->createdAt,
-            ]);
+            if ($reply->author) {
+                $p = Participant::getOrCreate($reply->author->realName);
+                $document->comments()->create([
+                    'author_id' => $p->id,
+                    'body' => $reply->message,
+                    'commented_at' => now(),
+                    'comment_id' => $reply->externalId,
+                    'metadata' => $reply,
+                    'commented_at' => $reply->createdAt,
+                ]);
+            }
         }
     }
 }

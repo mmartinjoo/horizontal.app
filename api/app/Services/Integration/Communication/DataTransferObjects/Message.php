@@ -19,10 +19,11 @@ class Message
         public string $externalUserId,
         public string $externalId,
         public Carbon $createdAt,
+        public ?User $author,
     ) {
     }
 
-    public static function fromSlack(Channel $channel, array $data): self
+    public static function fromSlack(Channel $channel, array $data, ?User $author = null): self
     {
         return new self(
             channel: $channel,
@@ -30,6 +31,7 @@ class Message
             externalUserId: $data['user'],
             externalId: $data['ts'],
             createdAt: Carbon::parse($data['ts']),
+            author: $author,
         );
     }
 }
