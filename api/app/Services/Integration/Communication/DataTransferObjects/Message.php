@@ -2,6 +2,8 @@
 
 namespace App\Services\Integration\Communication\DataTransferObjects;
 
+use Illuminate\Support\Arr;
+
 class Message
 {
     public function __construct(
@@ -9,6 +11,7 @@ class Message
         public string $message,
         public string $externalUserId,
         public string $externalId,
+        public ?string $externalThreadId = null,
     ) {
     }
 
@@ -18,7 +21,8 @@ class Message
             channel: $channel,
             message: $data['text'],
             externalUserId: $data['user'],
-            externalId: $data['client_msg_id'],
+            externalId: $data['ts'],
+            externalThreadId: Arr::get($data, 'thread_ts'),
         );
     }
 }

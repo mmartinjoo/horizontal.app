@@ -11,6 +11,7 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class Slack
 {
@@ -46,7 +47,14 @@ class Slack
         return collect($channels);
     }
 
-    public function conversations(Channel $channel)
+    /**
+     * @param Channel $channel
+     * @return Collection<Message>
+     * @throws ConnectionException
+     * @throws FailedToLoadMessagesException
+     * @throws RequestException
+     */
+    public function messages(Channel $channel): Collection
     {
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->botUserOauthToken,
@@ -54,7 +62,7 @@ class Slack
             ->get($this->baseUrl . '/conversations.history', [
                 'channel' => $channel->externalId,
                 'oldest' => now()->subMonths(3)->timestamp,
-                'limit' => 20,
+                'limit' => 100,
                 "inclusive" => true,
             ])
             ->throw()
@@ -73,9 +81,12 @@ class Slack
                 // channel_join, etc
                 continue;
             }
+            if (Arr::get($message, 'thread_ts') === $message['ts']) {
+                // this is a thread. it's processed in a dedicated function
+                continue;
+            }
             $messages[] = Message::fromSlack($channel, $message);
         }
-
-        dd($messages);
+        return collect($messages);
     }
 }
