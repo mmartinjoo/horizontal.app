@@ -127,20 +127,22 @@ class Slack
                 // this is an individual message without replies. it's processed in a dedicated function
                 continue;
             }
-
-
+            $messages[] = Message::fromSlack($channel, $message);
+        }
+        foreach ($messages as $message) {
+            $message->replies = $this->replies($channel, $message);
         }
         return collect($messages);
     }
 
-    public function replies(Channel $channel, Message $message): Collection
+    public function replies(Channel $channel, Message $thread): Collection
     {
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->botUserOauthToken,
         ])
             ->get($this->baseUrl . '/conversations.replies', [
                 'channel' => $channel->externalId,
-                'ts' => $message->externalId,
+                'ts' => $thread->externalId,
                 'oldest' => now()->subMonths(3)->timestamp,
                 'limit' => 100,
                 "inclusive" => true,
@@ -152,6 +154,13 @@ class Slack
             throw new FailedToLoadMessagesException('Failed to load replies. Response: ' . json_encode($response));
         }
 
-        return collect();
+        $replies = collect();
+        foreach ($response['messages'] as $message) {
+            if ($message['ts'] === $thread->externalId) {
+                continue;
+            }
+            $replies[] = Message::fromSlack($channel, $message);
+        }
+        return collect($replies);
     }
 }
