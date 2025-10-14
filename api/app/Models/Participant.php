@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Support\Str;
 
 class Participant extends Model
 {
@@ -25,5 +26,20 @@ class Participant extends Model
     public function entity(): MorphToMany
     {
         return $this->morphToMany(Model::class, 'entity', 'documents_participants');
+    }
+
+    public static function getOrCreate(string $name): self
+    {
+        return Participant::updateOrCreate(
+            [
+                'slug' => Str::slug($name),
+                'type' => 'person',
+            ],
+            [
+                'slug' => Str::slug($name),
+                'name' => $name,
+                'type' => 'person',
+            ],
+        );
     }
 }

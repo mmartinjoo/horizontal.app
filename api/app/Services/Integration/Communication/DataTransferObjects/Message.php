@@ -2,6 +2,7 @@
 
 namespace App\Services\Integration\Communication\DataTransferObjects;
 
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
@@ -18,6 +19,7 @@ class Message
         public string $message,
         public string $externalUserId,
         public string $externalId,
+        public Carbon $createdAt,
     ) {
     }
 
@@ -28,6 +30,7 @@ class Message
             message: $data['text'],
             externalUserId: $data['user'],
             externalId: $data['ts'],
+            createdAt: Carbon::parse($data['ts']),
         );
     }
 }
