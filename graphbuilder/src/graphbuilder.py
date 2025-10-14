@@ -1,14 +1,13 @@
 import logging
+from typing import List
 from psycopg2.extensions import cursor as Cursor
 from .jobs.index_batch import index_batch
 from .jobs.indexing_finished import indexing_finished
 from src.factories import create_queue, create_db_cursor, create_graph_client
-from src.services import count_waiting_comments, count_waiting_document_chunks
+from src.services import count_waiting_comments, count_waiting_document_chunks, get_waiting_ids
 
 class GraphBuilder:
-    def __init__(self, tenant_id: str):        
-        logging.basicConfig(level=logging.INFO)
-        
+    def __init__(self, tenant_id: str):
         self.tenant_id = tenant_id
         self.queue = create_queue()
         
@@ -20,18 +19,24 @@ class GraphBuilder:
             session.run("STORAGE MODE IN_MEMORY_ANALYTICAL")
             
         cursor = create_db_cursor(tenant_id=self.tenant_id)
-        self.build_graph(type="document_chunk",
+        doc_job_ids = self.build_graph(type="document_chunks",
                          cursor=cursor)
-        self.build_graph(type="comment",
+        comment_job_ids = self.build_graph(type="document_comments",
                          cursor=cursor)
+        
+        job_ids = doc_job_ids+comment_job_ids
+        
+        self.queue.enqueue(indexing_finished,
+                           tenant_id=self.tenant_id,
+                           depends_on=job_ids)
     
     def build_graph(self, 
                     type: str,
-                    cursor: Cursor):
+                    cursor: Cursor) -> List[str]:
         
-        logging.info(f"---- BUILDING GRAPH FROM {type}s BATCH ----")   
+        logging.warning(f"---- BUILDING GRAPH FROM {type} BATCH ----")   
         
-        if type == "document_chunk":
+        if type == "document_chunks":
             count = count_waiting_document_chunks(cursor=cursor)
         else:
             count = count_waiting_comments(cursor=cursor)
@@ -40,24 +45,26 @@ class GraphBuilder:
         num_of_batches = int(count/limit)+1
         
         if count == 0:
-            logging.info(f"No {type}s to process")
-            return
+            logging.warning(f"No {type} to process")
+            return []
         
-        logging.info(f"Number of {type}s to process: {count}")
-        logging.info(f"Number of batches: {num_of_batches}")
+        logging.warning(f"Number of {type} to process: {count}")
+        logging.warning(f"Number of batches: {num_of_batches}")
         
         job_ids = []
         for i in range(num_of_batches):
+            limit = 5
+            offset = limit*i
+            ids = get_waiting_ids(cursor=cursor, table=type, limit=limit, offset=offset)
+            if len(ids) == 0:
+                continue
+            
             job = self.queue.enqueue(index_batch,
                                type,
-                               5,   # limit
-                               num_of_batches,
-                               i+1, # batch serial
+                               ids,
                                self.tenant_id,
                                job_timeout="30m")
 
             job_ids.append(job.id)
             
-        self.queue.enqueue(indexing_finished,
-                           tenant_id=self.tenant_id,
-                           depends_on=job_ids)
+        return job_ids
