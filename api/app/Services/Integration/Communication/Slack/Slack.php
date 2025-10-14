@@ -11,7 +11,6 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 
 class Slack
 {
@@ -88,5 +87,71 @@ class Slack
             $messages[] = Message::fromSlack($channel, $message);
         }
         return collect($messages);
+    }
+
+    /**
+     * @param Channel $channel
+     * @return Collection<Message>
+     * @throws ConnectionException
+     * @throws FailedToLoadMessagesException
+     * @throws RequestException
+     */
+    public function threads(Channel $channel): Collection
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+        ])
+            ->get($this->baseUrl . '/conversations.history', [
+                'channel' => $channel->externalId,
+                'oldest' => now()->subMonths(3)->timestamp,
+                'limit' => 100,
+                "inclusive" => true,
+            ])
+            ->throw()
+            ->json();
+
+        if (!$response['ok']) {
+            throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
+        }
+
+        $messages = [];
+        foreach ($response['messages'] as $message) {
+            if ($message['type'] !== 'message') {
+                continue;
+            }
+            if (Arr::get($message, 'subtype') !== null) {
+                // channel_join, etc
+                continue;
+            }
+            if (Arr::get($message, 'thread_ts') !== $message['ts']) {
+                // this is an individual message without replies. it's processed in a dedicated function
+                continue;
+            }
+
+
+        }
+        return collect($messages);
+    }
+
+    public function replies(Channel $channel, Message $message): Collection
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+        ])
+            ->get($this->baseUrl . '/conversations.replies', [
+                'channel' => $channel->externalId,
+                'ts' => $message->externalId,
+                'oldest' => now()->subMonths(3)->timestamp,
+                'limit' => 100,
+                "inclusive" => true,
+            ])
+            ->throw()
+            ->json();
+
+        if (!$response['ok']) {
+            throw new FailedToLoadMessagesException('Failed to load replies. Response: ' . json_encode($response));
+        }
+
+        return collect();
     }
 }
