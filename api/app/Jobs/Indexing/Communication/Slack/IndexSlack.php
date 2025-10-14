@@ -3,6 +3,7 @@
 namespace App\Jobs\Indexing\Communication\Slack;
 
 use App\Jobs\Indexing\Communication\IndexMessage;
+use App\Jobs\Indexing\Communication\IndexThread;
 use App\Services\Integration\Communication\Slack\Slack;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -22,6 +23,11 @@ class IndexSlack implements ShouldQueue
             $messages = $slack->messages($channel);
             foreach ($messages as $message) {
                 IndexMessage::dispatch($message);
+            }
+
+            $threads = $slack->threads($channel);
+            foreach ($threads as $thread) {
+                IndexThread::dispatch($thread);
             }
         }
     }
