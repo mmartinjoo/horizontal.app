@@ -4,7 +4,8 @@ from psycopg2.extensions import cursor as Cursor
 from llama_index.core import Document
 from llama_index.readers.database import DatabaseReader
 
-def get_document_chunk_batch(reader: DatabaseReader, limit: int, offset: int) -> List[Document]:
+def get_document_chunk_batch(reader: DatabaseReader, ids: List[int]) -> List[Document]:
+    ids_str = ",".join([str(id) for id in ids])
     documents = reader.load_data(
         query=f"""
             select
@@ -18,9 +19,8 @@ def get_document_chunk_batch(reader: DatabaseReader, limit: int, offset: int) ->
             from document_chunks
             inner join documents on documents.id = document_chunks.document_id
             where document_chunks.processing_status = 'waiting'
-            order by document_chunks.id
-            limit {limit}
-            offset {offset}
+            and document_chunks.id in ({ids_str})
+            order by document_chunks.id        
         """,
         metadata_cols=[
             "title", "source_type", "source_url", "document_chunk_id", "source_document_id", "document_type",
@@ -45,45 +45,45 @@ def get_document_chunk_batch(reader: DatabaseReader, limit: int, offset: int) ->
         
     return transformed_documents
 
-def get_comment_batch(reader: DatabaseReader, limit: int, offset: int) -> List[Document]:
-        comments = reader.load_data(
-            query=f"""
-                select
-                    document_comments.id as comment_id,
-                    document_comments.body as body,
-                    documents.source_type as source_type,
-                    documents.source_url as source_url,
-                    documents.id as parent_document_id,
-                    'comment' as document_type
-                from document_comments
-                inner join documents on documents.id = document_comments.document_id
-                where document_comments.processing_status = 'waiting'
-                order by document_comments.id
-                limit {limit}
-                offset {offset}
-            """,
-            metadata_cols=[
-                "source_type", "source_url", "comment_id", "parent_document_id", "document_type",
-            ],
-            excluded_text_cols=[
-                "source_type", "source_url", "comment_id", "parent_document_id", "document_type",
-            ],
+def get_comment_batch(reader: DatabaseReader, ids: List[int]) -> List[Document]:    
+    ids_str = ",".join([str(id) for id in ids])
+    comments = reader.load_data(
+        query=f"""
+            select
+                document_comments.id as comment_id,
+                document_comments.body as body,
+                documents.source_type as source_type,
+                documents.source_url as source_url,
+                documents.id as parent_document_id,
+                'comment' as document_type
+            from document_comments
+            inner join documents on documents.id = document_comments.document_id
+            where document_comments.processing_status = 'waiting'
+            and document_comments.id in ({ids_str})
+            order by document_comments.id            
+        """,
+        metadata_cols=[
+            "source_type", "source_url", "comment_id", "parent_document_id", "document_type",
+        ],
+        excluded_text_cols=[
+            "source_type", "source_url", "comment_id", "parent_document_id", "document_type",
+        ],
+    )
+
+    # Original comments are copied to custom documents because the LLM also received
+    # the metadata and created graph nodes for thing like "source_url" etc
+    # I didn't find a better solution
+    transformed_comments = []
+    for comment in comments:
+        doc = Document(
+            text=comment.get_content(),
+            metadata=comment.metadata,
+            excluded_llm_metadata_keys=["source_type", "source_url", "comment_id", "parent_document_id", "document_type"],
+            excluded_embed_metadata_keys=["comment_id", "parent_document_id"],
         )
+        transformed_comments.append(doc)
 
-        # Original comments are copied to custom documents because the LLM also received
-        # the metadata and created graph nodes for thing like "source_url" etc
-        # I didn't find a better solution
-        transformed_comments = []
-        for comment in comments:
-            doc = Document(
-                text=comment.get_content(),
-                metadata=comment.metadata,
-                excluded_llm_metadata_keys=["source_type", "source_url", "comment_id", "parent_document_id", "document_type"],
-                excluded_embed_metadata_keys=["comment_id", "parent_document_id"],
-            )
-            transformed_comments.append(doc)
-
-        return transformed_comments
+    return transformed_comments
 
 def mark_document_chunks_as_processing(items: List[Document], job_id: str, cursor: Cursor):
     if len(items) == 0:
@@ -170,3 +170,15 @@ def count_waiting_document_chunks(cursor: Cursor) -> int:
 def count_waiting_comments(cursor: Cursor) -> int:
     cursor.execute("select count(*) from document_comments where processing_status = 'waiting'")
     return cursor.fetchone()[0]
+
+def get_waiting_ids(cursor: Cursor, table: str, limit: int, offset: int) -> List[int]:
+    cursor.execute(f"""
+                   select id 
+                   from {table} 
+                   where processing_status = 'waiting'
+                   order by id
+                   limit {limit}
+                   offset {offset}
+                   """)
+
+    return [row[0] for row in cursor.fetchall()]
