@@ -4,8 +4,10 @@ namespace App\Services\Integration\Communication\Slack;
 
 use App\Services\Integration\Communication\DataTransferObjects\Channel;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
+use App\Services\Integration\Communication\DataTransferObjects\User;
 use App\Services\Integration\Communication\Exceptions\FailedToLoadChannelsException;
 use App\Services\Integration\Communication\Exceptions\FailedToLoadMessagesException;
+use App\Services\Integration\Communication\Exceptions\UserNotFoundException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
@@ -14,6 +16,9 @@ use Illuminate\Support\Facades\Http;
 
 class Slack
 {
+    /** @var array<User> */
+    private static array $userCache;
+
     public function __construct(
         private string $baseUrl,
         private string $botUserOauthToken
@@ -162,5 +167,51 @@ class Slack
             $replies[] = Message::fromSlack($channel, $message);
         }
         return collect($replies);
+    }
+
+    /**
+     * @return Collection<User>
+     */
+    public function users(): Collection
+    {
+        if (!empty(self::$userCache)) {
+            return collect(self::$userCache);
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+        ])
+            ->get($this->baseUrl . '/users.list', [
+                'limit' => 100,
+            ])
+            ->throw()
+            ->json();
+
+        if (!$response['ok']) {
+            throw new FailedToLoadMessagesException('Failed to load replies. Response: ' . json_encode($response));
+        }
+
+        $users = collect();
+        foreach ($response['members'] as $member) {
+            if ($member['is_bot'] || $member['id'] === 'USLACKBOT') {
+                continue;
+            }
+            $users[] = User::fromSlack($member);
+        }
+        self::$userCache = $users->toArray();
+        return $users;
+    }
+
+    public function user(string $username): User
+    {
+        $user = $this->users()
+            ->filter(fn (User $user) => $user->username === $username)
+            ->first();
+
+        if (!$user) {
+            throw new UserNotFoundException("User not found with username: $username");
+        }
+
+        return $user;
     }
 }

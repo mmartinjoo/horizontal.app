@@ -3,7 +3,6 @@
 namespace App\Services\Integration\Communication\DataTransferObjects;
 
 use Carbon\Carbon;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class Message
