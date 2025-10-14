@@ -8,6 +8,7 @@ use App\Models\DocumentChunk;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
+use App\Services\Integration\Communication\DataTransferObjects\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -41,6 +42,14 @@ class IndexMessage implements ShouldQueue
             $author = Participant::getOrCreate($this->message->author?->realName);
             $document->participants()->attach($author->id, [
                 'context' => 'author',
+            ]);
+        }
+
+        /** @var User $mentionedUser */
+        foreach ($this->message->mentions as $mentionedUser) {
+            $p = Participant::getOrCreate($mentionedUser->realName);
+            $document->participants()->attach($p->id, [
+                'context' => 'mentioned',
             ]);
         }
 

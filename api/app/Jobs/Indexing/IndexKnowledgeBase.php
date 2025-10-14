@@ -19,7 +19,7 @@ class IndexKnowledgeBase implements ShouldQueue
         $graphDB->run('MATCH (n) DETACH DELETE n');
 
         IndexGoogleDrive::dispatch();
-//        IndexJira::dispatch();
+        // IndexJira::dispatch();
 
         BuildKnowledgeGraph::dispatch()
             ->delay(now()->addMinutes(5));

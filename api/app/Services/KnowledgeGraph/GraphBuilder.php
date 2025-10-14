@@ -162,7 +162,7 @@ class GraphBuilder
             ");
 
             foreach ($document->participants as $participant) {
-                // Already processed in `buildComments`
+                // Already processed in `onnectCommentsToDocuments`
                 if ($participant->pivot->context === 'commented') {
                     continue;
                 }

@@ -13,6 +13,12 @@ class Message
      */
     public Collection $replies;
 
+    /**
+     * Only has value if the given message mentions other user
+     * @var Collection<User> Users mentioned in a message
+     */
+    public Collection $mentions;
+
     public function __construct(
         public Channel $channel,
         public string $message,
@@ -21,6 +27,8 @@ class Message
         public Carbon $createdAt,
         public ?User $author,
     ) {
+        $this->replies = collect();
+        $this->mentions = collect();
     }
 
     public static function fromSlack(Channel $channel, array $data, ?User $author = null): self

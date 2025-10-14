@@ -222,13 +222,26 @@ class Slack
         try {
             $author = $this->userByID($data['user']);
         } catch (UserNotFoundException) {
-            $author = null;
+            $author = new User(
+                externalId: 'unknown',
+                username: 'unknown',
+                realName: 'Unknown',
+            );
         }
         
         $message = Message::fromSlack($channel, $data, $author);
         return $this->swapMentions($message);
     }
 
+    /**
+     * In the Slack message, mentions are represented like this:
+     *  "hey <@U3RB7BE81AW> what's up?"
+     * 
+     * This function swaps these IDs with the real names:
+     *  "hey John Doe what's up?"
+     * 
+     * It also sets the `mentions` property.
+     */
     private function swapMentions(Message $message): Message
     {
         try {
@@ -243,8 +256,9 @@ class Slack
                     $message->message = str_replace("<@$id>", $users[$i]->realName, $message->message);
                 }
             }
+            $message->mentions = collect($users);
             return $message;
-        } catch (Throwable $ex) {
+        } catch (Throwable) {
             return $message;
         }
     }
