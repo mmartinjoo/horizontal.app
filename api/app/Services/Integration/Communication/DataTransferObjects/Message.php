@@ -25,13 +25,13 @@ class Message
         public string $externalUserId,
         public string $externalId,
         public Carbon $createdAt,
-        public ?User $author,
+        public User $author,
     ) {
         $this->replies = collect();
         $this->mentions = collect();
     }
 
-    public static function fromSlack(Channel $channel, array $data, ?User $author = null): self
+    public static function fromSlack(Channel $channel, array $data, User $author): self
     {
         return new self(
             channel: $channel,

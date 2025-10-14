@@ -33,7 +33,7 @@ class IndexMessage implements ShouldQueue
         $document = Document::create([
             'source_type' => 'slack',
             'source_id' => $this->message->externalId,
-            'title' => 'Message in #' . $this->message->channel->name,
+            'title' => "{$this->message->author->realName}'s message in #{$this->message->channel->name}",
             'preview' => $chunks->first(),
             'priority' => 'high',
             'metadata' => $this->message,
