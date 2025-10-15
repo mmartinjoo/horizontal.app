@@ -132,9 +132,6 @@ class IndexGitHub implements ShouldQueue
                         'comment_id' => $comment->id,
                         'metadata' => $comment->toArray(),
                     ]);
-
-                    // Chunk and store comment content
-                    $this->chunkAndStoreContent($doc, $comment->body, $textChunker);
                 }
 
                 // Fetch and store reviews
