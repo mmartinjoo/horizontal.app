@@ -1,22 +1,42 @@
 import os
-import asyncio
-from fastapi import FastAPI, HTTPException, Request
-from graphbuilder import GraphBuilder
+import logging
+from dotenv import load_dotenv
+from flask import Flask, request, jsonify
+from src.graphbuilder import GraphBuilder
+from src.factories import create_graph_client
 
-app = FastAPI()
-graph_builder = GraphBuilder()
+load_dotenv()
+os.environ["OPENAI_API_KEY"] = os.getenv("FIREWORKS_API_KEY")
+
+app = Flask(__name__)
     
-@app.post("/api/build", status_code=202)
-async def api_build_graph(req: Request):
+@app.route("/api/build", methods=["POST"])
+def api_build_graph():
     try:
-        body = await req.json()
-        asyncio.create_task(graph_builder.build_graph_for_tenant(body["tenant_id"]))
-        return {"status": "accepted"}
+        body = request.get_json()
+        if not body or "tenant_id" not in body:
+            return jsonify({"error": "tenant_id is required"}), 400
+
+        graph_builder = GraphBuilder(body["tenant_id"])
+        graph_builder.build_graph_for_tenant()
+        return jsonify({"status": "accepted"}), 202
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.exception(e)
+        return jsonify({"success": False, "error": "somewthing went wrong"}), 500
+
+@app.route("/api/test", methods=["GET"])
+def api_test():
+    body = request.get_json()
+    if not body or "tenant_id" not in body:
+        return jsonify({"error": "tenant_id is required"}), 400
+    
+    graph_client = create_graph_client(tenant_id=body["tenant_id"])
+    with graph_client.session() as session:
+        result = session.run("match (n) return n;")
+        nodes = result.fetch(3)
+        print(nodes)
+        
+    return jsonify({"status": "accepted"}), 202
 
 if __name__ == '__main__':
-    import uvicorn
-    # Enable reload for development - set reload=False for production
-    reload_mode = os.getenv('HOT_RELOAD_ENABLED', 'true').lower() == 'true'
-    uvicorn.run("api:app", host='0.0.0.0', port=9998, reload=reload_mode)
+    app.run(host="0.0.0.0", port="9998")

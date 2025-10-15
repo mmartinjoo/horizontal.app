@@ -1,6 +1,6 @@
 # Core dependencies for GraphBuilder
-fastapi==0.116.1
-uvicorn==0.35.0
+flask==3.1.2
+gunicorn==21.2.0
 python-dotenv==1.1.1
 requests==2.32.3
 
@@ -31,6 +31,7 @@ pydantic==2.11.7
 pydantic-core>=2.27.0
 httpx==0.28.1
 aiohttp==3.12.15
+rq==2.6.0
 
 # Development utilities
 watchdog==6.0.0
