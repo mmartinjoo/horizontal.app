@@ -154,8 +154,6 @@ class IndexGitHub implements ShouldQueue
                         ],
                     ]);
 
-                    // Chunk and store review content
-                    $this->chunkAndStoreContent($doc, $review['body'], $textChunker);
                 }
 
                 // Update document with preview (first chunk)
