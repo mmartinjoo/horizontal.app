@@ -228,6 +228,24 @@ class Slack
         return collect($replies);
     }
 
+    public function permalink(string $channelID, string $messageID): string
+    {
+        $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+            ])
+            ->get($this->baseUrl . '/chat.getPermalink', [
+                'channel' => $channelID,
+                'message_ts' => $messageID,
+            ])
+            ->throw()
+            ->json();
+
+        if (!$response['ok']) {
+            throw new FailedToLoadMessagesException('Failed to fetch permalink. Response: ' . json_encode($response));
+        }
+        return $response['permalink'];
+    }
+
     /**
      * @return Collection<User>
      */
