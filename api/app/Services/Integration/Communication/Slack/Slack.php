@@ -35,20 +35,35 @@ class Slack
      */
     public function channels(): Collection
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->botUserOauthToken,
-        ])
-            ->get($this->baseUrl . '/conversations.list')
-            ->throw()
-            ->json();
-
-        if (!$response['ok']) {
-            throw new FailedToLoadChannelsException('Failed to load channels. Response: ' . json_encode($response));
-        }
-
         $channels = [];
-        foreach ($response['channels'] as $channel) {
-            $channels[] = Channel::fromSlack($channel);
+        $cursor = null;
+        while (true) {
+            $data = [
+                'limit' => 100,
+            ];
+            if ($cursor) {
+                $data['cursor'] = $cursor;
+            }
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+            ])
+                ->get($this->baseUrl . '/conversations.list', $data)
+                ->throw()
+                ->json();
+
+            if (!$response['ok']) {
+                throw new FailedToLoadChannelsException('Failed to load channels. Response: ' . json_encode($response));
+            }
+
+            foreach ($response['channels'] as $channel) {
+                $channels[] = Channel::fromSlack($channel);
+            }
+
+            $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
+            if (!$nextCursor) {
+                break;
+            }
+            $cursor = $nextCursor;             
         }
         return collect($channels);
     }
@@ -62,36 +77,50 @@ class Slack
      */
     public function messages(Channel $channel): Collection
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->botUserOauthToken,
-        ])
-            ->get($this->baseUrl . '/conversations.history', [
+        $messages = [];
+        $cursor = null;
+        while (true) {
+            $data = [
                 'channel' => $channel->externalId,
                 'oldest' => now()->subMonths(3)->timestamp,
                 'limit' => 100,
                 "inclusive" => true,
+            ];            
+            if ($cursor) {
+                $data['cursor'] = $cursor;
+            }
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->botUserOauthToken,
             ])
-            ->throw()
-            ->json();
+                ->get($this->baseUrl . '/conversations.history', $data)
+                ->throw()
+                ->json();
 
-        if (!$response['ok']) {
-            throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
-        }
+            if (!$response['ok']) {
+                throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
+            }
 
-        $messages = [];
-        foreach ($response['messages'] as $message) {
-            if ($message['type'] !== 'message') {
-                continue;
+            foreach ($response['messages'] as $message) {
+                if ($message['type'] !== 'message') {
+                    continue;
+                }
+                if (Arr::get($message, 'subtype') !== null) {
+                    // channel_join, etc
+                    continue;
+                }
+                if (Arr::get($message, 'thread_ts') === $message['ts']) {
+                    // this is a thread. it's processed in a dedicated function
+                    continue;
+                }            
+                $messages[] = $this->makeMessageWithMentions($channel, $message);
             }
-            if (Arr::get($message, 'subtype') !== null) {
-                // channel_join, etc
-                continue;
+
+            $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
+            if (!$nextCursor) {
+                break;
             }
-            if (Arr::get($message, 'thread_ts') === $message['ts']) {
-                // this is a thread. it's processed in a dedicated function
-                continue;
-            }            
-            $messages[] = $this->makeMessageWithMentions($channel, $message);
+            $cursor = $nextCursor;            
         }
         return collect($messages);
     }
@@ -105,68 +134,96 @@ class Slack
      */
     public function threads(Channel $channel): Collection
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->botUserOauthToken,
-        ])
-            ->get($this->baseUrl . '/conversations.history', [
+        $threads = [];
+        $cursor = null;
+        while (true) {
+            $data = [
                 'channel' => $channel->externalId,
                 'oldest' => now()->subMonths(3)->timestamp,
                 'limit' => 100,
-                "inclusive" => true,
+                'inclusive' => true,
+            ];
+            if ($cursor) {
+                $data['cursor'] = $cursor;
+            }
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->botUserOauthToken,
             ])
-            ->throw()
-            ->json();
+                ->get($this->baseUrl . '/conversations.history', $data)
+                ->throw()
+                ->json();
 
-        if (!$response['ok']) {
-            throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
-        }
+            if (!$response['ok']) {
+                throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
+            }
 
-        $messages = [];
-        foreach ($response['messages'] as $message) {
-            if ($message['type'] !== 'message') {
-                continue;
+            foreach ($response['messages'] as $message) {
+                if ($message['type'] !== 'message') {
+                    continue;
+                }
+                if (Arr::get($message, 'subtype') !== null) {
+                    // channel_join, etc
+                    continue;
+                }
+                if (Arr::get($message, 'thread_ts') !== $message['ts']) {
+                    // this is an individual message without replies. it's processed in a dedicated function
+                    continue;
+                }
+                $threads[] = $this->makeMessageWithMentions($channel, $message);
             }
-            if (Arr::get($message, 'subtype') !== null) {
-                // channel_join, etc
-                continue;
+            foreach ($threads as $thread) {
+                $thread->replies = $this->replies($channel, $thread);
             }
-            if (Arr::get($message, 'thread_ts') !== $message['ts']) {
-                // this is an individual message without replies. it's processed in a dedicated function
-                continue;
+
+            $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
+            if (!$nextCursor) {
+                break;
             }
-            $messages[] = $this->makeMessageWithMentions($channel, $message);
+            $cursor = $nextCursor;            
         }
-        foreach ($messages as $message) {
-            $message->replies = $this->replies($channel, $message);
-        }
-        return collect($messages);
+        return collect($threads);
     }
 
-    public function replies(Channel $channel, Message $thread): Collection
+    private function replies(Channel $channel, Message $thread): Collection
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->botUserOauthToken,
-        ])
-            ->get($this->baseUrl . '/conversations.replies', [
+        $replies = [];
+        $cursor = null;
+        while (true) {
+            $data = [
                 'channel' => $channel->externalId,
                 'ts' => $thread->externalId,
                 'oldest' => now()->subMonths(3)->timestamp,
                 'limit' => 100,
-                "inclusive" => true,
-            ])
-            ->throw()
-            ->json();
-
-        if (!$response['ok']) {
-            throw new FailedToLoadMessagesException('Failed to load replies. Response: ' . json_encode($response));
-        }
-
-        $replies = collect();
-        foreach ($response['messages'] as $message) {
-            if ($message['ts'] === $thread->externalId) {
-                continue;
+                'inclusive' => true,
+            ];
+            if ($cursor) {
+                $data['cursor'] = $cursor;
             }
-            $replies[] = $this->makeMessageWithMentions($channel, $message);
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+            ])
+                ->get($this->baseUrl . '/conversations.replies', $data)
+                ->throw()
+                ->json();
+
+            if (!$response['ok']) {
+                throw new FailedToLoadMessagesException('Failed to load replies. Response: ' . json_encode($response));
+            }
+
+            foreach ($response['messages'] as $message) {
+                if ($message['ts'] === $thread->externalId) {
+                    continue;
+                }
+                $replies[] = $this->makeMessageWithMentions($channel, $message);
+            }
+
+            $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
+            if (!$nextCursor) {
+                break;
+            }
+            $cursor = $nextCursor;            
         }
         return collect($replies);
     }
@@ -184,7 +241,7 @@ class Slack
             'Authorization' => 'Bearer ' . $this->botUserOauthToken,
         ])
             ->get($this->baseUrl . '/users.list', [
-                'limit' => 100,
+                'limit' => 500,
             ])
             ->throw()
             ->json();
