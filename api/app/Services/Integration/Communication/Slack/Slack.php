@@ -14,6 +14,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\LazyCollection;
 use Throwable;
 
 class Slack
@@ -70,121 +71,134 @@ class Slack
 
     /**
      * @param Channel $channel
-     * @return Collection<Message>
+     * @return LazyCollection<Message>
      * @throws ConnectionException
      * @throws FailedToLoadMessagesException
      * @throws RequestException
      */
-    public function messages(Channel $channel): Collection
+    public function messages(Channel $channel): LazyCollection
     {
-        $messages = [];
-        $cursor = null;
-        while (true) {
-            $data = [
-                'channel' => $channel->externalId,
-                'oldest' => now()->subMonths(3)->timestamp,
-                'limit' => 100,
-                "inclusive" => true,
-            ];            
-            if ($cursor) {
-                $data['cursor'] = $cursor;
-            }
-
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->botUserOauthToken,
-            ])
-                ->get($this->baseUrl . '/conversations.history', $data)
-                ->throw()
-                ->json();
-
-            if (!$response['ok']) {
-                throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
-            }
-
-            foreach ($response['messages'] as $message) {
-                if ($message['type'] !== 'message') {
-                    continue;
+        return LazyCollection::make(function () use ($channel) {
+            // $messages = [];
+            $cursor = null;
+            while (true) {
+                $data = [
+                    'channel' => $channel->externalId,
+                    'oldest' => now()->subMonths(3)->timestamp,
+                    'limit' => 100,
+                    "inclusive" => true,
+                ];            
+                if ($cursor) {
+                    $data['cursor'] = $cursor;
                 }
-                if (Arr::get($message, 'subtype') !== null) {
-                    // channel_join, etc
-                    continue;
-                }
-                if (Arr::get($message, 'thread_ts') === $message['ts']) {
-                    // this is a thread. it's processed in a dedicated function
-                    continue;
-                }            
-                $messages[] = $this->makeMessageWithMentions($channel, $message);
-            }
 
-            $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
-            if (!$nextCursor) {
-                break;
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+                ])
+                    ->get($this->baseUrl . '/conversations.history', $data)
+                    ->throw()
+                    ->json();
+
+                if (!$response['ok']) {
+                    throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
+                }
+
+                foreach ($response['messages'] as $message) {
+                    if ($message['type'] !== 'message') {
+                        continue;
+                    }
+                    if (Arr::get($message, 'subtype') !== null) {
+                        // channel_join, etc
+                        continue;
+                    }
+                    if (Arr::get($message, 'thread_ts') === $message['ts']) {
+                        // this is a thread. it's processed in a dedicated function
+                        continue;
+                    }            
+
+                    yield $this->makeMessageWithMentions($channel, $message);
+                }
+
+                $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
+                if (!$nextCursor) {
+                    break;
+                }
+                $cursor = $nextCursor;    
+                
+                // 50ms delay to avoid rate limits
+                usleep(50_000);
             }
-            $cursor = $nextCursor;            
-        }
-        return collect($messages);
+        });
     }
 
     /**
      * @param Channel $channel
-     * @return Collection<Message>
+     * @return LazyCollection<Message>
      * @throws ConnectionException
      * @throws FailedToLoadMessagesException
      * @throws RequestException
      */
-    public function threads(Channel $channel): Collection
+    public function threads(Channel $channel): LazyCollection
     {
-        $threads = [];
-        $cursor = null;
-        while (true) {
-            $data = [
-                'channel' => $channel->externalId,
-                'oldest' => now()->subMonths(3)->timestamp,
-                'limit' => 100,
-                'inclusive' => true,
-            ];
-            if ($cursor) {
-                $data['cursor'] = $cursor;
-            }
-
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->botUserOauthToken,
-            ])
-                ->get($this->baseUrl . '/conversations.history', $data)
-                ->throw()
-                ->json();
-
-            if (!$response['ok']) {
-                throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
-            }
-
-            foreach ($response['messages'] as $message) {
-                if ($message['type'] !== 'message') {
-                    continue;
+        return LazyCollection::make(function () use ($channel) {
+            $cursor = null;
+            while (true) {
+                $data = [
+                    'channel' => $channel->externalId,
+                    'oldest' => now()->subMonths(3)->timestamp,
+                    'limit' => 100,
+                    'inclusive' => true,
+                ];
+                if ($cursor) {
+                    $data['cursor'] = $cursor;
                 }
-                if (Arr::get($message, 'subtype') !== null) {
-                    // channel_join, etc
-                    continue;
-                }
-                if (Arr::get($message, 'thread_ts') !== $message['ts']) {
-                    // this is an individual message without replies. it's processed in a dedicated function
-                    continue;
-                }
-                $threads[] = $this->makeMessageWithMentions($channel, $message);
-            }
-            foreach ($threads as $thread) {
-                $thread->replies = $this->replies($channel, $thread);
-            }
 
-            $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
-            if (!$nextCursor) {
-                break;
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+                ])
+                    ->get($this->baseUrl . '/conversations.history', $data)
+                    ->throw()
+                    ->json();
+
+                if (!$response['ok']) {
+                    throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
+                }
+
+                foreach ($response['messages'] as $message) {
+                    if ($message['type'] !== 'message') {
+                        continue;
+                    }
+                    if (Arr::get($message, 'subtype') !== null) {
+                        // channel_join, etc
+                        continue;
+                    }
+                    if (Arr::get($message, 'thread_ts') !== $message['ts']) {
+                        // this is an individual message without replies. it's processed in a dedicated function
+                        continue;
+                    }
+                    
+                    $thread = $this->makeMessageWithMentions($channel, $message);
+                    $thread->replies = $this->replies($channel, $thread);
+                    yield $thread;
+                }
+
+                $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
+                if (!$nextCursor) {
+                    break;
+                }
+                $cursor = $nextCursor;    
+                
+                // 50ms delay to avoid rate limits
+                usleep(50_000);
             }
-            $cursor = $nextCursor;            
-        }
-        return collect($threads);
+        });
     }
 
+    /**
+     * No need for LazyCollection since it returns only the replies for a given message (a few dozens)
+     * 
+     * @return Collection<Message> 
+     */
     private function replies(Channel $channel, Message $thread): Collection
     {
         $replies = [];
@@ -223,7 +237,10 @@ class Slack
             if (!$nextCursor) {
                 break;
             }
-            $cursor = $nextCursor;            
+            $cursor = $nextCursor;
+            
+            // 50ms delay to avoid rate limits
+            usleep(50_000);
         }
         return collect($replies);
     }

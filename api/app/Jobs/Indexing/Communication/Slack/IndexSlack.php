@@ -9,7 +9,7 @@ use App\Services\Integration\Communication\DataTransferObjects\Message;
 use App\Services\Integration\Communication\Slack\Slack;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 
 class IndexSlack implements ShouldQueue
 {
@@ -38,24 +38,23 @@ class IndexSlack implements ShouldQueue
     }
 
     /**
-     * @param Collection<Message> $messages
-     * @return Collection<Message> $messages
+     * @param LazyCollection<Message> $messages
+     * @return LazyCollection<Message> $messages
      */
-    private function rejectExistingMessages(Collection $messages): Collection
+    private function rejectExistingMessages(LazyCollection $messages): LazyCollection
     {
-        $newMessages = collect();
-        
-        /** @var Message $message */
-        foreach ($messages as $message) {
-            $exists = Document::query()
-                ->where('source_type', 'slack')
-                ->where('source_id', $message->externalId)
-                ->exists();
+        return LazyCollection::make(function () use ($messages) {
+            /** @var Message $message */
+            foreach ($messages as $message) {
+                $exists = Document::query()
+                    ->where('source_type', 'slack')
+                    ->where('source_id', $message->externalId)
+                    ->exists();
 
-            if (!$exists) {
-                $newMessages[] = $message;
+                if (!$exists) {
+                    yield $message;
+                }
             }
-        }
-        return $newMessages;
+        });
     }
 }
