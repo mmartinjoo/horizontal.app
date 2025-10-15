@@ -2,14 +2,13 @@
 
 namespace App\Jobs\Indexing\CodeRepository\GitHub;
 
-use App\Jobs\Indexing\CodeRepository\GitHub\IndexPullRequest;
+use App\Jobs\Indexing\CodeRepository\IndexPullRequest;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentComment;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
-use App\Models\Team;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\CodeRepository\Github\DataTransferObjects\PullRequest;
 use App\Services\Integration\CodeRepository\Github\DataTransferObjects\PullRequestComment;
@@ -23,10 +22,6 @@ class IndexGitHub implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(
-        private Team $team
-    ) {}
-
     public function handle(
         TextChunker $textChunker
     ): void {
@@ -34,7 +29,6 @@ class IndexGitHub implements ShouldQueue
         $indexing = IndexingWorkflow::create([
             'integration' => 'github',
             'status' => 'syncing',
-            'team_id' => $this->team->id,
             'job_id' => $this->job->payload()['uuid'],
         ]);
 
@@ -63,7 +57,6 @@ class IndexGitHub implements ShouldQueue
 
                 // Delete existing document if it exists
                 $count = Document::query()
-                    ->where('team_id', $this->team->id)
                     ->where('source_type', 'github_pr')
                     ->where('source_id', $pullRequest->id)
                     ->delete();
@@ -75,7 +68,6 @@ class IndexGitHub implements ShouldQueue
 
                 // Create document for the PR
                 $doc = Document::create([
-                    'team_id' => $this->team->id,
                     'source_type' => 'github_pr',
                     'source_id' => $pullRequest->id,
                     'source_url' => $pullRequest->url,
@@ -132,6 +124,7 @@ class IndexGitHub implements ShouldQueue
                         'comment_id' => $comment->id,
                         'metadata' => $comment->toArray(),
                     ]);
+
                 }
 
                 // Fetch and store reviews
