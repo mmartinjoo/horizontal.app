@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Indexing\CodeRepository\GitHub;
 
-use App\Jobs\Indexing\CodeRepository\IndexPullRequest;
+use App\Jobs\Indexing\CodeRepository\GitHub\IndexPullRequest;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentComment;
