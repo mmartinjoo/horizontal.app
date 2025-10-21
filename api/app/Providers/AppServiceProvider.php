@@ -6,6 +6,7 @@ use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
+use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
 use App\Services\KnowledgeGraph\GraphBuilder;
 use App\Services\LLM\Anthropic;
 use App\Services\LLM\Embedder;
@@ -69,6 +70,21 @@ class AppServiceProvider extends ServiceProvider
             ->when(JiraOAuthService::class)
             ->needs('$redirectUri')
             ->give(config('services.jira.redirect_uri'));
+
+        $this->app
+            ->when(LinearOAuthService::class)
+            ->needs('$clientId')
+            ->give(config('services.linear.client_id'));
+
+        $this->app
+            ->when(LinearOAuthService::class)
+            ->needs('$clientSecret')
+            ->give(config('services.linear.client_secret'));
+
+        $this->app
+            ->when(LinearOAuthService::class)
+            ->needs('$redirectUri')
+            ->give(config('services.linear.redirect_uri'));
 
         $this->app->bind(GraphDB::class, function () {
             return GraphDBFactory::create();

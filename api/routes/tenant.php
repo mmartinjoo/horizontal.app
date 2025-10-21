@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\JiraIntegrationController;
+use App\Http\Controllers\LinearIntegrationController;
 use App\Http\Controllers\QuestionController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -41,5 +42,12 @@ Route::middleware([
         Route::post('authorize', [JiraIntegrationController::class, 'authorize']);
         Route::get('status', [JiraIntegrationController::class, 'status']);
         Route::delete('disconnect', [JiraIntegrationController::class, 'disconnect']);
+    });
+
+    Route::get('/integrations/linear/oauth/callback', [LinearIntegrationController::class, 'callback']);
+    Route::middleware('auth:sanctum')->prefix('/integrations/linear/oauth')->group(function () {
+        Route::post('authorize', [LinearIntegrationController::class, 'authorize']);
+        Route::get('status', [LinearIntegrationController::class, 'status']);
+        Route::delete('disconnect', [LinearIntegrationController::class, 'disconnect']);
     });
 });

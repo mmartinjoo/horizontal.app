@@ -2,24 +2,57 @@
 
 namespace App\Services\Integration\TaskManagement\Linear;
 
+use App\Models\LinearIntegration;
 use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class Linear
 {
-    public function __construct()
+    public function __construct(
+        private LinearTokenManager $tokenManager
+    ) {}
+
+    private function getValidIntegration(): LinearIntegration
     {
+        $integration = LinearIntegration::first();
+
+        if (!$integration) {
+            throw new Exception('No Linear integration found');
+        }
+
+        // Ensure token is valid (refresh if needed)
+        if (!$this->tokenManager->ensureValidToken($integration)) {
+            throw new Exception('Unable to obtain valid Linear token');
+        }
+
+        return $integration->fresh(); // Reload in case token was refreshed
     }
 
     public function makeGraphQLRequest(string $query, array $variables = []): Response
     {
-        $response = Http::withToken($this->getApiToken())
+        $integration = $this->getValidIntegration();
+
+        $response = Http::withToken($integration->access_token)
             ->acceptJson()
             ->post($this->getApiUrl(), [
                 'query' => $query,
                 'variables' => $variables,
             ]);
+
+        // If token is invalid, try to refresh and retry once
+        if ($response->status() === 401) {
+            if ($this->tokenManager->refreshToken($integration)) {
+                // Retry with refreshed token
+                $integration->refresh();
+                $response = Http::withToken($integration->access_token)
+                    ->acceptJson()
+                    ->post($this->getApiUrl(), [
+                        'query' => $query,
+                        'variables' => $variables,
+                    ]);
+            }
+        }
 
         if (!$response->successful()) {
             throw new Exception('Linear GraphQL request failed: ' . $response->body());
@@ -164,16 +197,6 @@ class Linear
         ];
     }
 
-    private function getApiToken(): string
-    {
-        $token = config('services.linear.api_token');
-
-        if (!$token) {
-            throw new Exception('Linear API token not configured');
-        }
-
-        return $token;
-    }
 
     private function getApiUrl(): string
     {
