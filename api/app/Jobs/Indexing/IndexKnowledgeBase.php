@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Indexing;
 
+use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\KnowledgeGraph\BuildCommunities;
 use App\Jobs\Indexing\KnowledgeGraph\BuildKnowledgeGraph;
 use App\Jobs\Indexing\KnowledgeGraph\BuildRelatedNodes;
@@ -18,16 +19,17 @@ class IndexKnowledgeBase implements ShouldQueue
     {
         $graphDB->run('MATCH (n) DETACH DELETE n');
 
-        IndexGoogleDrive::dispatch();
-//        IndexJira::dispatch();
+        // IndexGoogleDrive::dispatch();
+        // IndexJira::dispatch();
+        IndexSlack::dispatch();
 
         BuildKnowledgeGraph::dispatch()
-            ->delay(now()->addMinutes(5));
+            ->delay(now()->addMinutes(1));
 
         BuildRelatedNodes::dispatch()
-            ->delay(now()->addMinutes(10));
+            ->delay(now()->addMinutes(25));
 
         BuildCommunities::dispatch()
-            ->delay(now()->addMinutes(17));
+            ->delay(now()->addMinutes(30));
     }
 }

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\GraphDBFactory;
+use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use App\Services\KnowledgeGraph\GraphBuilder;
 use App\Services\LLM\Anthropic;
@@ -82,5 +83,15 @@ class AppServiceProvider extends ServiceProvider
             ->when(GraphBuilder::class)
             ->needs('$baseUrl')
             ->give(config('graph_builder.base_url'));
+
+        $this->app
+            ->when(Slack::class)
+            ->needs('$botUserOauthToken')
+            ->give(config('services.slack.bot_user_oauth_token'));
+
+        $this->app
+            ->when(Slack::class)
+            ->needs('$baseUrl')
+            ->give(config('services.slack.base_url'));
     }
 }

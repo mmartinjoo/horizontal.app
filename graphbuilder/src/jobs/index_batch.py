@@ -12,6 +12,10 @@ def index_batch(type: str,
                 tenant_id: str):
     
     logging.warning(f"Processing {type} batch (ids={ids}) for tenant {tenant_id}")
+    
+    # needed to LlamaIndex
+    os.environ["OPENAI_API_KEY"] = os.getenv("FIREWORKS_API_KEY")
+    
     if type == "document_chunks":
         get_batch_fn = get_document_chunk_batch
         mark_as_processing_fn = mark_document_chunks_as_processing

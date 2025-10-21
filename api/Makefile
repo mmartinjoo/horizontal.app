@@ -13,3 +13,6 @@ run:
 
 copy-vendor:
 	docker compose cp api:/var/www/vendor ./
+
+tunnel:
+	lt --port 9999 --subdomain horizontal-local-test
