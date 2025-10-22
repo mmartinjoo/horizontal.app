@@ -5,6 +5,8 @@ namespace App\Jobs\Indexing\TaskManagement\Linear;
 use App\Jobs\Indexing\TaskManagement\IndexIssue;
 use App\Models\Document;
 use App\Models\DocumentComment;
+use App\Models\IndexingWorkflow;
+use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use App\Services\Integration\TaskManagement\DataTransferObjects\IssueComment;
@@ -19,19 +21,33 @@ class IndexLinear implements ShouldQueue
 
     public function handle(Linear $linear): void
     {
-        $issues = $linear->getIssues();
+        /** @var IndexingWorkflow $indexing */
+        $indexingWorkflow = IndexingWorkflow::create([
+            'integration' => 'linear',
+            'status' => 'syncing',
+            'job_id' => $this->job->payload()['uuid'],
+        ]);
 
-        foreach ($issues as $issueData) {
+        $issues = $linear->getIssues();
+        $indexingWorkflow->increment('overall_items', count($issues));
+
+        foreach ($issues as $i => $issueData) {
             $transformedIssue = $linear->transformIssueForDocument($issueData);
             $description = $transformedIssue['description'];
 
             $issue = Issue::fromLinear($issueData, $description);
 
             if (!$this->issueNeedsIndexing($issue)) {
+                $indexingWorkflow->increment('skipped_items', 1);
+                if ($i === count($issues) - 1) {
+                    $indexingWorkflow->update([
+                        'status' => 'completed',
+                    ]);
+                }
                 continue;
             }
 
-            $this->processIssue($linear, $issue, $issueData);
+            $this->processIssue($linear, $issue, $issueData, $indexingWorkflow);
         }
     }
 
@@ -49,13 +65,15 @@ class IndexLinear implements ShouldQueue
         return $issue->getLastUpdatedAt()->gt($existingContent->indexed_at ?? now()->subYears(100));
     }
 
-    private function processIssue(Linear $linear, Issue $issue, array $issueData): void
+    private function processIssue(Linear $linear, Issue $issue, array $issueData, IndexingWorkflow $indexingWorkflow): void
     {
         // Delete existing document if it exists
         $count = Document::query()
             ->where('source_type', 'linear')
             ->where('source_id', $issue->id)
             ->delete();
+
+        $indexingWorkflow->increment('deleted_items', $count);
 
         // Create new document
         $doc = Document::create([
@@ -65,13 +83,19 @@ class IndexLinear implements ShouldQueue
             'title' => $issue->title,
             'metadata' => $issueData,
         ]);
+        $indexingItem = IndexingWorkflowItem::create([
+            'indexing_workflow_id' => $indexingWorkflow->id,
+            'data' => $issue,
+            'status' => 'queued',
+            'document_id' => $doc->id,
+        ]);
 
         // Process comments, watchers, and participants in the next sub-tasks
         $this->processIssueComments($linear, $doc, $issueData);
         $this->processIssueParticipants($linear, $doc, $issueData);
 
         // Dispatch IndexIssue job for content processing
-        IndexIssue::dispatch($doc, $issue);
+        IndexIssue::dispatch($doc, $issue, $indexingItem->id);
     }
 
     private function processIssueComments(Linear $linear, Document $doc, array $issueData): void
