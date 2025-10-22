@@ -86,6 +86,9 @@ class Linear
                         $transformedIssue['description']
                     );
                 }
+
+                // 50ms delay to avoid rate limits
+                usleep(50_000);
             }
         });
     }
