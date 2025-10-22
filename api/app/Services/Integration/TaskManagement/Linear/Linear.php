@@ -73,7 +73,7 @@ class Linear
         return LazyCollection::make(function () use ($hasNextPage, $after) {
             while ($hasNextPage) {
                 $result = $this->getIssuesPaginated(
-                    limit: 250,
+                    limit: 100,
                     after: $after,
                 );
                 $hasNextPage = $result['pageInfo']['hasNextPage'];
