@@ -32,7 +32,7 @@ def get_document_chunk_batch(reader: DatabaseReader, ids: List[int]) -> List[Doc
     
     # Original comments are copied to custom documents because the LLM also received
     # the metadata and created graph nodes for thing like "source_url" etc
-    # I didn't find a better solution
+    # If `excluded_embed_metadata_keys` and `exluded_llm_metadata_keys` are set in the `load_data` call it just doesn't work somehow
     transformed_documents = []
     for document in documents:
         doc = Document(

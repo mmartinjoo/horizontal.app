@@ -79,7 +79,6 @@ class Slack
     public function messages(Channel $channel): LazyCollection
     {
         return LazyCollection::make(function () use ($channel) {
-            // $messages = [];
             $cursor = null;
             while (true) {
                 $data = [

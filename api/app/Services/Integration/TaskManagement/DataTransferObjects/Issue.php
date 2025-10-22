@@ -37,6 +37,19 @@ class Issue
         );
     }
 
+    public static function fromLinear(array $data, string $description): self
+    {
+        return new static(
+            id: Arr::get($data, 'identifier', ''),
+            title: Arr::get($data, 'title', ''),
+            description: $description,
+            assignee: Arr::get($data, 'assignee.displayName', ''),
+            url: Arr::get($data, 'url', ''),
+            createdAt: Carbon::parse(Arr::get($data, 'createdAt', '1900-01-01T00:00:00.000Z')),
+            updatedAt: Carbon::parse(Arr::get($data, 'updatedAt', '1900-01-01T00:00:00.000Z')),
+        );
+    }
+
     public function toString(): string
     {
         $str = '';

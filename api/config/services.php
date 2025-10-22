@@ -62,4 +62,11 @@ return [
         'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
         'base_url' => env('SLACK_BASE_URL'),
     ],
+
+    'linear' => [
+        'api_token' => env('LINEAR_API_TOKEN'),
+        'client_id' => env('LINEAR_CLIENT_ID'),
+        'client_secret' => env('LINEAR_CLIENT_SECRET'),
+        'redirect_uri' => env('LINEAR_REDIRECT_URL'),
+    ],
 ];

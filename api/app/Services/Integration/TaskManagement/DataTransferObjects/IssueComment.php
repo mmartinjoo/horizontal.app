@@ -31,4 +31,21 @@ class IssueComment
         }
         return $comments;
     }
+
+    /**
+     * @return Collection<IssueComment>
+     */
+    public static function collectLinear(array $linearComments): Collection
+    {
+        $comments = collect();
+        foreach ($linearComments as $comment) {
+            $comments[] = new static(
+                id: $comment['id'],
+                body: $comment['body'] ?? '',
+                author: $comment['user']['displayName'] ?? '',
+                createdAt: Carbon::parse($comment['createdAt']),
+            );
+        }
+        return $comments;
+    }
 }

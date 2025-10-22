@@ -8,6 +8,7 @@ from llama_index.readers.database import DatabaseReader
 from llama_index.graph_stores.memgraph import MemgraphPropertyGraphStore
 from src.services.horizontal_api import get_graph_db_connection_info
 from llama_index.llms.fireworks import Fireworks
+from llama_index.llms.openai import OpenAI
 from llama_index.core.embeddings import BaseEmbedding
 from src.fireworks_embedding import FireworksEmbedding
 from psycopg2.extensions import cursor as Cursor
@@ -53,9 +54,10 @@ def create_queue() -> Queue:
     return Queue(connection=redis, name="default", default_timeout="30m")
 
 def create_llm() -> Fireworks:
-    return Fireworks(api_key=os.getenv("FIREWORKS_API_KEY"),
-              temperature=0,
-              model=os.getenv("LLM_MODEL"))
+    return OpenAI(temperature=0.0, model="gpt-3.5-turbo")
+    #return Fireworks(api_key=os.getenv("FIREWORKS_API_KEY"),
+    #                 temperature=0,
+    #                 model=os.getenv("LLM_MODEL"))
     
 def create_embed_model() -> BaseEmbedding:
     return FireworksEmbedding()
