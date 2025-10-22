@@ -61,10 +61,10 @@ class Linear
         return $response;
     }
 
-    public function getIssues(int $first = 50): array
+    public function getIssues(int $limit = 250): array
     {
         $response = $this->makeGraphQLRequest($this->getIssuesQuery(), [
-            'first' => $first,
+            'first' => $limit,
         ]);
 
         $data = $response->json('data.issues.nodes');

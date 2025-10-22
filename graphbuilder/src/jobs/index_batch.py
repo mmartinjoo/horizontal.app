@@ -4,6 +4,7 @@ from typing import List
 from rq import get_current_job
 from llama_index.core.indices.property_graph import SimpleLLMPathExtractor
 from llama_index.core import PropertyGraphIndex
+from llama_index.core import Document
 from src.factories import create_db_reader, create_graph_store, create_llm, create_embed_model, create_db_cursor
 from src.services import get_comment_batch, get_document_chunk_batch, mark_document_chunks_as_processing, mark_document_chunks_as_processed, mark_comments_as_processed, mark_comments_as_processing
 
@@ -12,9 +13,6 @@ def index_batch(type: str,
                 tenant_id: str):
     
     logging.warning(f"Processing {type} batch (ids={ids}) for tenant {tenant_id}")
-    
-    # needed to LlamaIndex
-    os.environ["OPENAI_API_KEY"] = os.getenv("FIREWORKS_API_KEY")
     
     if type == "document_chunks":
         get_batch_fn = get_document_chunk_batch
