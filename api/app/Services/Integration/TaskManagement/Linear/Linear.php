@@ -3,9 +3,11 @@
 namespace App\Services\Integration\TaskManagement\Linear;
 
 use App\Models\LinearIntegration;
+use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\LazyCollection;
 
 class Linear
 {
@@ -61,25 +63,37 @@ class Linear
         return $response;
     }
 
-    public function getIssues(int $limit = 250): array
+    /**
+     * @return LazyCollection<Issue>
+     */
+    public function issues(): LazyCollection
     {
-        $response = $this->makeGraphQLRequest($this->getIssuesQuery(), [
-            'first' => $limit,
-        ]);
+        $after = null;
+        $hasNextPage = true;
+        return LazyCollection::make(function () use ($hasNextPage, $after) {
+            while ($hasNextPage) {
+                $result = $this->getIssuesPaginated(
+                    limit: 250,
+                    after: $after,
+                );
+                $hasNextPage = $result['pageInfo']['hasNextPage'];
+                $after = $result['pageInfo']['endCursor'];
 
-        $data = $response->json('data.issues.nodes');
-
-        if (!$data) {
-            throw new Exception('No issues data received from Linear API');
-        }
-
-        return $data;
+                foreach ($result['issues'] as $issueData) {
+                    $transformedIssue = $this->transformIssueForDocument($issueData);
+                    yield Issue::fromLinear(
+                        $transformedIssue, 
+                        $transformedIssue['description']
+                    );
+                }
+            }
+        });
     }
 
-    public function getIssueComments(string $issueId, int $first = 50): array
+    public function comments(Issue $issue, int $first = 50): array
     {
         $response = $this->makeGraphQLRequest($this->getIssueCommentsQuery(), [
-            'issueId' => $issueId,
+            'issueId' => $issue->id,
             'first' => $first,
         ]);
 
@@ -92,10 +106,10 @@ class Linear
         return $data;
     }
 
-    public function getIssueWatchers(string $issueId, int $first = 50): array
+    public function watchers(Issue $issue, int $first = 50): array
     {
         $response = $this->makeGraphQLRequest($this->getIssueWatchersQuery(), [
-            'issueId' => $issueId,
+            'issueId' => $issue->id,
             'first' => $first,
         ]);
 
@@ -108,7 +122,7 @@ class Linear
         return $data;
     }
 
-    public function extractTextFromDocument(string $documentJson): string
+    private function extractTextFromDocument(string $documentJson): string
     {
         if (empty($documentJson)) {
             return '';
@@ -121,6 +135,28 @@ class Linear
         }
 
         return $this->extractTextFromNodes($document['content']);
+    }
+
+    /**
+     * @return array{'issues': array, 'pageInfo': array}
+     */
+    private function getIssuesPaginated(int $limit = 250, ?string $after = null): array
+    {
+        $variables = ['first' => $limit];
+        if ($after) {
+            $variables['after'] = $after;
+        }
+
+        $response = $this->makeGraphQLRequest($this->getIssuesQuery(), $variables);
+        $data = $response->json('data.issues');
+        if (!$data) {
+            throw new Exception('No issues data received from Linear API');
+        }
+
+        return [
+            'issues' => $data['nodes'],
+            'pageInfo' => $data['pageInfo']
+        ];
     }
 
     private function extractTextFromNodes(array $nodes): string
@@ -206,8 +242,8 @@ class Linear
     private function getIssuesQuery(): string
     {
         return '
-            query GetIssues($first: Int) {
-                issues(first: $first) {
+            query GetIssues($first: Int, $after: String) {
+                issues(first: $first, after: $after) {
                     nodes {
                         id
                         identifier

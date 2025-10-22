@@ -28,15 +28,10 @@ class IndexLinear implements ShouldQueue
             'job_id' => $this->job->payload()['uuid'],
         ]);
 
-        $issues = $linear->getIssues();
+        $issues = $linear->issues();
         $indexingWorkflow->increment('overall_items', count($issues));
 
-        foreach ($issues as $i => $issueData) {
-            $transformedIssue = $linear->transformIssueForDocument($issueData);
-            $description = $transformedIssue['description'];
-
-            $issue = Issue::fromLinear($issueData, $description);
-
+        foreach ($issues as $i => $issue) {
             if (!$this->issueNeedsIndexing($issue)) {
                 $indexingWorkflow->increment('skipped_items', 1);
                 if ($i === count($issues) - 1) {
@@ -47,7 +42,7 @@ class IndexLinear implements ShouldQueue
                 continue;
             }
 
-            $this->processIssue($linear, $issue, $issueData, $indexingWorkflow);
+            $this->processIssue($linear, $issue, $indexingWorkflow);
         }
     }
 
@@ -65,7 +60,7 @@ class IndexLinear implements ShouldQueue
         return $issue->getLastUpdatedAt()->gt($existingContent->indexed_at ?? now()->subYears(100));
     }
 
-    private function processIssue(Linear $linear, Issue $issue, array $issueData, IndexingWorkflow $indexingWorkflow): void
+    private function processIssue(Linear $linear, Issue $issue, IndexingWorkflow $indexingWorkflow): void
     {
         // Delete existing document if it exists
         $count = Document::query()
@@ -81,7 +76,7 @@ class IndexLinear implements ShouldQueue
             'source_id' => $issue->id,
             'source_url' => $issue->url,
             'title' => $issue->title,
-            'metadata' => $issueData,
+            'metadata' => $issue,
         ]);
         $indexingItem = IndexingWorkflowItem::create([
             'indexing_workflow_id' => $indexingWorkflow->id,
@@ -91,16 +86,16 @@ class IndexLinear implements ShouldQueue
         ]);
 
         // Process comments, watchers, and participants in the next sub-tasks
-        $this->processIssueComments($linear, $doc, $issueData);
-        $this->processIssueParticipants($linear, $doc, $issueData);
+        $this->processIssueComments($linear, $doc, $issue);
+        $this->processIssueParticipants($linear, $doc, $issue);
 
         // Dispatch IndexIssue job for content processing
         IndexIssue::dispatch($doc, $issue, $indexingItem->id);
     }
 
-    private function processIssueComments(Linear $linear, Document $doc, array $issueData): void
+    private function processIssueComments(Linear $linear, Document $doc, Issue $issue): void
     {
-        $commentsData = $linear->getIssueComments($issueData['id']);
+        $commentsData = $linear->comments($issue);
         $comments = IssueComment::collectLinear($commentsData);
 
         foreach ($comments as $comment) {
@@ -127,19 +122,18 @@ class IndexLinear implements ShouldQueue
         }
     }
 
-    private function processIssueParticipants(Linear $linear, Document $doc, array $issueData): void
+    private function processIssueParticipants(Linear $linear, Document $doc, Issue $issue): void
     {
         // Process assignee
-        if (isset($issueData['assignee']) && !empty($issueData['assignee']['displayName'])) {
-            $assignee = $issueData['assignee'];
+        if ($issue->assignee) {
             $p = Participant::updateOrCreate(
                 [
-                    'slug' => Str::slug($assignee['displayName']),
+                    'slug' => Str::slug($issue->assignee),
                     'type' => 'person',
                 ],
                 [
-                    'slug' => Str::slug($assignee['displayName']),
-                    'name' => $assignee['displayName'],
+                    'slug' => Str::slug($issue->assignee),
+                    'name' => $issue->assignee,
                     'type' => 'person',
                 ],
             );
@@ -150,7 +144,7 @@ class IndexLinear implements ShouldQueue
         }
 
         // Process watchers/subscribers
-        $watchersData = $linear->getIssueWatchers($issueData['id']);
+        $watchersData = $linear->watchers($issue);
         foreach ($watchersData as $watcher) {
             if (empty($watcher['displayName'])) {
                 continue;
