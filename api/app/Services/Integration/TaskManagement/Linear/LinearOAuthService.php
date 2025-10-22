@@ -13,9 +13,6 @@ class LinearOAuthService
 
     private array $scopes = [
         'read',
-        'write',
-        'issues:create',
-        'comments:create',
     ];
 
     public function __construct(

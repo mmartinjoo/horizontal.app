@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\LinearOAuthAuthorizeRequest;
 use App\Http\Requests\LinearOAuthCallbackRequest;
 use App\Models\LinearIntegration;
 use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
@@ -17,7 +16,7 @@ class LinearIntegrationController extends Controller
     ) {
     }
 
-    public function authorize(LinearOAuthAuthorizeRequest $request): JsonResponse
+    public function authorize(): JsonResponse
     {
         $existingIntegration = LinearIntegration::first();
         if ($existingIntegration) {
