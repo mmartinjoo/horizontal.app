@@ -9,17 +9,17 @@ class GoogleOAuthService
 {
     private Client $client;
 
-    public function __construct() 
+    public function __construct(array $config) 
     {
         $redirecUrl = "https://tenant2-horizontal.loca.lt/api/integrations/google/oauth/callback";
         $this->client = new Client();
-        $this->client->setAuthConfig(storage_path('/app/private/google_creds.json'));
-        $this->client->addScope('https://googleapis.com/auth/chat.spaces');
-        $this->client->addScope('https://googleapis.com/auth/chat.spaces.readonly');
-        $this->client->addScope('https://googleapis.com/auth/chat.memberships');
-        $this->client->addScope('https://googleapis.com/auth/auth/chat.memberships.readonly');
-        $this->client->addScope('https://googleapis.com/auth/auth/chat.messages');
-        $this->client->addScope('https://googleapis.com/auth/auth/auth/chat.messages.readonly');
+        $this->client->setAuthConfig($config);
+        $this->client->addScope('https://www.googleapis.com/auth/chat.spaces');
+        $this->client->addScope('https://www.googleapis.com/auth/chat.spaces.readonly');
+        $this->client->addScope('https://www.googleapis.com/auth/chat.memberships');
+        $this->client->addScope('https://www.googleapis.com/auth/chat.memberships.readonly');
+        $this->client->addScope('https://www.googleapis.com/auth/chat.messages');
+        $this->client->addScope('https://www.googleapis.com/auth/chat.messages.readonly');
     }
 
     public function generateAuthorizationUrl(): array

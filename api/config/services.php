@@ -44,11 +44,22 @@ return [
         'api_key' => env('PINECONE_API_KEY'),
     ],
 
+    // TODO: merge with Google
     'google_drive' => [
         'client_id' => env('GOOGLE_DRIVE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
         'refresh_token' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
         'access_token' => env('GOOGLE_DRIVE_ACCESS_TOKEN'),
+    ],
+
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'project_id' => env('GOOGLE_PROJECT_ID'),
+        'auth_uri' => env('GOOGLE_AUTH_URI'),
+        'token_uri' => env('GOOGLE_TOKEN_URI'),
+        'auth_provider_x509_cert_url' => env('GOOGLE_AUTH_PROVIDER_X509_CERT_URL'),
+        'redirect_uris' => ['https://tenant2-horizontal.loca.lt' . env('GOOGLE_REDIRECT_URI')],
     ],
 
     'jira' => [
