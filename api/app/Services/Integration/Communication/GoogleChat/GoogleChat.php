@@ -4,6 +4,7 @@ namespace App\Services\Integration\Communication\GoogleChat;
 
 use App\Models\GoogleIntegration;
 use App\Services\Integration\Communication\DataTransferObjects\Channel;
+use App\Services\Integration\Communication\DataTransferObjects\Message;
 use Exception;
 use Google\Client;
 use Google\Service\HangoutsChat;
@@ -30,7 +31,7 @@ class GoogleChat
         $spaces = $this->chat->spaces->listSpaces([
             'pageSize' => 1000,
         ]);
-        
+
         $channels = collect();
 
         /** @var Space $space */
@@ -43,9 +44,17 @@ class GoogleChat
         return $channels;
     }
 
-    public function messages(Channel $channel)
+    /**
+     * @return Collection<Message>
+     */
+    public function messages(Channel $channel): Collection
     {
-
+        $data = $this->chat->spaces_messages->listSpacesMessages($channel->externalId);
+        $messages = collect();
+        foreach ($data->messages as $googleMessage) {
+            $messages[] = Message::fromGoogleChat($channel, (array)$googleMessage);
+        }
+        return $messages;
     }
 
     private function getValidIntegration(): GoogleIntegration

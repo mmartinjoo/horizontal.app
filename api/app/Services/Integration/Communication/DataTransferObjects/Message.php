@@ -42,4 +42,16 @@ class Message
             author: $author,
         );
     }
+
+    public static function fromGoogleChat(Channel $channel, array $data): self
+    {
+        return new self(
+            channel: $channel,
+            message: $data['formattedText'],
+            externalUserId: $data['sender']['name'],
+            externalId: $data['name'],
+            createdAt: Carbon::parse($data['createTime']),
+            author: User::fromGoogleChat((array)$data['sender']),
+        );
+    }
 }
