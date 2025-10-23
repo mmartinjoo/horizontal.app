@@ -50,4 +50,8 @@ Route::middleware([
         Route::get('status', [LinearIntegrationController::class, 'status']);
         Route::delete('disconnect', [LinearIntegrationController::class, 'disconnect']);
     });
+
+    Route::get('/integrations/google/oauth/callback', function () {
+        return "ok";
+    });
 });
