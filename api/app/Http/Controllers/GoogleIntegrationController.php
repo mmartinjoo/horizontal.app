@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\LinearOAuthCallbackRequest;
+use App\Http\Requests\GoogleOAuthCallbackRequest;
 use App\Models\GoogleIntegration;
-use App\Models\LinearIntegration;
 use App\Services\Integration\Google\GoogleOAuthService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -44,7 +43,7 @@ class GoogleIntegrationController extends Controller
         }
     }
 
-    public function callback(LinearOAuthCallbackRequest $request): JsonResponse
+    public function callback(GoogleOAuthCallbackRequest $request): JsonResponse
     {
         $code = $request->input('code');
         $state = $request->input('state');
@@ -57,39 +56,33 @@ class GoogleIntegrationController extends Controller
         }
 
         // Validate OAuth state to prevent CSRF attacks
-        $cacheState = Cache::get('linear_oauth_state-' . $state);
-
-        if (!$cacheState || !$this->linearOAuthService->validateState($state, $cacheState)) {
+        $cacheState = Cache::get('google_oauth_state-' . $state);
+        if (!$cacheState || !$this->googleOAuthService->validateState($state, $cacheState)) {
             return response()->json([
                 'error' => 'Invalid OAuth state. Please restart the authorization process.',
             ], 400);
         }
 
         try {
-            // Exchange authorization code for access token
-            $tokenData = $this->linearOAuthService->exchangeCodeForToken($code);
-
-            // Get user information
-            $userInfo = $this->linearOAuthService->getUserInfo($tokenData['access_token']);
-
-            // Calculate token expiration time
+            $tokenData = $this->googleOAuthService->exchangeCodeForToken($code);
+            
+            // $userInfo = $this->googleOAuthService->getUserInfo($tokenData['access_token']);
             $expiresAt = now()->addSeconds($tokenData['expires_in'] ?? 86400); // Default 24 hours
 
-            // Create the Linear integration record
-            $integration = LinearIntegration::create([
-                'user_name' => $userInfo['displayName'] ?? $userInfo['name'] ?? null,
-                'user_email' => $userInfo['email'] ?? null,
-                'linear_user_id' => $userInfo['id'] ?? null,
+            $integration = GoogleIntegration::create([
+                // 'user_name' => $userInfo['displayName'] ?? $userInfo['name'] ?? null,
+                // 'user_email' => $userInfo['email'] ?? null,
+                // 'linear_user_id' => $userInfo['id'] ?? null,
                 'access_token' => $tokenData['access_token'],
                 'refresh_token' => $tokenData['refresh_token'] ?? null,
                 'expires_at' => $expiresAt,
                 'scope' => isset($tokenData['scope']) ? explode(',', $tokenData['scope']) : ['read', 'write'],
             ]);
 
-            Cache::forget('linear_oauth_state-' . $state);
+            Cache::forget('google_oauth_state-' . $state);
 
             return response()->json([
-                'message' => 'Linear integration successfully connected',
+                'message' => 'Google integration successfully connected',
                 'integration' => [
                     'id' => $integration->id,
                     'user_name' => $integration->user_name,
@@ -98,9 +91,9 @@ class GoogleIntegrationController extends Controller
                     'scope' => $integration->scope,
                 ],
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Clear session data on error
-            Cache::forget('linear_oauth_state-' . $state);
+            Cache::forget('google_oauth_state-' . $state);
 
             return response()->json([
                 'error' => 'Failed to complete OAuth authorization: ' . $e->getMessage(),
@@ -110,12 +103,12 @@ class GoogleIntegrationController extends Controller
 
     public function status(Request $request): JsonResponse
     {
-        $integration = LinearIntegration::first();
+        $integration = GoogleIntegration::first();
 
         if (!$integration) {
             return response()->json([
                 'connected' => false,
-                'message' => 'No Linear integration found',
+                'message' => 'No Google integration found',
             ]);
         }
 
@@ -141,11 +134,11 @@ class GoogleIntegrationController extends Controller
 
     public function disconnect(Request $request): JsonResponse
     {
-        $integration = LinearIntegration::first();
+        $integration = GoogleIntegration::first();
 
         if (!$integration) {
             return response()->json([
-                'error' => 'No Linear integration found',
+                'error' => 'No Google integration found',
             ], 404);
         }
 
@@ -162,12 +155,12 @@ class GoogleIntegrationController extends Controller
             $integration->delete();
 
             return response()->json([
-                'message' => 'Linear integration successfully disconnected',
+                'message' => 'Google integration successfully disconnected',
                 'disconnected_integration' => $integrationDetails,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
-                'error' => 'Failed to disconnect Linear integration: ' . $e->getMessage(),
+                'error' => 'Failed to disconnect Google integration: ' . $e->getMessage(),
             ], 500);
         }
     }

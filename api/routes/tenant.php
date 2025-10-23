@@ -52,9 +52,7 @@ Route::middleware([
         Route::delete('disconnect', [LinearIntegrationController::class, 'disconnect']);
     });
 
-    Route::get('/integrations/google/oauth/callback', function () {
-        return "ok";
-    });
+    Route::get('/integrations/google/oauth/callback', [GoogleIntegrationController::class, 'callback']);
     Route::middleware('auth:sanctum')->prefix('/integrations/google/oauth')->group(function () {
         Route::post('authorize', [GoogleIntegrationController::class, 'authorize']);
         Route::get('status', [GoogleIntegrationController::class, 'status']);
