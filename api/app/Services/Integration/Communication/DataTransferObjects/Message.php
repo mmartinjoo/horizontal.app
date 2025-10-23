@@ -26,7 +26,7 @@ class Message
         public string $externalId,
         public Carbon $createdAt,
         public User $author,
-        public ?string $link = null,
+        public ?string $url = null,
     ) {
         $this->replies = collect();
         $this->mentions = collect();

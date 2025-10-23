@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\Indexing\Communication\GoogleChat\IndexGoogleChat;
 use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\KnowledgeGraph\BuildCommunities;
 use App\Jobs\Indexing\KnowledgeGraph\BuildKnowledgeGraph;
@@ -12,7 +13,7 @@ class TestController extends Controller
 {
     public function index()
     {
-        IndexLinear::dispatch();
+        IndexGoogleChat::dispatch();
         // IndexSlack::dispatch();
         // IndexKnowledgeBase::dispatch();
 

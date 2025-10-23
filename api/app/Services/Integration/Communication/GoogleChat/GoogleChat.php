@@ -54,7 +54,7 @@ class GoogleChat
         $messages = collect();
         foreach ($data->messages as $googleMessage) {
             $message = Message::fromGoogleChat($channel, (array)$googleMessage);
-            $message->link = $this->messageLink($channel, $message);
+            $message->url = $this->messageLink($channel, $message);
             $messages[] = $message;
         }
         return $messages;

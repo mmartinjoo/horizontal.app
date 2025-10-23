@@ -16,8 +16,11 @@ class IndexMessage implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(private Message $message)
-    {
+    public function __construct(
+        private Message $message,
+        private string $sourceType,
+    ) {
+
     }
 
     public function handle(TextChunker $textChunker)
@@ -31,8 +34,9 @@ class IndexMessage implements ShouldQueue
         }
 
         $document = Document::create([
-            'source_type' => 'slack',
+            'source_type' => $this->sourceType,
             'source_id' => $this->message->externalId,
+            'source_url' => $this->message->url,
             'title' => "{$this->message->author->realName}'s message in #{$this->message->channel->name}",
             'preview' => $chunks->first(),
             'priority' => 'high',

@@ -26,7 +26,7 @@ class IndexSlack implements ShouldQueue
             $messages = $slack->messages($channel);
             $newMessages = $this->rejectExistingMessages($messages);
             foreach ($newMessages as $message) {
-                IndexMessage::dispatch($message);
+                IndexMessage::dispatch($message, 'slack');
             }
 
             $threads = $slack->threads($channel);
