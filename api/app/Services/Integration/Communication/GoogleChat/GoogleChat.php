@@ -10,6 +10,7 @@ use Google\Client;
 use Google\Service\HangoutsChat;
 use Google\Service\HangoutsChat\Space;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class GoogleChat
 {
@@ -52,7 +53,9 @@ class GoogleChat
         $data = $this->chat->spaces_messages->listSpacesMessages($channel->externalId);
         $messages = collect();
         foreach ($data->messages as $googleMessage) {
-            $messages[] = Message::fromGoogleChat($channel, (array)$googleMessage);
+            $message = Message::fromGoogleChat($channel, (array)$googleMessage);
+            $message->link = $this->messageLink($channel, $message);
+            $messages[] = $message;
         }
         return $messages;
     }
@@ -66,5 +69,12 @@ class GoogleChat
 
         // TODO: Ensure token is valid (refresh if needed)
         return $integration;
+    }
+
+    private function messageLink(Channel $channel, Message $message): string
+    {
+        $channelID = Str::after($channel->externalId, "spaces/");
+        $messageID = Str::after($message->externalId, "messages/");
+        return "https://mail.google.com/chat/u/0/#chat/space/{$channelID}/message/{$messageID}";
     }
 }
