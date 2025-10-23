@@ -15,11 +15,8 @@ class GoogleOAuthService
         $this->client = new Client();
         $this->client->setAuthConfig($config);
         $this->client->setAccessType('offline');
-        $this->client->addScope('https://www.googleapis.com/auth/chat.spaces');
         $this->client->addScope('https://www.googleapis.com/auth/chat.spaces.readonly');
-        $this->client->addScope('https://www.googleapis.com/auth/chat.memberships');
         $this->client->addScope('https://www.googleapis.com/auth/chat.memberships.readonly');
-        $this->client->addScope('https://www.googleapis.com/auth/chat.messages');
         $this->client->addScope('https://www.googleapis.com/auth/chat.messages.readonly');
     }
 

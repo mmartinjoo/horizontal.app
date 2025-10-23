@@ -2,30 +2,60 @@
 
 namespace App\Services\Integration\Communication\GoogleChat;
 
+use App\Models\GoogleIntegration;
+use App\Services\Integration\Communication\DataTransferObjects\Channel;
+use Exception;
 use Google\Client;
 use Google\Service\HangoutsChat;
-use Illuminate\Support\Facades\Storage;
+use Google\Service\HangoutsChat\Space;
+use Illuminate\Support\Collection;
 
 class GoogleChat
 {
-    public function testing()
+    private HangoutsChat $chat;
+
+    public function __construct()
     {
-        $redirecUrl = "https://tenant2-horizontal.loca.lt/api/integrations/google/oauth/callback";
+        $integration = $this->getValidIntegration();
         $client = new Client();
-        $client->setAuthConfig(storage_path('/app/private/google_creds.json'));
-        $client->addScope('https://googleapis.com/auth/chat.spaces');
-        $client->addScope('https://googleapis.com/auth/chat.spaces.readonly');
-        $client->addScope('https://googleapis.com/auth/chat.memberships');
-        $client->addScope('https://googleapis.com/auth/auth/chat.memberships.readonly');
-        $client->addScope('https://googleapis.com/auth/auth/chat.messages');
-        $client->addScope('https://googleapis.com/auth/auth/auth/chat.messages.readonly');
+        $client->setAccessToken($integration->access_token);    
+        $this->chat = new HangoutsChat($client);
+    }
+
+    /**
+     * @return Collection<Channel>
+     */
+    public function channels(): Collection
+    {
+        $spaces = $this->chat->spaces->listSpaces([
+            'pageSize' => 1000,
+        ]);
         
-        // $client->setAuthConfig([
-        //     'client_id' => config('services.google_drive.client_id'),
-        //     'client_secret' => config('services.google_drive.client_secret'),
-        //     'redirect_uris' => ["https://developers.google.com/oauthplayground"],
-        // ]);
-        // $chat = new HangoutsChat($client);
-        // dd($chat->spaces->listSpaces());
+        $channels = collect();
+
+        /** @var Space $space */
+        foreach ($spaces as $space) {
+            if ($space->spaceType !== 'SPACE') {
+                continue;
+            }
+            $channels[] = Channel::fromGoogleChat((array)$space);
+        }
+        return $channels;
+    }
+
+    public function messages(Channel $channel)
+    {
+
+    }
+
+    private function getValidIntegration(): GoogleIntegration
+    {
+        $integration = GoogleIntegration::first();
+        if (!$integration) {
+            throw new Exception('No Google integration found');
+        }
+
+        // TODO: Ensure token is valid (refresh if needed)
+        return $integration;
     }
 }

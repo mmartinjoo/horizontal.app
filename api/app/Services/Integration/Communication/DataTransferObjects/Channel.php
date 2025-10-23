@@ -17,4 +17,12 @@ class Channel
             name: $data['name'],
         );
     }
+
+    public static function fromGoogleChat(array $data): self
+    {
+        return new self(
+            externalId: $data['name'],
+            name: $data['displayName'],
+        );
+    }
 }
