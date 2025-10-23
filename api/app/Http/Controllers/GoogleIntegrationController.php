@@ -66,13 +66,14 @@ class GoogleIntegrationController extends Controller
         try {
             $tokenData = $this->googleOAuthService->exchangeCodeForToken($code);
             
-            // $userInfo = $this->googleOAuthService->getUserInfo($tokenData['access_token']);
+            $userInfo = $this->googleOAuthService->getUserInfo($tokenData['access_token']);
+
             $expiresAt = now()->addSeconds($tokenData['expires_in'] ?? 86400); // Default 24 hours
 
             $integration = GoogleIntegration::create([
-                // 'user_name' => $userInfo['displayName'] ?? $userInfo['name'] ?? null,
-                // 'user_email' => $userInfo['email'] ?? null,
-                // 'linear_user_id' => $userInfo['id'] ?? null,
+                'user_name' => $userInfo['displayName'] ?? $userInfo['name'] ?? null,
+                'user_email' => $userInfo['email'] ?? null,
+                'google_user_id' => $userInfo['id'] ?? null,
                 'access_token' => $tokenData['access_token'],
                 'refresh_token' => $tokenData['refresh_token'] ?? null,
                 'expires_at' => $expiresAt,
