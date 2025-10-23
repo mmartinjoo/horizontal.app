@@ -21,9 +21,9 @@ class LinearOAuthService
         private string $redirectUri
     ) {}
 
-    public function generateAuthorizationUrl(?string $state = null): array
+    public function generateAuthorizationUrl(): array
     {
-        $state = $state ?: Str::random(40);
+        $state = Str::random(40);
 
         $queryParams = http_build_query([
             'client_id' => $this->clientId,

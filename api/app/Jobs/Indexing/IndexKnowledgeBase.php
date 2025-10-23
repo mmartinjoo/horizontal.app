@@ -7,6 +7,8 @@ use App\Jobs\Indexing\KnowledgeGraph\BuildCommunities;
 use App\Jobs\Indexing\KnowledgeGraph\BuildKnowledgeGraph;
 use App\Jobs\Indexing\KnowledgeGraph\BuildRelatedNodes;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
+use App\Jobs\Indexing\TaskManagement\Jira\IndexJira;
+use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
 use App\Services\GraphDB\GraphDB;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -19,9 +21,10 @@ class IndexKnowledgeBase implements ShouldQueue
     {
         $graphDB->run('MATCH (n) DETACH DELETE n');
 
-        // IndexGoogleDrive::dispatch();
+        IndexGoogleDrive::dispatch();
         // IndexJira::dispatch();
         IndexSlack::dispatch();
+        IndexLinear::dispatch();
 
         BuildKnowledgeGraph::dispatch()
             ->delay(now()->addMinutes(1));
