@@ -28,13 +28,6 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'slack' => [
-        'notifications' => [
-            'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
-            'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
-        ],
-    ],
-
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
     ],
@@ -51,6 +44,7 @@ return [
         'api_key' => env('PINECONE_API_KEY'),
     ],
 
+    // TODO: merge with Google
     'google_drive' => [
         'client_id' => env('GOOGLE_DRIVE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
@@ -58,11 +52,33 @@ return [
         'access_token' => env('GOOGLE_DRIVE_ACCESS_TOKEN'),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'project_id' => env('GOOGLE_PROJECT_ID'),
+        'auth_uri' => env('GOOGLE_AUTH_URI'),
+        'token_uri' => env('GOOGLE_TOKEN_URI'),
+        'auth_provider_x509_cert_url' => env('GOOGLE_AUTH_PROVIDER_X509_CERT_URL'),
+        'redirect_uris' => ['https://tenant2-horizontal.loca.lt' . env('GOOGLE_REDIRECT_URI')],
+    ],
+
     'jira' => [
         'app_id' => env('JIRA_APP_ID'),
         'client_id' => env('JIRA_CLIENT_ID'),
         'client_secret' => env('JIRA_CLIENT_SECRET'),
         'redirect_uri' => env('JIRA_REDIRECT_URI'),
+    ],
+
+    'slack' => [
+        'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+        'base_url' => env('SLACK_BASE_URL'),
+    ],
+
+    'linear' => [
+        'api_token' => env('LINEAR_API_TOKEN'),
+        'client_id' => env('LINEAR_CLIENT_ID'),
+        'client_secret' => env('LINEAR_CLIENT_SECRET'),
+        'redirect_uri' => env('LINEAR_REDIRECT_URL'),
     ],
 
     'github' => [

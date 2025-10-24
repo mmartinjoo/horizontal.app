@@ -4,8 +4,11 @@ namespace App\Providers;
 
 use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\GraphDBFactory;
+use App\Services\Integration\Communication\Slack\Slack;
+use App\Services\Integration\Google\GoogleOAuthService;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
+use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
 use App\Services\KnowledgeGraph\GraphBuilder;
 use App\Services\LLM\Anthropic;
 use App\Services\LLM\Embedder;
@@ -70,6 +73,26 @@ class AppServiceProvider extends ServiceProvider
             ->needs('$redirectUri')
             ->give(config('services.jira.redirect_uri'));
 
+        $this->app
+            ->when(LinearOAuthService::class)
+            ->needs('$clientId')
+            ->give(config('services.linear.client_id'));
+
+        $this->app
+            ->when(LinearOAuthService::class)
+            ->needs('$clientSecret')
+            ->give(config('services.linear.client_secret'));
+
+        $this->app
+            ->when(GoogleOAuthService::class)
+            ->needs('$config')
+            ->give(config('services.google'));
+
+        $this->app
+            ->when(LinearOAuthService::class)
+            ->needs('$redirectUri')
+            ->give(config('services.linear.redirect_uri'));
+
         $this->app->bind(GraphDB::class, function () {
             return GraphDBFactory::create();
         });
@@ -83,6 +106,16 @@ class AppServiceProvider extends ServiceProvider
             ->when(GraphBuilder::class)
             ->needs('$baseUrl')
             ->give(config('graph_builder.base_url'));
+
+        $this->app
+            ->when(Slack::class)
+            ->needs('$botUserOauthToken')
+            ->give(config('services.slack.bot_user_oauth_token'));
+
+        $this->app
+            ->when(Slack::class)
+            ->needs('$baseUrl')
+            ->give(config('services.slack.base_url'));
 
         $this->app
             ->when(GitHub::class)

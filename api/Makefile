@@ -13,3 +13,10 @@ run:
 
 copy-vendor:
 	docker compose cp api:/var/www/vendor ./
+
+tunnel-tenant1:
+	lt --port 9999 --subdomain tenant1-horizontal
+
+tunnel-tenant2:
+	lt --port 9999 --subdomain tenant2-horizontal
+# 	lt --host tenant2.localhost --port 9999

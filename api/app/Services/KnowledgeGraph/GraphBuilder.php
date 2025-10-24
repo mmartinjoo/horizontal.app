@@ -5,12 +5,10 @@ namespace App\Services\KnowledgeGraph;
 use App\Jobs\Indexing\IndexGraphCommunity;
 use App\Models\Document;
 use App\Models\DocumentComment;
-use App\Models\Tenant;
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
 use Bolt\protocol\v5\structures\Node;
 use Illuminate\Support\Facades\Http;
-use Stancl\Tenancy\Tenancy;
 use Symfony\Component\HttpFoundation\Response;
 
 class GraphBuilder
@@ -34,7 +32,8 @@ class GraphBuilder
     public function buildRelatedNodes()
     {
         $this->connectCommentsToDocuments();
-        $this->buildParticipants();
+        $this->buildParticipantsForDocuments();
+        $this->buildParticipantsForDocumentComments();
         $this->buildWorklogs();
     }
 
@@ -151,7 +150,7 @@ class GraphBuilder
         }
     }
 
-    private function buildParticipants()
+    private function buildParticipantsForDocuments()
     {
         $documents = Document::with('participants')->get();
         foreach ($documents as $document) {
@@ -162,7 +161,7 @@ class GraphBuilder
             ");
 
             foreach ($document->participants as $participant) {
-                // Already processed in `buildComments`
+                // Already processed in `connectCommentsToDocuments`
                 if ($participant->pivot->context === 'commented') {
                     continue;
                 }
@@ -183,6 +182,44 @@ class GraphBuilder
                         'watcher' => 'WATCHER_OF',
                         'voter' => 'VOTED_FOR',
                         'sharing user' => 'SHARED_BY',
+                        default => 'MENTIONED_IN',
+                    };
+
+                    $this->graphDB->addRelation(
+                        fromNodeLabel: 'Participant',
+                        fromNodeID: $participant->id,
+                        relation: $relation,
+                        toNodeLabel: 'Chunk',
+                        toNodeID: $chunkNode->properties['id'],
+                    );
+                }
+            }
+        }
+    }
+
+    private function buildParticipantsForDocumentComments()
+    {
+        $comments = DocumentComment::with('participants')->get();
+        foreach ($comments as $comment) {
+            $chunkNodes = $this->graphDB->queryMany("
+                match (n:Chunk)
+                where n.comment_id={$comment->id}
+                return n
+            ");
+
+            foreach ($comment->participants as $participant) {
+                $this->graphDB->createNode(
+                    label: 'Participant',
+                    attributes: [
+                        'id' => $participant->id,
+                        'name' => $participant->name,
+                        'embedding' => $this->embedder->createEmbedding($participant->name),
+                    ],
+                );
+
+                foreach ($chunkNodes as $chunkNode) {
+                    $relation = match ($participant->pivot->context) {
+                        'mentioned' => 'MENTIONED_IN',
                         default => 'MENTIONED_IN',
                     };
 

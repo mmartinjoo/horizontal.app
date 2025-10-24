@@ -6,7 +6,6 @@ from src.graphbuilder import GraphBuilder
 from src.factories import create_graph_client
 
 load_dotenv()
-os.environ["OPENAI_API_KEY"] = os.getenv("FIREWORKS_API_KEY")
 
 app = Flask(__name__)
     

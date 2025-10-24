@@ -2,16 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\Indexing\IndexKnowledgeBase;
-use App\Services\Integration\CodeRepository\GitHub\GitHub;
+use App\Jobs\Indexing\Communication\GoogleChat\IndexGoogleChat;
+use App\Jobs\Indexing\Communication\Slack\IndexSlack;
+use App\Jobs\Indexing\KnowledgeGraph\BuildCommunities;
+use App\Jobs\Indexing\KnowledgeGraph\BuildKnowledgeGraph;
+use App\Jobs\Indexing\KnowledgeGraph\BuildRelatedNodes;
+use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
 
 class TestController extends Controller
 {
-    public function index(GitHub $github)
+    public function index()
     {
-        $repos = $github->repositories();
+        IndexGoogleChat::dispatch();
+        // IndexSlack::dispatch();
+        // IndexKnowledgeBase::dispatch();
 
-        dd($repos->toArray());
+        // BuildKnowledgeGraph::dispatch();
     }
 
     public function token()
