@@ -10,8 +10,8 @@ use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
-use App\Services\Integration\CodeRepository\DataTransferObject\Repository;
-use App\Services\Integration\CodeRepository\Github\DataTransferObjects\PullRequest;
+use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
+use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use App\Services\Integration\CodeRepository\Github\DataTransferObjects\PullRequestComment;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use Carbon\Carbon;
@@ -40,17 +40,13 @@ class IndexGitHub implements ShouldQueue
 
         /** @var Repository $repo */
         foreach ($repositories as $repo) {
-            $pullRequests = $github->getPullRequests(
-                owner: $repo->owner,
-                repo: $repo->name,
-                months: 3,
+            $pullRequests = $github->pullRequests(
+                repo: $repo,
             );
 
             $indexing->increment('overall_items', count($pullRequests));
 
-            foreach ($pullRequests as $i => $prData) {
-                $pullRequest = PullRequest::fromGitHub($prData);
-
+            foreach ($pullRequests as $i => $pullRequest) {
                 if (!$this->pullRequestNeedsIndexing($pullRequest)) {
                     $indexing->increment('skipped_items', 1);
                     continue;
@@ -74,7 +70,7 @@ class IndexGitHub implements ShouldQueue
                     'source_url' => $pullRequest->url,
                     'title' => $pullRequest->title,
                     'priority' => $priority,
-                    'metadata' => $pullRequest->toArray(),
+                    'metadata' => $pullRequest,
                 ]);
 
                 // Create indexing workflow item
@@ -239,7 +235,7 @@ class IndexGitHub implements ShouldQueue
             return true;
         }
 
-        return $pullRequest->getLastUpdatedAt()->gt(
+        return $pullRequest->updatedAt->gt(
             $existingContent->indexed_at ?? Carbon::parse('1900-01-01 00:00:00')
         );
     }

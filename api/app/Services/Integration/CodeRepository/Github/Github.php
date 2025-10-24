@@ -2,9 +2,9 @@
 
 namespace App\Services\Integration\CodeRepository\GitHub;
 
-use App\Services\Integration\CodeRepository\DataTransferObject\Repository;
+use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
+use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use Illuminate\Support\Facades\Http;
-use Carbon\Carbon;
 use Illuminate\Support\LazyCollection;
 
 class GitHub
@@ -40,40 +40,39 @@ class GitHub
         
     }
 
-    public function getPullRequests(string $owner, string $repo, int $months = 3): array
+    /**
+     * @return LazyCollection<PullRequest>
+     */
+    public function pullRequests(Repository $repo, int $months = 3): LazyCollection
     {
-        $pullRequests = [];
-        $page = 1;
-        $perPage = 100;
-        $fromDate = now()->subMonths($months);
+        return LazyCollection::make(function () use ($repo, $months) {
+            $page = 1;
+            $perPage = 100;
+            $fromDate = now()->subMonths($months);
+            while (true) {
+                $prs = $this->makeRequest("/repos/{$repo->owner}/{$repo->name}/pulls", [
+                    'state' => 'all',
+                    'sort' => 'updated',
+                    'direction' => 'desc',
+                    'per_page' => $perPage,
+                    'page' => $page,
+                ]);
 
-        do {
-            $prs = $this->makeRequest("/repos/{$owner}/{$repo}/pulls", [
-                'state' => 'all',
-                'sort' => 'updated',
-                'direction' => 'desc',
-                'per_page' => $perPage,
-                'page' => $page,
-            ]);
-
-            if (empty($prs)) {
-                break;
-            }
-
-            foreach ($prs as $pr) {
-                $updatedAt = Carbon::parse($pr['updated_at']);
-
-                if ($updatedAt->lt($fromDate)) {
-                    break 2;
+                if (empty($prs)) {
+                    break;
                 }
 
-                $pullRequests[] = $pr;
+                foreach ($prs as $pr) {
+                    $pullRequest = PullRequest::fromGitHub($pr);
+                    if ($pullRequest->updatedAt->lt($fromDate)) {
+                        continue;
+                    }
+                    yield $pullRequest;
+                }
+                $page++;
+                usleep(50_000);
             }
-
-            $page++;
-        } while (count($prs) === $perPage);
-
-        return $pullRequests;
+        });
     }
 
     public function getPullRequestComments(string $owner, string $repo, int $prNumber): array

@@ -4,7 +4,7 @@ namespace App\Jobs\Indexing\CodeRepository\GitHub;
 
 use App\Models\Document;
 use App\Models\IndexingWorkflowItem;
-use App\Services\Integration\CodeRepository\Github\DataTransferObjects\PullRequest;
+use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -35,13 +35,7 @@ class IndexPullRequest implements ShouldQueue
         ]);
 
         try {
-            // Update document metadata
-            $this->document->update([
-                'metadata' => array_merge(
-                    $this->document->metadata ?? [],
-                    $this->pullRequest->toArray()
-                ),
-            ]);
+            
 
             $indexingItem->update([
                 'status' => 'completed',

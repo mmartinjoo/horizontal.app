@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Integration\CodeRepository\DataTransferObject;
+namespace App\Services\Integration\CodeRepository\DataTransferObjects;
 
 class Repository
 {
