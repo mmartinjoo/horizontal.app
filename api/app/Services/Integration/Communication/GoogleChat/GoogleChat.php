@@ -9,7 +9,7 @@ use Exception;
 use Google\Client;
 use Google\Service\HangoutsChat;
 use Google\Service\HangoutsChat\Space;
-use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 
 class GoogleChat
@@ -25,39 +25,66 @@ class GoogleChat
     }
 
     /**
-     * @return Collection<Channel>
+     * @return LazyCollection<Channel>
      */
-    public function channels(): Collection
+    public function channels(): LazyCollection
     {
-        $spaces = $this->chat->spaces->listSpaces([
-            'pageSize' => 1000,
-        ]);
+        return LazyCollection::make(function () {
+            $pageToken = null;
+            while (true) {
+                $data = $this->chat->spaces->listSpaces([
+                    'pageSize' => 100,
+                    'pageToken' => $pageToken,
+                ]);
 
-        $channels = collect();
+                $pageToken = $data->nextPageToken;                
 
-        /** @var Space $space */
-        foreach ($spaces as $space) {
-            if ($space->spaceType !== 'SPACE') {
-                continue;
+                /** @var Space $space */
+                foreach ($data->getSpaces() as $space) {
+                    if ($space->spaceType !== 'SPACE') {
+                        continue;
+                    }
+                    yield Channel::fromGoogleChat((array)$space);
+                }
+
+                if (!$pageToken) {
+                    break;
+                }
+
+                // 50ms delay to avoid rate limits
+                usleep(50_000);
             }
-            $channels[] = Channel::fromGoogleChat((array)$space);
-        }
-        return $channels;
+        });
     }
 
     /**
-     * @return Collection<Message>
+     * @return LazyCollection<Message>
      */
-    public function messages(Channel $channel): Collection
+    public function messages(Channel $channel): LazyCollection
     {
-        $data = $this->chat->spaces_messages->listSpacesMessages($channel->externalId);
-        $messages = collect();
-        foreach ($data->messages as $googleMessage) {
-            $message = Message::fromGoogleChat($channel, (array)$googleMessage);
-            $message->url = $this->messageLink($channel, $message);
-            $messages[] = $message;
-        }
-        return $messages;
+        return LazyCollection::make(function () use ($channel) {
+            $pageToken = null;
+            while (true) {
+                $data = $this->chat->spaces_messages->listSpacesMessages($channel->externalId, [
+                    'pageSize' => 100,
+                    'pageToken' => $pageToken,
+                ]);
+
+                $pageToken = $data->nextPageToken;
+                foreach ($data->messages as $googleMessage) {
+                    $message = Message::fromGoogleChat($channel, (array)$googleMessage);
+                    $message->url = $this->messageLink($channel, $message);
+                    yield $message;
+                }
+
+                if (!$pageToken) {
+                    break;
+                }
+
+                // 50ms delay to avoid rate limits
+                usleep(50_000);
+            }
+        });
     }
 
     private function getValidIntegration(): GoogleIntegration
