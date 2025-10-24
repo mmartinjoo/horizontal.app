@@ -2,26 +2,37 @@
 
 namespace App\Services\Integration\CodeRepository\GitHub;
 
+use App\Models\GithubIntegration;
 use App\Services\Integration\CodeRepository\CodeRepository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Comment;
 use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
+use App\Services\Integration\CodeRepository\Github\GithubOAuth;
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
 
 class GitHub implements CodeRepository
 {
+    private string $accessToken;
+
     public function __construct(
-        private string $accessToken,
+        private GithubOAuth $githubAuth,
         private string $baseUrl,
-    ) {}
+    ) {
+        $integration = GithubIntegration::first();
+        if (!$integration) {
+            throw new Exception('No valid GitHub integration found.');
+        }
+        $this->accessToken = $this->githubAuth->getInstallationToken($integration->installation_id);
+    }
 
     public function repositories(): LazyCollection
     {
         return LazyCollection::make(function () {
             $page = 1;
             while (true) {
-                $repos = $this->makeRequest('/user/repos', [
+                $repos = $this->makeRequest('/installation/repositories', [
                     'per_page' => 100,
                     'page' => $page,
                     'sort' => 'updated',
