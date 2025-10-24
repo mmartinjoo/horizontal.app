@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Jobs\Indexing\Communication\Slack;
+namespace App\Jobs\Indexing\Communication\GoogleChat;
 
 use App\Jobs\Indexing\Communication\IndexMessage;
-use App\Jobs\Indexing\Communication\IndexThread;
 use App\Models\Document;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
-use App\Services\Integration\Communication\Slack\Slack;
+use App\Services\Integration\Communication\GoogleChat\GoogleChat;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\LazyCollection;
 
-class IndexSlack implements ShouldQueue
+class IndexGoogleChat implements ShouldQueue
 {
     use Queueable;
 
@@ -19,20 +18,14 @@ class IndexSlack implements ShouldQueue
     {
     }
 
-    public function handle(Slack $slack)
+    public function handle(GoogleChat $googleChat)
     {
-        $channels = $slack->channels();
+        $channels = $googleChat->channels();
         foreach ($channels as $channel) {
-            $messages = $slack->messages($channel);
+            $messages = $googleChat->messages($channel);
             $newMessages = $this->rejectExistingMessages($messages);
             foreach ($newMessages as $message) {
-                IndexMessage::dispatch($message, 'slack');
-            }
-
-            $threads = $slack->threads($channel);
-            $newThreads = $this->rejectExistingMessages($threads);
-            foreach ($newThreads as $thread) {
-                IndexThread::dispatch($thread);
+                IndexMessage::dispatch($message, 'google_chat');
             }
         }
     }
@@ -47,7 +40,7 @@ class IndexSlack implements ShouldQueue
             /** @var Message $message */
             foreach ($messages as $message) {
                 $exists = Document::query()
-                    ->where('source_type', 'slack')
+                    ->where('source_type', 'google_chat')
                     ->where('source_id', $message->externalId)
                     ->exists();
 

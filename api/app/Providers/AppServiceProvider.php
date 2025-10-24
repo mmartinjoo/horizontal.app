@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Integration\Communication\Slack\Slack;
+use App\Services\Integration\Google\GoogleOAuthService;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
 use App\Services\KnowledgeGraph\GraphBuilder;
@@ -80,6 +81,11 @@ class AppServiceProvider extends ServiceProvider
             ->when(LinearOAuthService::class)
             ->needs('$clientSecret')
             ->give(config('services.linear.client_secret'));
+
+        $this->app
+            ->when(GoogleOAuthService::class)
+            ->needs('$config')
+            ->give(config('services.google'));
 
         $this->app
             ->when(LinearOAuthService::class)

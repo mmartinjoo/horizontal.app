@@ -29,44 +29,44 @@ class Slack
     }
 
     /**
-     * @return Collection<Channel>
+     * @return LazyCollection<Channel>
      * @throws FailedToLoadChannelsException
      * @throws ConnectionException
      * @throws RequestException
      */
-    public function channels(): Collection
+    public function channels(): LazyCollection
     {
-        $channels = [];
         $cursor = null;
-        while (true) {
-            $data = [
-                'limit' => 100,
-            ];
-            if ($cursor) {
-                $data['cursor'] = $cursor;
-            }
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->botUserOauthToken,
-            ])
-                ->get($this->baseUrl . '/conversations.list', $data)
-                ->throw()
-                ->json();
+        return LazyCollection::make(function () use ($cursor) {
+            while (true) {
+                $data = [
+                    'limit' => 100,
+                ];
+                if ($cursor) {
+                    $data['cursor'] = $cursor;
+                }
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+                ])
+                    ->get($this->baseUrl . '/conversations.list', $data)
+                    ->throw()
+                    ->json();
 
-            if (!$response['ok']) {
-                throw new FailedToLoadChannelsException('Failed to load channels. Response: ' . json_encode($response));
-            }
+                if (!$response['ok']) {
+                    throw new FailedToLoadChannelsException('Failed to load channels. Response: ' . json_encode($response));
+                }
 
-            foreach ($response['channels'] as $channel) {
-                $channels[] = Channel::fromSlack($channel);
-            }
+                foreach ($response['channels'] as $channel) {
+                    yield Channel::fromSlack($channel);
+                }
 
-            $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
-            if (!$nextCursor) {
-                break;
+                $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
+                if (!$nextCursor) {
+                    break;
+                }
+                $cursor = $nextCursor;
             }
-            $cursor = $nextCursor;             
-        }
-        return collect($channels);
+        });
     }
 
     /**

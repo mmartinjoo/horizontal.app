@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\JiraIntegrationController;
 use App\Http\Controllers\LinearIntegrationController;
+use App\Http\Controllers\GoogleIntegrationController;
 use App\Http\Controllers\QuestionController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -49,5 +50,12 @@ Route::middleware([
         Route::post('authorize', [LinearIntegrationController::class, 'authorize']);
         Route::get('status', [LinearIntegrationController::class, 'status']);
         Route::delete('disconnect', [LinearIntegrationController::class, 'disconnect']);
+    });
+
+    Route::get('/integrations/google/oauth/callback', [GoogleIntegrationController::class, 'callback']);
+    Route::middleware('auth:sanctum')->prefix('/integrations/google/oauth')->group(function () {
+        Route::post('authorize', [GoogleIntegrationController::class, 'authorize']);
+        Route::get('status', [GoogleIntegrationController::class, 'status']);
+        Route::delete('disconnect', [GoogleIntegrationController::class, 'disconnect']);
     });
 });

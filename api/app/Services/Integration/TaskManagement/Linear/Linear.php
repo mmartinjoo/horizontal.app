@@ -15,54 +15,6 @@ class Linear
         private LinearTokenManager $tokenManager
     ) {}
 
-    private function getValidIntegration(): LinearIntegration
-    {
-        $integration = LinearIntegration::first();
-
-        if (!$integration) {
-            throw new Exception('No Linear integration found');
-        }
-
-        // Ensure token is valid (refresh if needed)
-        if (!$this->tokenManager->ensureValidToken($integration)) {
-            throw new Exception('Unable to obtain valid Linear token');
-        }
-
-        return $integration->fresh(); // Reload in case token was refreshed
-    }
-
-    public function makeGraphQLRequest(string $query, array $variables = []): Response
-    {
-        $integration = $this->getValidIntegration();
-
-        $response = Http::withToken($integration->access_token)
-            ->acceptJson()
-            ->post($this->getApiUrl(), [
-                'query' => $query,
-                'variables' => $variables,
-            ]);
-
-        // If token is invalid, try to refresh and retry once
-        if ($response->status() === 401) {
-            if ($this->tokenManager->refreshToken($integration)) {
-                // Retry with refreshed token
-                $integration->refresh();
-                $response = Http::withToken($integration->access_token)
-                    ->acceptJson()
-                    ->post($this->getApiUrl(), [
-                        'query' => $query,
-                        'variables' => $variables,
-                    ]);
-            }
-        }
-
-        if (!$response->successful()) {
-            throw new Exception('Linear GraphQL request failed: ' . $response->body());
-        }
-
-        return $response;
-    }
-
     /**
      * @return LazyCollection<Issue>
      */
@@ -123,6 +75,38 @@ class Linear
         }
 
         return $data;
+    }
+
+    public function makeGraphQLRequest(string $query, array $variables = []): Response
+    {
+        $integration = $this->getValidIntegration();
+
+        $response = Http::withToken($integration->access_token)
+            ->acceptJson()
+            ->post($this->getApiUrl(), [
+                'query' => $query,
+                'variables' => $variables,
+            ]);
+
+        // If token is invalid, try to refresh and retry once
+        if ($response->status() === 401) {
+            if ($this->tokenManager->refreshToken($integration)) {
+                // Retry with refreshed token
+                $integration->refresh();
+                $response = Http::withToken($integration->access_token)
+                    ->acceptJson()
+                    ->post($this->getApiUrl(), [
+                        'query' => $query,
+                        'variables' => $variables,
+                    ]);
+            }
+        }
+
+        if (!$response->successful()) {
+            throw new Exception('Linear GraphQL request failed: ' . $response->body());
+        }
+
+        return $response;
     }
 
     private function extractTextFromDocument(string $documentJson): string
@@ -319,5 +303,21 @@ class Linear
                 }
             }
         ';
+    }
+
+    private function getValidIntegration(): LinearIntegration
+    {
+        $integration = LinearIntegration::first();
+
+        if (!$integration) {
+            throw new Exception('No Linear integration found');
+        }
+
+        // Ensure token is valid (refresh if needed)
+        if (!$this->tokenManager->ensureValidToken($integration)) {
+            throw new Exception('Unable to obtain valid Linear token');
+        }
+
+        return $integration->fresh(); // Reload in case token was refreshed
     }
 }
