@@ -10,12 +10,14 @@ use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
+use App\Services\Integration\CodeRepository\DataTransferObject\Repository;
 use App\Services\Integration\CodeRepository\Github\DataTransferObjects\PullRequest;
 use App\Services\Integration\CodeRepository\Github\DataTransferObjects\PullRequestComment;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 
 class IndexGitHub implements ShouldQueue
@@ -33,14 +35,15 @@ class IndexGitHub implements ShouldQueue
             'job_id' => $this->job->payload()['uuid'],
         ]);
 
+        /** @var LazyCollection<Repository> $repositories */
         $repositories = $github->repositories();
 
-        foreach ($repositories as $repoData) {
-            // Fetch pull requests from the last 3 months
+        /** @var Repository $repo */
+        foreach ($repositories as $repo) {
             $pullRequests = $github->getPullRequests(
-                $repoData['owner']['login'],
-                $repoData['name'],
-                3
+                owner: $repo->owner,
+                repo: $repo->name,
+                months: 3,
             );
 
             $indexing->increment('overall_items', count($pullRequests));
@@ -105,9 +108,9 @@ class IndexGitHub implements ShouldQueue
 
                 // Fetch and store comments
                 $commentsData = $github->getPullRequestComments(
-                    $repoData['owner']['login'],
-                    $repoData['name'],
-                    $pullRequest->number
+                    owner: $repo->owner,
+                    repo: $repo->name,
+                    prNumber: $pullRequest->number
                 );
 
                 $comments = PullRequestComment::collectGitHub($commentsData);
@@ -127,9 +130,9 @@ class IndexGitHub implements ShouldQueue
 
                 // Fetch and store reviews
                 $reviewsData = $github->getPullRequestReviews(
-                    $repoData['owner']['login'],
-                    $repoData['name'],
-                    $pullRequest->number
+                    owner: $repo->owner,
+                    repo: $repo->name,
+                    prNumber: $pullRequest->number
                 );
 
                 foreach ($reviewsData as $review) {
