@@ -12,6 +12,11 @@ use Google\Service\HangoutsChat\Space;
 use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 
+/**
+ * This service doesn't support threads yet. Everything is processed as a stand-alone message.
+ * This is because the Google Chat API doesn't make it easy to differentiate between a 
+ * stand-alone message and a thread. GChat is not used enough so it's not worth it
+ */
 class GoogleChat
 {
     private HangoutsChat $chat;
