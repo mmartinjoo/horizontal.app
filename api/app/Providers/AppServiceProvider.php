@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\GraphDBFactory;
+use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use App\Services\KnowledgeGraph\GraphBuilder;
 use App\Services\LLM\Anthropic;
@@ -82,5 +83,10 @@ class AppServiceProvider extends ServiceProvider
             ->when(GraphBuilder::class)
             ->needs('$baseUrl')
             ->give(config('graph_builder.base_url'));
+
+        $this->app
+            ->when(GitHub::class)
+            ->needs('$accessToken')
+            ->give(config('services.github.access_token'));
     }
 }
