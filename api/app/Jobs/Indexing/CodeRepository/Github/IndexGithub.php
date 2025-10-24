@@ -4,10 +4,7 @@ namespace App\Jobs\Indexing\CodeRepository\GitHub;
 
 use App\Jobs\Indexing\CodeRepository\GitHub\IndexPullRequest;
 use App\Models\Document;
-use App\Models\DocumentChunk;
 use App\Models\IndexingWorkflow;
-use App\Models\Participant;
-use App\Services\Indexing\TextChunker;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
@@ -15,7 +12,6 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\LazyCollection;
-use Illuminate\Support\Str;
 
 class IndexGitHub implements ShouldQueue
 {
@@ -64,60 +60,6 @@ class IndexGitHub implements ShouldQueue
         }
 
         $indexing->update(['status' => 'completed']);
-    }
-
-    private function chunkAndStoreContent(Document $doc, string $content, TextChunker $textChunker): void
-    {
-        if (empty(trim($content))) {
-            return;
-        }
-
-        $chunks = $textChunker->chunk($content);
-
-        // Get the current max position for this document
-        $maxPosition = DocumentChunk::where('document_id', $doc->id)
-            ->max('position') ?? 0;
-
-        foreach ($chunks as $i => $chunk) {
-            if (empty(trim($chunk))) {
-                continue;
-            }
-
-            DocumentChunk::create([
-                'document_id' => $doc->id,
-                'body' => $chunk,
-                'position' => $maxPosition + $i + 1,
-            ]);
-        }
-    }
-
-    private function addParticipant(Document $doc, string $username, string $context): Participant
-    {
-        $participant = Participant::updateOrCreate(
-            [
-                'slug' => Str::slug($username),
-                'type' => 'person',
-            ],
-            [
-                'slug' => Str::slug($username),
-                'name' => $username,
-                'type' => 'person',
-            ]
-        );
-
-        // Check if participant is already attached with this context
-        $exists = $doc->participants()
-            ->wherePivot('context', $context)
-            ->where('participants.id', $participant->id)
-            ->exists();
-
-        if (!$exists) {
-            $doc->participants()->attach($participant->id, [
-                'context' => $context,
-            ]);
-        }
-
-        return $participant;
     }
 
     private function pullRequestNeedsIndexing(PullRequest $pullRequest): bool
