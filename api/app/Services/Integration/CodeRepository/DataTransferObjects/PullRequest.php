@@ -16,12 +16,13 @@ class PullRequest
         public ?string $assignee,
         public array $reviewers,
         public string $author,
+        public Repository $repository,
         public Carbon $createdAt,
         public Carbon $updatedAt,
     ) {
     }
 
-    public static function fromGitHub(array $data): self
+    public static function fromGitHub(array $data, Repository $repo): self
     {
         $reviewers = [];
         foreach (Arr::get($data, 'requested_reviewers', []) as $reviewer) {
@@ -40,6 +41,7 @@ class PullRequest
             assignee: Arr::get($data, 'assignee.login'),
             reviewers: $reviewers,
             author: Arr::get($data, 'user.login'),
+            repository: $repo,
             createdAt: Carbon::parse($data['created_at']),
             updatedAt: Carbon::parse($data['updated_at']),
         );

@@ -2,47 +2,104 @@
 
 namespace App\Jobs\Indexing\CodeRepository\GitHub;
 
+use App\Exceptions\NoContentToIndexException;
 use App\Models\Document;
+use App\Models\DocumentChunk;
+use App\Models\DocumentComment;
 use App\Models\IndexingWorkflowItem;
+use App\Models\Participant;
+use App\Services\Indexing\TextChunker;
 use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\LazyCollection;
+use Illuminate\Support\Str;
+use Exception;
 
 class IndexPullRequest implements ShouldQueue
 {
     use Queueable;
 
     public function __construct(
-        private Document $document,
         private PullRequest $pullRequest,
-        private int $indexingWorkflowItemId
+        /** @var LazyCollection<Comment> $comments */
+        private LazyCollection $comments,
+        private int $indexingWorkflowId,
     ) {}
 
-    public function handle(): void
+    public function handle(TextChunker $textChunker): void
     {
-        $indexingItem = IndexingWorkflowItem::find($this->indexingWorkflowItemId);
-
-        if (!$indexingItem) {
-            return;
-        }
-
-        $jobIds = $indexingItem->job_ids ?? [];
-        $jobIds[] = $this->job->payload()['uuid'];
-
-        $indexingItem->update([
-            'status' => 'processing',
-            'job_ids' => $jobIds,
-        ]);
-
         try {
+            $doc = Document::create([
+                'source_type' => 'github_pr',
+                'source_id' => $this->pullRequest->id,
+                'source_url' => $this->pullRequest->url,
+                'title' => $this->pullRequest->title,
+                'priority' => 'high',
+                'metadata' => $this->pullRequest,
+            ]);
             
+            $indexingItem = IndexingWorkflowItem::create([
+                'indexing_workflow_id' => $this->indexingWorkflowId,
+                'data' => $this->pullRequest,
+                'status' => 'processing',
+                'document_id' => $doc->id,
+                'job_ids' => [$this->job->payload()['uuid']],
+            ]);
 
+            $chunks = $textChunker->chunk($this->pullRequest->description);
+            if (count($chunks) === 0) {
+                $indexingItem->update([
+                    'status' => 'warning',
+                ]);
+                throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->pullRequest));
+            }
+            if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
+                $indexingItem->update([
+                    'status' => 'warning',
+                ]);
+                throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->pullRequest));
+            }
+
+            foreach ($chunks as $i => $chunk) {
+                DocumentChunk::create([
+                    'document_id' => $doc->id,
+                    'body' => $chunk,
+                    'position' => $i+1,
+                ]);
+            }
+
+            $this->addParticipant($doc, $this->pullRequest->author, 'author');
+
+            if ($this->pullRequest->assignee) {
+                $this->addParticipant($doc, $this->pullRequest->assignee, 'assignee');
+            }
+
+            foreach ($this->pullRequest->reviewers as $reviewer) {
+                $this->addParticipant($doc, $reviewer, 'reviewer');
+            }
+
+            foreach ($this->comments as $comment) {
+                $participant = $this->addParticipant($doc, $comment->author, 'commenter');
+                DocumentComment::create([
+                    'document_id' => $doc->id,
+                    'author_id' => $participant->id,
+                    'body' => $comment->body,
+                    'commented_at' => $comment->createdAt,
+                    'comment_id' => $comment->id,
+                    'metadata' => $comment,
+                ]);
+            }
+
+            $doc->update([
+                'preview' => $chunks->first(),
+                'indexed_at' => now(),
+            ]);
             $indexingItem->update([
                 'status' => 'completed',
             ]);
-
             $this->updateWorkflowStatus($indexingItem);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $indexingItem->update([
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
@@ -52,10 +109,24 @@ class IndexPullRequest implements ShouldQueue
         }
     }
 
+    private function addParticipant(Document $doc, string $username, string $context)
+    {
+        $participant = Participant::getOrCreate(Str::slug($username));
+        $exists = $doc->participants()
+            ->wherePivot('context', $context)
+            ->where('participants.id', $participant->id)
+            ->exists();
+
+        if (!$exists) {
+            $doc->participants()->attach($participant->id, [
+                'context' => $context,
+            ]);
+        }
+    }
+
     private function updateWorkflowStatus(IndexingWorkflowItem $indexingItem): void
     {
         $workflow = $indexingItem->indexing_workflow;
-
         if (!$workflow) {
             return;
         }

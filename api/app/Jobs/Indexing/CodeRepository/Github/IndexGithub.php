@@ -5,9 +5,7 @@ namespace App\Jobs\Indexing\CodeRepository\GitHub;
 use App\Jobs\Indexing\CodeRepository\GitHub\IndexPullRequest;
 use App\Models\Document;
 use App\Models\DocumentChunk;
-use App\Models\DocumentComment;
 use App\Models\IndexingWorkflow;
-use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
@@ -24,7 +22,6 @@ class IndexGitHub implements ShouldQueue
     use Queueable;
 
     public function handle(
-        TextChunker $textChunker,
         GitHub $github,
     ): void {
         /** @var IndexingWorkflow $indexing */
@@ -44,7 +41,6 @@ class IndexGitHub implements ShouldQueue
             );
 
             $indexing->increment('overall_items', count($pullRequests));
-
             foreach ($pullRequests as $i => $pullRequest) {
                 if (!$this->pullRequestNeedsIndexing($pullRequest)) {
                     $indexing->increment('skipped_items', 1);
@@ -59,79 +55,11 @@ class IndexGitHub implements ShouldQueue
 
                 $indexing->increment('deleted_items', $count);
 
-                // Determine priority based on PR age
-                $priority = $this->determinePriority($pullRequest);
-
-                // Create document for the PR
-                $doc = Document::create([
-                    'source_type' => 'github_pr',
-                    'source_id' => $pullRequest->id,
-                    'source_url' => $pullRequest->url,
-                    'title' => $pullRequest->title,
-                    'priority' => $priority,
-                    'metadata' => $pullRequest,
-                ]);
-
-                // Create indexing workflow item
-                $indexingItem = IndexingWorkflowItem::create([
-                    'indexing_workflow_id' => $indexing->id,
-                    'data' => $pullRequest->toArray(),
-                    'status' => 'queued',
-                    'document_id' => $doc->id,
-                ]);
-
-                // Dispatch job to index PR content
-                IndexPullRequest::dispatch($doc, $pullRequest, $indexingItem->id);
-
-                // Chunk and store PR description
-                if ($pullRequest->description) {
-                    $this->chunkAndStoreContent($doc, $pullRequest->description, $textChunker);
-                }
-
-                // Add author as participant
-                $this->addParticipant($doc, $pullRequest->author, 'author');
-
-                // Add assignee as participant
-                if ($pullRequest->assignee) {
-                    $this->addParticipant($doc, $pullRequest->assignee, 'assignee');
-                }
-
-                // Add reviewers as participants
-                foreach ($pullRequest->reviewers as $reviewer) {
-                    $this->addParticipant($doc, $reviewer, 'reviewer');
-                }
-
-                // Fetch and store comments
                 $comments = $github->pullRequestComments(
-                    repo: $repo,
                     pullRequest: $pullRequest,
                 );
-
-                foreach ($comments as $comment) {
-                    $participant = $this->addParticipant($doc, $comment->author, 'commenter');
-
-                    DocumentComment::create([
-                        'document_id' => $doc->id,
-                        'author_id' => $participant->id,
-                        'body' => $comment->body,
-                        'commented_at' => $comment->createdAt,
-                        'comment_id' => $comment->id,
-                        'metadata' => $comment,
-                    ]);
-
-                }
-
-                // Update document with preview (first chunk)
-                $firstChunk = DocumentChunk::where('document_id', $doc->id)
-                    ->orderBy('position')
-                    ->first();
-
-                if ($firstChunk) {
-                    $doc->update([
-                        'preview' => $firstChunk->body,
-                        'indexed_at' => now(),
-                    ]);
-                }
+            
+                IndexPullRequest::dispatch($pullRequest, $comments, $indexing->id);
             }
         }
 
@@ -206,23 +134,5 @@ class IndexGitHub implements ShouldQueue
         return $pullRequest->updatedAt->gt(
             $existingContent->indexed_at ?? Carbon::parse('1900-01-01 00:00:00')
         );
-    }
-
-    private function determinePriority(PullRequest $pullRequest): string
-    {
-        $age = now()->diffInDays($pullRequest->createdAt);
-
-        // High priority: Recent PRs (last month)
-        if ($age <= 30) {
-            return 'high';
-        }
-
-        // Medium priority: PRs from 1-2 months ago
-        if ($age <= 60) {
-            return 'medium';
-        }
-
-        // Low priority: Older PRs
-        return 'low';
     }
 }

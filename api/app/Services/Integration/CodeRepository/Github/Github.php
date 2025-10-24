@@ -66,7 +66,7 @@ class GitHub
                 }
 
                 foreach ($prs as $pr) {
-                    $pullRequest = PullRequest::fromGitHub($pr);
+                    $pullRequest = PullRequest::fromGitHub($pr, $repo);
                     if ($pullRequest->updatedAt->lt($fromDate)) {
                         continue;
                     }
@@ -81,12 +81,15 @@ class GitHub
         });
     }
 
-    public function pullRequestComments(Repository $repo, PullRequest $pullRequest): LazyCollection
+    /**
+     * @return LazyCollection<Comment>
+     */
+    public function pullRequestComments(PullRequest $pullRequest): LazyCollection
     {
-        return LazyCollection::make(function () use ($repo, $pullRequest) {
+        return LazyCollection::make(function () use ($pullRequest) {
             $page = 1;
             while (true) {                
-                $comments = $this->makeRequest("/repos/{$repo->owner}/{$repo->name}/issues/{$pullRequest->number}/comments", [
+                $comments = $this->makeRequest("/repos/{$pullRequest->repository->owner}/{$pullRequest->repository->name}/issues/{$pullRequest->number}/comments", [
                     'per_page' => 100,
                     'page' => $page,
                 ]);
