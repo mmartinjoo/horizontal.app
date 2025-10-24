@@ -2,12 +2,10 @@
 
 namespace App\Services\Integration\CodeRepository\GitHub;
 
-use App\Models\Team;
-use Exception;
-use Illuminate\Http\Client\Response;
+use App\Services\Integration\CodeRepository\DataTransferObject\Repository;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Illuminate\Support\LazyCollection;
 
 class GitHub
 {
@@ -15,41 +13,31 @@ class GitHub
         private string $accessToken
     ) {}
 
-    public function makeRequest(string $endpoint, array $params = []): Response
+    public function repositories(): LazyCollection
     {
-        $url = $this->buildApiUrl($endpoint);
+        return LazyCollection::make(function () {
+            $page = 1;
+            while (true) {
+                $repos = $this->makeRequest('/user/repos', [
+                    'per_page' => 100,
+                    'page' => $page,
+                    'sort' => 'updated',
+                    'affiliation' => 'owner,collaborator,organization_member',
+                ]);
 
-        $response = Http::withToken($this->accessToken)
-            ->acceptJson()
-            ->withHeaders([
-                'X-GitHub-Api-Version' => '2022-11-28',
-            ])
-            ->get($url, $params);
+                if (empty($repos)) {
+                    break;
+                }
 
-        if (!$response->successful()) {
-            Log::error('GitHub API request failed', [
-                'endpoint' => $endpoint,
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-        }
+                foreach ($repos as $repo) {
+                    yield Repository::fromGitHub($repo);
+                }
 
-        return $response;
-    }
-
-    public function getRepositories(): array
-    {
-        $response = $this->makeRequest('/user/repos', [
-            'per_page' => 100,
-            'sort' => 'updated',
-            'affiliation' => 'owner,collaborator,organization_member',
-        ]);
-
-        if (!$response->successful()) {
-            throw new Exception('Failed to fetch GitHub repositories: ' . $response->body());
-        }
-
-        return $response->json();
+                $page++;
+                usleep(50_000);
+            }
+        });
+        
     }
 
     public function getPullRequests(string $owner, string $repo, int $months = 3): array
@@ -60,19 +48,13 @@ class GitHub
         $fromDate = now()->subMonths($months);
 
         do {
-            $response = $this->makeRequest("/repos/{$owner}/{$repo}/pulls", [
+            $prs = $this->makeRequest("/repos/{$owner}/{$repo}/pulls", [
                 'state' => 'all',
                 'sort' => 'updated',
                 'direction' => 'desc',
                 'per_page' => $perPage,
                 'page' => $page,
             ]);
-
-            if (!$response->successful()) {
-                throw new Exception('Failed to fetch pull requests: ' . $response->body());
-            }
-
-            $prs = $response->json();
 
             if (empty($prs)) {
                 break;
@@ -99,40 +81,39 @@ class GitHub
         $allComments = [];
 
         // Get issue comments (PR conversation comments)
-        $response = $this->makeRequest("/repos/{$owner}/{$repo}/issues/{$prNumber}/comments");
-
-        if ($response->successful()) {
-            $allComments = array_merge($allComments, $response->json());
-        }
+        $issueComments = $this->makeRequest("/repos/{$owner}/{$repo}/issues/{$prNumber}/comments");
+        $allComments = array_merge($allComments, $issueComments);
 
         // Get review comments (inline code review comments)
-        $response = $this->makeRequest("/repos/{$owner}/{$repo}/pulls/{$prNumber}/comments");
-
-        if ($response->successful()) {
-            $reviewComments = $response->json();
-            foreach ($reviewComments as &$comment) {
-                $comment['type'] = 'review_comment';
-            }
-            $allComments = array_merge($allComments, $reviewComments);
+        $reviewComments = $this->makeRequest("/repos/{$owner}/{$repo}/pulls/{$prNumber}/comments");
+        foreach ($reviewComments as &$comment) {
+            $comment['type'] = 'review_comment';
         }
+        $allComments = array_merge($allComments, $reviewComments);
 
         return $allComments;
     }
 
     public function getPullRequestReviews(string $owner, string $repo, int $prNumber): array
     {
-        $response = $this->makeRequest("/repos/{$owner}/{$repo}/pulls/{$prNumber}/reviews");
-
-        if (!$response->successful()) {
-            return [];
-        }
-
-        return $response->json();
+        return $this->makeRequest("/repos/{$owner}/{$repo}/pulls/{$prNumber}/reviews");
     }
 
     private function buildApiUrl(string $endpoint): string
     {
         $endpoint = ltrim($endpoint, '/');
         return 'https://api.github.com/' . $endpoint;
+    }
+
+    private function makeRequest(string $endpoint, array $params = []): array
+    {
+        return Http::withToken($this->accessToken)
+            ->acceptJson()
+            ->withHeaders([
+                'X-GitHub-Api-Version' => '2022-11-28',
+            ])
+            ->throw()
+            ->get($this->buildApiUrl($endpoint), $params)
+            ->json();
     }
 }

@@ -23,7 +23,8 @@ class IndexGitHub implements ShouldQueue
     use Queueable;
 
     public function handle(
-        TextChunker $textChunker
+        TextChunker $textChunker,
+        GitHub $github,
     ): void {
         /** @var IndexingWorkflow $indexing */
         $indexing = IndexingWorkflow::create([
@@ -32,10 +33,7 @@ class IndexGitHub implements ShouldQueue
             'job_id' => $this->job->payload()['uuid'],
         ]);
 
-        // Initialize GitHub service with token from config
-        $github = new GitHub(config('services.github.token'));
-
-        $repositories = $github->getRepositories();
+        $repositories = $github->repositories();
 
         foreach ($repositories as $repoData) {
             // Fetch pull requests from the last 3 months

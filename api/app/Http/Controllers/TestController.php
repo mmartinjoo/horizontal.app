@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\Indexing\IndexKnowledgeBase;
+use App\Services\Integration\CodeRepository\GitHub\GitHub;
 
 class TestController extends Controller
 {
-    public function index()
+    public function index(GitHub $github)
     {
-        IndexKnowledgeBase::dispatch();
+        $repos = $github->repositories();
 
-        return response('indexing...');
+        dd($repos->toArray());
     }
 
     public function token()
