@@ -88,5 +88,10 @@ class AppServiceProvider extends ServiceProvider
             ->when(GitHub::class)
             ->needs('$accessToken')
             ->give(config('services.github.access_token'));
+
+        $this->app
+            ->when(GitHub::class)
+            ->needs('$baseUrl')
+            ->give(config('services.github.base_url'));
     }
 }

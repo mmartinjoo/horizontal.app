@@ -2,6 +2,7 @@
 
 namespace App\Services\Integration\CodeRepository\GitHub;
 
+use App\Services\Integration\CodeRepository\DataTransferObjects\Comment;
 use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use Illuminate\Support\Facades\Http;
@@ -10,7 +11,8 @@ use Illuminate\Support\LazyCollection;
 class GitHub
 {
     public function __construct(
-        private string $accessToken
+        private string $accessToken,
+        private string $baseUrl,
     ) {}
 
     public function repositories(): LazyCollection
@@ -33,7 +35,9 @@ class GitHub
                     yield Repository::fromGitHub($repo);
                 }
 
-                $page++;
+                if (++$page >= 100) {
+                    break;
+                }
                 usleep(50_000);
             }
         });
@@ -47,14 +51,13 @@ class GitHub
     {
         return LazyCollection::make(function () use ($repo, $months) {
             $page = 1;
-            $perPage = 100;
             $fromDate = now()->subMonths($months);
             while (true) {
                 $prs = $this->makeRequest("/repos/{$repo->owner}/{$repo->name}/pulls", [
                     'state' => 'all',
                     'sort' => 'updated',
                     'direction' => 'desc',
-                    'per_page' => $perPage,
+                    'per_page' => 100,
                     'page' => $page,
                 ]);
 
@@ -69,39 +72,39 @@ class GitHub
                     }
                     yield $pullRequest;
                 }
-                $page++;
+
+                if (++$page >= 100) {
+                    break;
+                }
                 usleep(50_000);
             }
         });
     }
 
-    public function getPullRequestComments(string $owner, string $repo, int $prNumber): array
+    public function pullRequestComments(Repository $repo, PullRequest $pullRequest): LazyCollection
     {
-        $allComments = [];
+        return LazyCollection::make(function () use ($repo, $pullRequest) {
+            $page = 1;
+            while (true) {                
+                $comments = $this->makeRequest("/repos/{$repo->owner}/{$repo->name}/issues/{$pullRequest->number}/comments", [
+                    'per_page' => 100,
+                    'page' => $page,
+                ]);
 
-        // Get issue comments (PR conversation comments)
-        $issueComments = $this->makeRequest("/repos/{$owner}/{$repo}/issues/{$prNumber}/comments");
-        $allComments = array_merge($allComments, $issueComments);
+                if (empty($comments)) {
+                    break;
+                }
 
-        // Get review comments (inline code review comments)
-        $reviewComments = $this->makeRequest("/repos/{$owner}/{$repo}/pulls/{$prNumber}/comments");
-        foreach ($reviewComments as &$comment) {
-            $comment['type'] = 'review_comment';
-        }
-        $allComments = array_merge($allComments, $reviewComments);
+                foreach ($comments as $comment) {
+                    yield Comment::fromGithub($comment);
+                }
 
-        return $allComments;
-    }
-
-    public function getPullRequestReviews(string $owner, string $repo, int $prNumber): array
-    {
-        return $this->makeRequest("/repos/{$owner}/{$repo}/pulls/{$prNumber}/reviews");
-    }
-
-    private function buildApiUrl(string $endpoint): string
-    {
-        $endpoint = ltrim($endpoint, '/');
-        return 'https://api.github.com/' . $endpoint;
+                if (++$page >= 100) {
+                    break;
+                }
+                usleep(50_000);
+            }
+        });
     }
 
     private function makeRequest(string $endpoint, array $params = []): array
@@ -112,7 +115,7 @@ class GitHub
                 'X-GitHub-Api-Version' => '2022-11-28',
             ])
             ->throw()
-            ->get($this->buildApiUrl($endpoint), $params)
+            ->get($this->baseUrl . '/' . $endpoint, $params)
             ->json();
     }
 }

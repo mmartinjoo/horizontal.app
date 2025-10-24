@@ -67,5 +67,6 @@ return [
 
     'github' => [
         'access_token' => env('GITHUB_ACCESS_TOKEN'),
+        'base_url' => env('GITHUB_BASE_URL'),
     ],
 ];

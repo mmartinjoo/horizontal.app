@@ -12,7 +12,6 @@ use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
-use App\Services\Integration\CodeRepository\Github\DataTransferObjects\PullRequestComment;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -103,13 +102,11 @@ class IndexGitHub implements ShouldQueue
                 }
 
                 // Fetch and store comments
-                $commentsData = $github->getPullRequestComments(
-                    owner: $repo->owner,
-                    repo: $repo->name,
-                    prNumber: $pullRequest->number
+                $comments = $github->pullRequestComments(
+                    repo: $repo,
+                    pullRequest: $pullRequest,
                 );
 
-                $comments = PullRequestComment::collectGitHub($commentsData);
                 foreach ($comments as $comment) {
                     $participant = $this->addParticipant($doc, $comment->author, 'commenter');
 
@@ -119,36 +116,7 @@ class IndexGitHub implements ShouldQueue
                         'body' => $comment->body,
                         'commented_at' => $comment->createdAt,
                         'comment_id' => $comment->id,
-                        'metadata' => $comment->toArray(),
-                    ]);
-
-                }
-
-                // Fetch and store reviews
-                $reviewsData = $github->getPullRequestReviews(
-                    owner: $repo->owner,
-                    repo: $repo->name,
-                    prNumber: $pullRequest->number
-                );
-
-                foreach ($reviewsData as $review) {
-                    if (empty($review['body'])) {
-                        continue;
-                    }
-
-                    $reviewer = $review['user']['login'] ?? 'Unknown';
-                    $participant = $this->addParticipant($doc, $reviewer, 'reviewer');
-
-                    DocumentComment::create([
-                        'document_id' => $doc->id,
-                        'author_id' => $participant->id,
-                        'body' => $review['body'],
-                        'commented_at' => Carbon::parse($review['submitted_at']),
-                        'comment_id' => (string) $review['id'],
-                        'metadata' => [
-                            'type' => 'review',
-                            'state' => $review['state'],
-                        ],
+                        'metadata' => $comment,
                     ]);
 
                 }
