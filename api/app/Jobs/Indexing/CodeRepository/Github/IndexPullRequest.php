@@ -9,10 +9,10 @@ use App\Models\DocumentComment;
 use App\Models\IndexingWorkflowItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
+use App\Services\Integration\CodeRepository\CodeRepository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 use Exception;
 
@@ -22,8 +22,7 @@ class IndexPullRequest implements ShouldQueue
 
     public function __construct(
         private PullRequest $pullRequest,
-        /** @var LazyCollection<Comment> $comments */
-        private LazyCollection $comments,
+        private CodeRepository $codeRepository,
         private int $indexingWorkflowId,
     ) {}
 
@@ -79,14 +78,15 @@ class IndexPullRequest implements ShouldQueue
                 $this->addParticipant($doc, $reviewer, 'reviewer');
             }
 
-            foreach ($this->comments as $comment) {
+            $comments = $this->codeRepository->pullRequestComments($this->pullRequest);
+            foreach ($comments as $comment) {
                 $participant = $this->addParticipant($doc, $comment->author, 'commenter');
                 DocumentComment::create([
                     'document_id' => $doc->id,
                     'author_id' => $participant->id,
                     'body' => $comment->body,
                     'commented_at' => $comment->createdAt,
-                    'comment_id' => $comment->id,
+                    'comment_id' => $comment->externalId,
                     'metadata' => $comment,
                 ]);
             }
@@ -109,7 +109,7 @@ class IndexPullRequest implements ShouldQueue
         }
     }
 
-    private function addParticipant(Document $doc, string $username, string $context)
+    private function addParticipant(Document $doc, string $username, string $context): Participant
     {
         $participant = Participant::getOrCreate(Str::slug($username));
         $exists = $doc->participants()
@@ -122,6 +122,8 @@ class IndexPullRequest implements ShouldQueue
                 'context' => $context,
             ]);
         }
+
+        return $participant;
     }
 
     private function updateWorkflowStatus(IndexingWorkflowItem $indexingItem): void

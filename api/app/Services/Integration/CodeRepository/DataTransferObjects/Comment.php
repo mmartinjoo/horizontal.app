@@ -2,6 +2,7 @@
 
 namespace App\Services\Integration\CodeRepository\DataTransferObjects;
 
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 
 class Comment
@@ -11,6 +12,7 @@ class Comment
         public string $body,
         public string $author,
         public string $url,
+        public Carbon $createdAt,
     ) {
     }
 
@@ -21,6 +23,7 @@ class Comment
             body: $data['body'],
             author: Arr::get($data, 'user.login'),
             url: $data['html_url'],
+            createdAt: Carbon::parse($data['created_at']),
         );
     }
 }

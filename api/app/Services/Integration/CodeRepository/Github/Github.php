@@ -2,13 +2,14 @@
 
 namespace App\Services\Integration\CodeRepository\GitHub;
 
+use App\Services\Integration\CodeRepository\CodeRepository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Comment;
 use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
 
-class GitHub
+class GitHub implements CodeRepository
 {
     public function __construct(
         private string $accessToken,
@@ -118,7 +119,7 @@ class GitHub
                 'X-GitHub-Api-Version' => '2022-11-28',
             ])
             ->throw()
-            ->get($this->baseUrl . '/' . $endpoint, $params)
+            ->get(rtrim($this->baseUrl, '/') . '/' . ltrim($endpoint, '/'), $params)
             ->json();
     }
 }

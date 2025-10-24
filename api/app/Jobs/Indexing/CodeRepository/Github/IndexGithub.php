@@ -51,11 +51,7 @@ class IndexGitHub implements ShouldQueue
 
                 $indexing->increment('deleted_items', $count);
 
-                $comments = $github->pullRequestComments(
-                    pullRequest: $pullRequest,
-                );
-            
-                IndexPullRequest::dispatch($pullRequest, $comments, $indexing->id);
+                IndexPullRequest::dispatch($pullRequest, $github, $indexing->id);
             }
         }
 
