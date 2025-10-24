@@ -13,9 +13,13 @@ use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 
 /**
- * This service doesn't support threads yet. Everything is processed as a stand-alone message.
- * This is because the Google Chat API doesn't make it easy to differentiate between a 
- * stand-alone message and a thread. GChat is not used enough so it's not worth it
+ * Missing features:
+ *  - Identifying threads vs stand-alone messages
+ *  - Hanlding mentions in messages
+ *  - Retrieving sender information
+ * 
+ * Google Chat is not that popular and the API is not that great.
+ * These features aren't worth it.
  */
 class GoogleChat
 {
