@@ -20,12 +20,7 @@ class GitHub implements CodeRepository
     public function __construct(
         private GithubOAuth $githubAuth,
         private string $baseUrl,
-    ) {
-        $integration = GithubIntegration::first();
-        if (!$integration) {
-            throw new Exception('No valid GitHub integration found.');
-        }
-        $this->accessToken = $this->githubAuth->getInstallationToken($integration->installation_id);
+    ) {        
     }
 
     public function repositories(): LazyCollection
@@ -55,7 +50,6 @@ class GitHub implements CodeRepository
                 usleep(50_000);
             }
         });
-        
     }
 
     /**
@@ -128,6 +122,7 @@ class GitHub implements CodeRepository
 
     private function makeRequest(string $endpoint, array $params = []): Response
     {
+        $this->initAccessToken();
         return Http::withToken($this->accessToken)
             ->acceptJson()
             ->withHeaders([
@@ -135,5 +130,14 @@ class GitHub implements CodeRepository
             ])
             ->throw()
             ->get(rtrim($this->baseUrl, '/') . '/' . ltrim($endpoint, '/'), $params);
+    }
+
+    private function initAccessToken()
+    {
+        $integration = GithubIntegration::first();
+        if (!$integration) {
+            throw new Exception('No valid GitHub integration found.');
+        }
+        $this->accessToken = $this->githubAuth->getInstallationToken($integration->installation_id);
     }
 }

@@ -18,10 +18,11 @@ class TestController extends Controller
         foreach ($github->repositories() as $repository) {
             $prs = $github->pullRequests($repository);
             foreach ($prs as $pr) {
-                $comments = $github->pullRequestComments($pr);
-                foreach ($comments as $comment) {
-                    dump($comment);
-                }
+                dump($pr);
+                // $comments = $github->pullRequestComments($pr);
+                // foreach ($comments as $comment) {
+                //     dump($comment);
+                // }
             }
         }
     }

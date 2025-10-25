@@ -3,13 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\GithubIntegration;
+use App\Models\GithubRepository;
+use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
+use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
 use Illuminate\Http\Request;
 
 class GithubIntegrationController
 {
-    public function __construct(private GithubOAuth $githubOAuth)
-    {
+    public function __construct(
+        private GithubOAuth $githubOAuth,
+        private GitHub $github,
+    ) {
     }
 
     public function authorize()
@@ -30,6 +35,15 @@ class GithubIntegrationController
         $integration = GithubIntegration::create([
             'installation_id' => $installationId
         ]);
+
+        /** @var Repository $repository */
+        foreach ($this->github->repositories() as $repository) {
+            GithubRepository::create([
+                'github_integration_id' => $integration->id,
+                'external_id' => $repository->externalId,
+                'name' => $repository->name,
+            ]);
+        }
 
         return response()->json([
             'message' => 'GitHub integration successfully connected',
