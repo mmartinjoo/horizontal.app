@@ -17,20 +17,20 @@ class IndexIssues implements ShouldQueue
     public function __construct(
         private Repository $repository,
         private CodeRepository $connector,
-        private int $indexingWorkflowId,
+        private int $indexingWorkflowStepId,
     ) {}
 
     public function handle()
     {
-        $indexingWorkflow = IndexingWorkflowStep::findOrFail($this->indexingWorkflowId);
+        $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
         $issues = $this->connector->issues($this->repository);
 
-        $indexingWorkflow->increment('overall_items', count($issues));
+        $indexingWorkflowStep->increment('overall_items', count($issues));
 
         /** @var Issue $issue */
         foreach ($issues as $issue) {
-            if (! $this->issueNeedsIndexing($issue)) {
-                $indexingWorkflow->increment('skipped_items', 1);
+            if (!$this->issueNeedsIndexing($issue)) {
+                $indexingWorkflowStep->increment('skipped_items', 1);
 
                 continue;
             }
@@ -41,8 +41,8 @@ class IndexIssues implements ShouldQueue
                 ->where('source_id', $issue->externalId)
                 ->delete();
 
-            $indexingWorkflow->increment('deleted_items', $count);
-            IndexIssue::dispatch($issue, $indexingWorkflow->id);
+            $indexingWorkflowStep->increment('deleted_items', $count);
+            IndexIssue::dispatch($issue, $indexingWorkflowStep->id);
         }
     }
 
