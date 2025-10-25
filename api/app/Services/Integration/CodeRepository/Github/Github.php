@@ -5,6 +5,7 @@ namespace App\Services\Integration\CodeRepository\GitHub;
 use App\Models\GithubIntegration;
 use App\Services\Integration\CodeRepository\CodeRepository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Comment;
+use App\Services\Integration\CodeRepository\DataTransferObjects\Issue;
 use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
@@ -110,6 +111,33 @@ class GitHub implements CodeRepository
 
                 foreach ($comments as $comment) {
                     yield Comment::fromGithub($comment);
+                }
+
+                if (++$page >= 100) {
+                    break;
+                }
+                usleep(50_000);
+            }
+        });
+    }
+
+    public function issues(Repository $repository): LazyCollection
+    {
+        return LazyCollection::make(function () use ($repository) {
+            $page = 1;
+            while (true) {
+                $res = $this->makeRequest("/repos/{$repository->owner}/{$repository->name}/issues", [
+                    'page' => $page,
+                    'per_page' => 100,
+                ]);
+
+                $issues = $res->json();
+                if (empty($issues)) {
+                    break;
+                }
+
+                foreach ($issues as $issue) {
+                    yield Issue::fromGithub($issue);
                 }
 
                 if (++$page >= 100) {
