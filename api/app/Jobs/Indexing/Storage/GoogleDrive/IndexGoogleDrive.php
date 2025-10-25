@@ -21,16 +21,11 @@ class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue
         /** @var IndexingWorkflowStep $indexing */
         $indexing = IndexingWorkflowStep::create([
             'integration' => 'google_drive',
-            'status' => 'downloading',
+            'status' => 'processing',
             'job_id' => $this->job->payload()['uuid'],
         ]);
 
         $files = $drive->listDirectoryContents();
-        $indexing->update([
-            'status' => 'processing',
-            'overall_items' => count($files),
-        ]);
-
         foreach ($files as $i => $file) {
             if (! $this->fileNeedsIndexing($file)) {
                 $indexing->increment('skipped_items', 1);

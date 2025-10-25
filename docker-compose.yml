@@ -56,7 +56,7 @@ services:
       sh -c "
         sleep 10 &&
         composer install &&
-        php artisan queue:listen --timeout=300
+        php artisan queue:listen --timeout=1800
       "
 
   db:

@@ -46,16 +46,12 @@ class IndexFile implements ShouldQueue
             $indexingWorkflowItem = IndexingWorkflowStepItem::create([
                 'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
                 'data' => $this->file,
-                'status' => 'downloading',
+                'status' => 'processing',
                 'document_id' => $document->id,
                 'job_id' => $this->job->payload()['uuid'],
             ]);
 
             $drive->downloadFile($this->file);
-            $indexingWorkflowItem->update([
-                'status' => 'downloaded',
-            ]);
-
             if ($this->file->mimeType() === 'application/pdf') {
                 $this->indexPDF($pdfParser, $textChunker, $indexingWorkflowItem);
                 $indexingWorkflowItem->update([
@@ -70,7 +66,7 @@ class IndexFile implements ShouldQueue
 
             if (strlen($content) === 0) {
                 $indexingWorkflowItem->update([
-                    'status' => 'warning',
+                    'status' => 'completed',
                 ]);
                 throw new NoContentToIndexException('File is empty: '.json_encode($this->file));
             }
@@ -78,13 +74,13 @@ class IndexFile implements ShouldQueue
             $chunks = $textChunker->chunk($content);
             if (count($chunks) === 0) {
                 $indexingWorkflowItem->update([
-                    'status' => 'warning',
+                    'status' => 'completed',
                 ]);
                 throw new NoContentToIndexException('Chunk is empty: '.json_encode($this->file).'; content: '.$content);
             }
             if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
                 $indexingWorkflowItem->update([
-                    'status' => 'warning',
+                    'status' => 'completed',
                 ]);
                 throw new NoContentToIndexException('Chunk contains one empty item: '.json_encode($this->file).'; content: '.$content);
             }

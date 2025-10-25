@@ -6,4 +6,7 @@ enum WorkflowStepStatus: string
 {
     case Starting = 'starting';
     case Processing = 'processing';
+    case Failed = 'failed';
+    case CompletedWithErrors = 'completed_with_errors';
+    case Completed = 'completed';
 }
