@@ -7,6 +7,7 @@ use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\Google\GoogleOAuthService;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
+use App\Services\Integration\CodeRepository\Github\GithubOAuth;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
 use App\Services\KnowledgeGraph\GraphBuilder;
@@ -126,5 +127,10 @@ class AppServiceProvider extends ServiceProvider
             ->when(GitHub::class)
             ->needs('$baseUrl')
             ->give(config('services.github.base_url'));
+
+        $this->app
+            ->when(GithubOAuth::class)
+            ->needs('$config')
+            ->give(config('services.github'));
     }
 }

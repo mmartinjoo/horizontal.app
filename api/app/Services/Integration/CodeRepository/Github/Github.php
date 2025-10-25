@@ -9,6 +9,7 @@ use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
 use Exception;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
 
@@ -32,13 +33,14 @@ class GitHub implements CodeRepository
         return LazyCollection::make(function () {
             $page = 1;
             while (true) {
-                $repos = $this->makeRequest('/installation/repositories', [
+                $res = $this->makeRequest('/installation/repositories', [
                     'per_page' => 100,
                     'page' => $page,
                     'sort' => 'updated',
                     'affiliation' => 'owner,collaborator,organization_member',
                 ]);
 
+                $repos = $res->json('repositories');
                 if (empty($repos)) {
                     break;
                 }
@@ -65,7 +67,7 @@ class GitHub implements CodeRepository
             $page = 1;
             $fromDate = now()->subMonths($months);
             while (true) {
-                $prs = $this->makeRequest("/repos/{$repo->owner}/{$repo->name}/pulls", [
+                $res = $this->makeRequest("/repos/{$repo->owner}/{$repo->name}/pulls", [
                     'state' => 'all',
                     'sort' => 'updated',
                     'direction' => 'desc',
@@ -73,6 +75,7 @@ class GitHub implements CodeRepository
                     'page' => $page,
                 ]);
 
+                $prs = $res->json();
                 if (empty($prs)) {
                     break;
                 }
@@ -101,11 +104,12 @@ class GitHub implements CodeRepository
         return LazyCollection::make(function () use ($pullRequest) {
             $page = 1;
             while (true) {                
-                $comments = $this->makeRequest("/repos/{$pullRequest->repository->owner}/{$pullRequest->repository->name}/issues/{$pullRequest->number}/comments", [
+                $res = $this->makeRequest("/repos/{$pullRequest->repository->owner}/{$pullRequest->repository->name}/issues/{$pullRequest->number}/comments", [
                     'per_page' => 100,
                     'page' => $page,
                 ]);
 
+                $comments = $res->json();
                 if (empty($comments)) {
                     break;
                 }
@@ -122,7 +126,7 @@ class GitHub implements CodeRepository
         });
     }
 
-    private function makeRequest(string $endpoint, array $params = []): array
+    private function makeRequest(string $endpoint, array $params = []): Response
     {
         return Http::withToken($this->accessToken)
             ->acceptJson()
@@ -130,7 +134,6 @@ class GitHub implements CodeRepository
                 'X-GitHub-Api-Version' => '2022-11-28',
             ])
             ->throw()
-            ->get(rtrim($this->baseUrl, '/') . '/' . ltrim($endpoint, '/'), $params)
-            ->json();
+            ->get(rtrim($this->baseUrl, '/') . '/' . ltrim($endpoint, '/'), $params);
     }
 }

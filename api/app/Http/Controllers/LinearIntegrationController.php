@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LinearOAuthCallbackRequest;
 use App\Models\LinearIntegration;
 use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -35,7 +36,7 @@ class LinearIntegrationController extends Controller
                 'authorization_url' => $authData['authorization_url'],
                 'state' => $authData['state'],
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => 'Failed to generate authorization URL: ' . $e->getMessage(),
             ], 500);

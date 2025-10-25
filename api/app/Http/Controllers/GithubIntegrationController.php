@@ -3,51 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Models\GithubIntegration;
+use App\Services\Integration\CodeRepository\Github\GithubOAuth;
 use Illuminate\Http\Request;
 
 class GithubIntegrationController
 {
-    public function handleInstallation(Request $request)
+    public function __construct(private GithubOAuth $githubOAuth)
     {
-        $payload = $request->all();
-        $action = $payload['action'] ?? null;
-        $installation = $payload['installation'] ?? null;
-
-        if (!$installation) {
-            return response('No installation data', 400);
-        }
-
-        $installationId = $installation['id'];
-        $accountLogin = $installation['account']['login'];
-
-        switch ($action) {
-            case 'created':
-                $this->handleInstallationCreated($installationId, $accountLogin, $installation);
-                break;
-
-            case 'deleted':
-                $this->handleInstallationDeleted($installationId);
-                break;
-        }
-
-        return response('', 200);
     }
 
-    private function handleInstallationCreated(int $installationId, string $accountLogin, array $installation): void
+    public function authorize()
     {
-        GithubIntegration::create([
-            'installation_id' => $installationId,
-            'metadata' => [
-                'account_login' => $accountLogin,
-                'account_type' => $installation['account']['type'],
-                'target_type' => $installation['target_type'],
-            ],
+        $urlData = $this->githubOAuth->generateAuthorizationUrl();
+        return response()->json([
+            'authorization_url' => $urlData['authorization_url'],
         ]);
     }
 
-    private function handleInstallationDeleted(int $installationId): void
-      {
-          GithubIntegration::where('installation_id', $installationId)
-              ->delete();
-      }
+    public function callback(Request $request)
+    {
+        $installationId = $request->get('installation_id');
+        if (!$installationId) {
+            return response('GitHub integration failed', 400);
+        }
+
+        $integration = GithubIntegration::create([
+            'installation_id' => $installationId
+        ]);
+
+        return response()->json([
+            'message' => 'GitHub integration successfully connected',
+            'integration' => [
+                'id' => $integration->id,
+                'installation_id' => $integration->installation_id,
+            ],
+        ]);
+    }
 }
