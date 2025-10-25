@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LinearOAuthCallbackRequest;
 use App\Models\LinearIntegration;
 use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -35,7 +36,7 @@ class LinearIntegrationController extends Controller
                 'authorization_url' => $authData['authorization_url'],
                 'state' => $authData['state'],
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => 'Failed to generate authorization URL: ' . $e->getMessage(),
             ], 500);
@@ -96,7 +97,7 @@ class LinearIntegrationController extends Controller
                     'scope' => $integration->scope,
                 ],
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Clear session data on error
             Cache::forget('linear_oauth_state-' . $state);
 
@@ -106,7 +107,7 @@ class LinearIntegrationController extends Controller
         }
     }
 
-    public function status(Request $request): JsonResponse
+    public function status(): JsonResponse
     {
         $integration = LinearIntegration::first();
 
@@ -137,10 +138,9 @@ class LinearIntegrationController extends Controller
         ]);
     }
 
-    public function disconnect(Request $request): JsonResponse
+    public function disconnect(): JsonResponse
     {
         $integration = LinearIntegration::first();
-
         if (!$integration) {
             return response()->json([
                 'error' => 'No Linear integration found',
@@ -163,7 +163,7 @@ class LinearIntegrationController extends Controller
                 'message' => 'Linear integration successfully disconnected',
                 'disconnected_integration' => $integrationDetails,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => 'Failed to disconnect Linear integration: ' . $e->getMessage(),
             ], 500);

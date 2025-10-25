@@ -92,9 +92,6 @@ class IndexFile implements ShouldQueue
                 'indexed_at' => now(),
             ]);
             $indexingWorkflowItem->update([
-                'status' => 'prepared',
-            ]);
-            $indexingWorkflowItem->update([
                 'status' => 'completed',
             ]);
             $this->updateWorkflowStatus($indexingWorkflowItem);
@@ -152,7 +149,7 @@ class IndexFile implements ShouldQueue
         /** @var IndexingWorkflow $workflow */
         $workflow = $indexingWorkflowItem->indexing_workflow;
         $hasQueuedItems = $workflow->items()
-            ->where('status', 'queued')
+            ->whereIn('status', ['queued', 'processing'])
             ->exists();
 
         if (!$hasQueuedItems) {

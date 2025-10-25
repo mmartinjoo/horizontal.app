@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\GithubIntegrationController;
 use App\Http\Controllers\JiraIntegrationController;
 use App\Http\Controllers\LinearIntegrationController;
 use App\Http\Controllers\GoogleIntegrationController;
@@ -57,5 +58,12 @@ Route::middleware([
         Route::post('authorize', [GoogleIntegrationController::class, 'authorize']);
         Route::get('status', [GoogleIntegrationController::class, 'status']);
         Route::delete('disconnect', [GoogleIntegrationController::class, 'disconnect']);
+    });
+
+    Route::get('/integrations/github/oauth/callback', [GithubIntegrationController::class, 'callback']);
+    Route::middleware('auth:sanctum')->prefix('/integrations/github/oauth')->group(function () {
+        Route::post('authorize', [GithubIntegrationController::class, 'authorize']);
+        Route::get('status', [GithubIntegrationController::class, 'status']);
+        Route::delete('disconnect', [GithubIntegrationController::class, 'disconnect']);
     });
 });
