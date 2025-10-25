@@ -61,10 +61,9 @@ Route::middleware([
     });
 
     Route::get('/integrations/github/oauth/callback', [GithubIntegrationController::class, 'callback']);
-    Route::get('/integrations/github/oauth/setup', [GithubIntegrationController::class, 'setup']);
-    Route::middleware('auth:sanctum')->prefix('/integrations/google/oauth')->group(function () {
+    Route::middleware('auth:sanctum')->prefix('/integrations/github/oauth')->group(function () {
         Route::post('authorize', [GithubIntegrationController::class, 'authorize']);
-        // Route::get('status', [GoogleIntegrationController::class, 'status']);
-        // Route::delete('disconnect', [GoogleIntegrationController::class, 'disconnect']);
+        Route::get('status', [GithubIntegrationController::class, 'status']);
+        Route::delete('disconnect', [GithubIntegrationController::class, 'disconnect']);
     });
 });

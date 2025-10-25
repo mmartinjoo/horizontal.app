@@ -97,7 +97,7 @@ class LinearIntegrationController extends Controller
                     'scope' => $integration->scope,
                 ],
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Clear session data on error
             Cache::forget('linear_oauth_state-' . $state);
 
@@ -107,7 +107,7 @@ class LinearIntegrationController extends Controller
         }
     }
 
-    public function status(Request $request): JsonResponse
+    public function status(): JsonResponse
     {
         $integration = LinearIntegration::first();
 
@@ -138,10 +138,9 @@ class LinearIntegrationController extends Controller
         ]);
     }
 
-    public function disconnect(Request $request): JsonResponse
+    public function disconnect(): JsonResponse
     {
         $integration = LinearIntegration::first();
-
         if (!$integration) {
             return response()->json([
                 'error' => 'No Linear integration found',
@@ -164,7 +163,7 @@ class LinearIntegrationController extends Controller
                 'message' => 'Linear integration successfully disconnected',
                 'disconnected_integration' => $integrationDetails,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => 'Failed to disconnect Linear integration: ' . $e->getMessage(),
             ], 500);
