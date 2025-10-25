@@ -5,8 +5,8 @@ namespace App\Services\Integration\Storage\GoogleDrive;
 use App\Exceptions\Storage\FileDownloadException;
 use App\Services\Indexing\FilePrioritizer;
 use App\Services\Integration\Storage\DataTransferObjects\File;
+use App\Services\Integration\Storage\Storage as StorageIntegration;
 use Exception;
-use Generator;
 use Google\Client;
 use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
@@ -14,24 +14,25 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\LazyCollection;
 use League\Flysystem\Filesystem;
 use Masbug\Flysystem\GoogleDriveAdapter;
+use League\Flysystem\FileAttributes;
 
-class GoogleDrive
+class GoogleDrive implements StorageIntegration
 {
     private Filesystem $fs;
     private Drive $drive;
 
     private const GOOGLE_NATIVE_TYPES = [
-        'application/vnd.google-apps.document',     // Google Docs
-        'application/vnd.google-apps.spreadsheet', // Google Sheets
-        'application/vnd.google-apps.presentation',// Google Slides
-        'application/vnd.google-apps.form',        // Google Forms
+        'application/vnd.google-apps.document',
+        'application/vnd.google-apps.spreadsheet',
+        'application/vnd.google-apps.presentation',
+        'application/vnd.google-apps.form',
     ];
 
     private const EXPORT_FORMATS = [
-        'application/vnd.google-apps.document' => 'text/plain',     // Export Docs as plain text
-        'application/vnd.google-apps.spreadsheet' => 'text/csv',   // Export Sheets as CSV
-        'application/vnd.google-apps.presentation' => 'text/plain', // Export Slides as plain text
-        'application/vnd.google-apps.form' => 'text/plain',        // Export Forms as plain text
+        'application/vnd.google-apps.document' => 'text/plain',
+        'application/vnd.google-apps.spreadsheet' => 'text/csv',
+        'application/vnd.google-apps.presentation' => 'text/plain',
+        'application/vnd.google-apps.form' => 'text/plain',
     ];
 
     public function __construct(private FilePrioritizer $prioritizer)
@@ -47,23 +48,34 @@ class GoogleDrive
         $this->fs = new Filesystem($adapter);
     }
 
+    /**
+     * @return LazyCollection<File>
+     */
     public function listDirectoryContents(string $directory = ''): LazyCollection
     {
         return LazyCollection::make(function () use ($directory) {
             $listing = $this->fs->listContents($directory, true);
-            $files = File::fromDirectoryListing($listing);
-            foreach ($files as $file) {
+            foreach ($listing as $listingItem) {
+                if (!$listingItem instanceof FileAttributes) {
+                    continue;
+                }
+
+                $file = new File($listingItem);
+
                 $data = $this->getMetaData($file);
                 $file->setCreatedAt($data->createdTime);
                 $file->setUpdatedAt($data->modifiedTime);
                 $file->setViewedAt($data->viewedByMeTime);
+
                 foreach ($data->getOwners() as $owner) {
                     $file->addOwner($owner->displayName);
                 }
+
                 $sharingUser = $data->getSharingUser();
                 if ($sharingUser) {
                     $file->setSharingUser($sharingUser->displayName);;
                 }
+
                 yield $file;
             }
         });
