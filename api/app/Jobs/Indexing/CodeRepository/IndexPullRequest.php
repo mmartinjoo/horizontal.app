@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\Indexing\CodeRepository\GitHub;
+namespace App\Jobs\Indexing\CodeRepository;
 
 use App\Exceptions\NoContentToIndexException;
 use App\Models\Document;
@@ -46,26 +46,29 @@ class IndexPullRequest implements ShouldQueue
                 'job_ids' => [$this->job->payload()['uuid']],
             ]);
 
-            $chunks = $textChunker->chunk($this->pullRequest->description);
-            if (count($chunks) === 0) {
-                $indexingItem->update([
-                    'status' => 'warning',
-                ]);
-                throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->pullRequest));
-            }
-            if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
-                $indexingItem->update([
-                    'status' => 'warning',
-                ]);
-                throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->pullRequest));
-            }
-
-            foreach ($chunks as $i => $chunk) {
-                DocumentChunk::create([
-                    'document_id' => $doc->id,
-                    'body' => $chunk,
-                    'position' => $i+1,
-                ]);
+            $preview = $this->pullRequest->title;
+            if ($this->pullRequest->description) {
+                $chunks = $textChunker->chunk($this->pullRequest->description);
+                if (count($chunks) === 0) {
+                    $indexingItem->update([
+                        'status' => 'warning',
+                    ]);
+                    throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->pullRequest));
+                }
+                if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
+                    $indexingItem->update([
+                        'status' => 'warning',
+                    ]);
+                    throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->pullRequest));
+                }
+                foreach ($chunks as $i => $chunk) {
+                    DocumentChunk::create([
+                        'document_id' => $doc->id,
+                        'body' => $chunk,
+                        'position' => $i+1,
+                    ]);
+                }
+                $preview = $chunks->first();
             }
 
             $this->addParticipant($doc, $this->pullRequest->author, 'author');
@@ -92,7 +95,7 @@ class IndexPullRequest implements ShouldQueue
             }
 
             $doc->update([
-                'preview' => $chunks->first(),
+                'preview' => $preview,
                 'indexed_at' => now(),
             ]);
             $indexingItem->update([

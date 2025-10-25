@@ -40,20 +40,10 @@ class Document extends Model
     protected static function booted()
     {
         static::deleting(function (Document $document) {
-            $chunks = DocumentChunk::where('document_id', $document->id)->get();
-            foreach ($chunks as $chunk) {
-                DocumentParticipant::query()
-                    ->where('entity_id', $chunk->id)
-                    ->where('entity_type', get_class($chunk))
-                    ->delete();
-            }
-            $comments = DocumentComment::where('document_id', $document->id)->get();
-            foreach ($comments as $comment) {
-                DocumentParticipant::query()
-                    ->where('entity_id', $comment->id)
-                    ->where('entity_type', get_class($comment))
-                    ->delete();
-            }
+            DocumentParticipant::query()
+                ->where('entity_id', $document->id)
+                ->where('entity_type', get_class($document))
+                ->delete();
         });
     }
 }

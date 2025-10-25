@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Indexing\CodeRepository\GitHub;
 
-use App\Jobs\Indexing\CodeRepository\GitHub\IndexPullRequest;
+use App\Jobs\Indexing\CodeRepository\IndexPullRequest;
 use App\Models\Document;
 use App\Models\IndexingWorkflow;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;

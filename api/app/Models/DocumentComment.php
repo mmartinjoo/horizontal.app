@@ -29,4 +29,14 @@ class DocumentComment extends Model
     {
         return $this->belongsTo(Participant::class, 'author_id');
     }
+
+    protected static function booted()
+    {
+        static::deleting(function (DocumentComment $comment) {
+            DocumentParticipant::query()
+                ->where('entity_id', $comment->id)
+                ->where('entity_type', get_class($comment))
+                ->delete();
+        });
+    }
 }
