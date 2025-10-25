@@ -8,6 +8,7 @@ use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\KnowledgeGraph\BuildCommunities;
 use App\Jobs\Indexing\KnowledgeGraph\BuildKnowledgeGraph;
 use App\Jobs\Indexing\KnowledgeGraph\BuildRelatedNodes;
+use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 
@@ -15,7 +16,7 @@ class TestController extends Controller
 {
     public function index(GitHub $github)
     {
-        IndexGitHub::dispatch();
+        IndexGoogleDrive::dispatch();
     }
 
     public function token()

@@ -80,16 +80,6 @@ class File implements JsonSerializable
         return $this->sharingUser;
     }
 
-    public static function fromDirectoryListing(DirectoryListing $listing): Generator
-    {
-        foreach ($listing as $file) {
-            if (!$file instanceof FileAttributes) {
-                continue;
-            }
-            yield new self($file);
-        }
-    }
-
     public function extraMetadata(): array
     {
         return $this->file->extraMetadata();

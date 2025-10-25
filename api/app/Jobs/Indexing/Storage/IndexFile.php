@@ -3,9 +3,11 @@
 namespace App\Jobs\Indexing\Storage;
 
 use App\Exceptions\NoContentToIndexException;
+use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
+use App\Models\Participant;
 use App\Services\File\PdfParser;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\Storage\DataTransferObjects\File;
@@ -21,9 +23,10 @@ class IndexFile implements ShouldQueue
     use Queueable;
     use Batchable;
 
-    public function __construct(
-        private int $indexingWorkflowItemId,
+    public function __construct(        
         private File $file,
+        private int $indexingWorkflowId,        
+        private string $vendor,
     ) {
     }
 
@@ -31,15 +34,22 @@ class IndexFile implements ShouldQueue
         GoogleDrive $drive,
         TextChunker $textChunker,
         PdfParser $pdfParser,
+        Factory $storageFactory,
     ): void {
-        $indexingWorkflowItem = IndexingWorkflowItem::find($this->indexingWorkflowItemId);
         try {
-            $jobIds = $indexingWorkflowItem->job_ids;
-            $jobIds[] = $this->job->payload()['uuid'];
-
-            $indexingWorkflowItem->update([
+            $document = Document::create([
+                'source_type' => 'google_drive',
+                'source_id' => $this->file->extraMetadata()['id'],
+                'title' => $this->file->path(),
+                'metadata' => $this->file,
+                'priority' => 'high',
+            ]);
+            $indexingWorkflowItem = IndexingWorkflowItem::create([
+                'indexing_workflow_id' => $this->indexingWorkflowId,
+                'data' => $this->file,
                 'status' => 'downloading',
-                'job_ids' => $jobIds,
+                'document_id' => $document->id,
+                'job_ids' => [$this->job->payload()['uuid']],
             ]);
 
             $drive->downloadFile($this->file);
@@ -81,13 +91,15 @@ class IndexFile implements ShouldQueue
 
             foreach ($chunks as $i => $chunk) {
                 DocumentChunk::create([
-                    'document_id' => $indexingWorkflowItem->document->id,
+                    'document_id' => $document->id,
                     'body' => $chunk,
                     'position' => $i+1,
                 ]);
             }
 
-            $indexingWorkflowItem->document()->update([
+            $this->addParticipants($document, $storageFactory);
+
+            $document->update([
                 'preview' => $chunks->first(),
                 'indexed_at' => now(),
             ]);
@@ -103,6 +115,42 @@ class IndexFile implements ShouldQueue
         }
         finally {
             Storage::delete($this->file->path());
+        }
+    }
+
+    private function addParticipants(Document $document, Factory $storageFactory)
+    {
+        $storage = $storageFactory->create($this->vendor);
+        foreach ($storage->getRevisionAuthors($this->file) as $author) {
+            $p = Participant::getOrCreate($author);
+            $document->participants()->attach($p->id, [
+                'context' => 'revision author',
+            ]);
+        }
+
+        foreach ($this->file->getOwners() as $owner) {
+            $p = Participant::getOrCreate($owner);
+            $document->participants()->attach($p->id, [
+                'context' => 'owner',
+            ]);
+        }
+
+        foreach ($storage->getComments($this->file) as $comment) {
+            $p = Participant::getOrCreate($comment['author']);
+            $document->comments()->create([
+                'author_id' => $p->id,
+                'body' => $comment['content'],
+                'commented_at' => $comment['created_at'],
+                'comment_id' => $comment['id'],
+                'metadata' => $comment,
+            ]);
+        }
+
+        if ($sharingUser = $this->file->getSharingUser()) {
+            $p = Participant::getOrCreate($sharingUser);
+            $document->participants()->attach($p->id, [
+                'context' => 'sharing user',
+            ]);
         }
     }
 

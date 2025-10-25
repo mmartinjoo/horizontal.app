@@ -5,13 +5,10 @@ namespace App\Jobs\Indexing\Storage\GoogleDrive;
 use App\Jobs\Indexing\Storage\IndexFile;
 use App\Models\Document;
 use App\Models\IndexingWorkflow;
-use App\Models\IndexingWorkflowItem;
-use App\Models\Participant;
 use App\Services\Integration\Storage\DataTransferObjects\File;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Str;
 
 class IndexGoogleDrive implements ShouldQueue
 {
@@ -27,9 +24,9 @@ class IndexGoogleDrive implements ShouldQueue
             'job_id' => $this->job->payload()['uuid'],
         ]);
 
-        $files = $drive->listDirectoryContents('horizontal.app');
+        $files = $drive->listDirectoryContents();
         $indexing->update([
-            'status' => 'downloaded',
+            'status' => 'processing',
             'overall_items' => count($files),
         ]);
 
@@ -50,92 +47,7 @@ class IndexGoogleDrive implements ShouldQueue
                 ->delete();
 
             $indexing->increment('deleted_items', $count);
-            $document = Document::create([
-                'source_type' => 'google_drive',
-                'source_id' => $file->extraMetadata()['id'],
-                'title' => $file->path(),
-                'metadata' => $file,
-                'priority' => 'high',
-            ]);
-            $indexingItem = IndexingWorkflowItem::create([
-                'indexing_workflow_id' => $indexing->id,
-                'data' => $file,
-                'status' => 'queued',
-                'document_id' => $document->id,
-            ]);
-            IndexFile::dispatch($indexingItem->id, $file);
-
-            foreach ($drive->getRevisionAuthors($file) as $author) {
-                $p = Participant::updateOrCreate(
-                    [
-                        'slug' => Str::slug($author),
-                        'type' => 'person',
-                    ],
-                    [
-                        'slug' => Str::slug($author),
-                        'name' => $author,
-                        'type' => 'person',
-                    ],
-                );
-                $document->participants()->attach($p->id, [
-                    'context' => 'revision author',
-                ]);
-            }
-
-            foreach ($file->getOwners() as $owner) {
-                $p = Participant::updateOrCreate(
-                    [
-                        'slug' => Str::slug($owner),
-                        'type' => 'person',
-                    ],
-                    [
-                        'slug' => Str::slug($owner),
-                        'name' => $owner,
-                        'type' => 'person',
-                    ],
-                );
-                $document->participants()->attach($p->id, [
-                    'context' => 'owner',
-                ]);
-            }
-
-            foreach ($drive->getComments($file) as $comment) {
-                $p = Participant::updateOrCreate(
-                    [
-                        'slug' => Str::slug($comment['author']),
-                        'type' => 'person',
-                    ],
-                    [
-                        'slug' => Str::slug($comment['author']),
-                        'name' => $comment['author'],
-                        'type' => 'person',
-                    ],
-                );
-                $document->comments()->create([
-                    'author_id' => $p->id,
-                    'body' => $comment['content'],
-                    'commented_at' => $comment['created_at'],
-                    'comment_id' => $comment['id'],
-                    'metadata' => $comment,
-                ]);
-            }
-
-            if ($sharingUser = $file->getSharingUser()) {
-                $p = Participant::updateOrCreate(
-                    [
-                        'slug' => Str::slug($sharingUser),
-                        'type' => 'person',
-                    ],
-                    [
-                        'slug' => Str::slug($sharingUser),
-                        'name' => $sharingUser,
-                        'type' => 'person',
-                    ],
-                );
-                $document->participants()->attach($p->id, [
-                    'context' => 'sharing user',
-                ]);
-            }
+            IndexFile::dispatch($file, $indexing->id, 'google_drive');
         }
     }
 
