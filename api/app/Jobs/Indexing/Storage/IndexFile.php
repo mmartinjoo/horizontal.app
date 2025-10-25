@@ -5,7 +5,7 @@ namespace App\Jobs\Indexing\Storage;
 use App\Exceptions\NoContentToIndexException;
 use App\Models\Document;
 use App\Models\DocumentChunk;
-use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStepItem;
 use App\Models\IndexingWorkflowStep;
 use App\Models\Participant;
 use App\Services\File\PdfParser;
@@ -43,7 +43,7 @@ class IndexFile implements ShouldQueue
                 'metadata' => $this->file,
                 'priority' => 'high',
             ]);
-            $indexingWorkflowItem = IndexingWorkflowItem::create([
+            $indexingWorkflowItem = IndexingWorkflowStepItem::create([
                 'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
                 'data' => $this->file,
                 'status' => 'downloading',
@@ -153,7 +153,7 @@ class IndexFile implements ShouldQueue
         }
     }
 
-    private function indexPDF(PdfParser $pdfParser, TextChunker $textChunker, IndexingWorkflowItem $indexingWorkflowItem)
+    private function indexPDF(PdfParser $pdfParser, TextChunker $textChunker, IndexingWorkflowStepItem $indexingWorkflowItem)
     {
         $indexingWorkflowItem->update([
             'status' => 'parsing',
@@ -190,7 +190,7 @@ class IndexFile implements ShouldQueue
         ]);
     }
 
-    private function updateWorkflowStatus(IndexingWorkflowItem $indexingWorkflowItem)
+    private function updateWorkflowStatus(IndexingWorkflowStepItem $indexingWorkflowItem)
     {
         /** @var IndexingWorkflowStep $workflow */
         $workflow = $indexingWorkflowItem->indexing_workflow_step;

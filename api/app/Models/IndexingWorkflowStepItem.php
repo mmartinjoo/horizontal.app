@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
-class IndexingWorkflowItem extends Model
+class IndexingWorkflowStepItem extends Model
 {
     protected $guarded = [];
 

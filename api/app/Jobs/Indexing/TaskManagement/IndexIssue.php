@@ -5,7 +5,7 @@ namespace App\Jobs\Indexing\TaskManagement;
 use App\Exceptions\NoContentToIndexException;
 use App\Models\Document;
 use App\Models\DocumentChunk;
-use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStepItem;
 use App\Models\IndexingWorkflowStep;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
@@ -27,7 +27,7 @@ class IndexIssue implements ShouldQueue
     public function handle(
         TextChunker $textChunker,
     ): void {
-        $indexingWorkflowItem = IndexingWorkflowItem::findOrFail($this->indexingWorkflowItemId);
+        $indexingWorkflowItem = IndexingWorkflowStepItem::findOrFail($this->indexingWorkflowItemId);
         $chunks = $textChunker->chunk($this->issue->title.' '.$this->issue->description);
         if (count($chunks) === 0) {
             $indexingWorkflowItem->update([
@@ -77,7 +77,7 @@ class IndexIssue implements ShouldQueue
         $this->updateWorkflowStatus($indexingWorkflowItem);
     }
 
-    private function updateWorkflowStatus(IndexingWorkflowItem $indexingWorkflowItem)
+    private function updateWorkflowStatus(IndexingWorkflowStepItem $indexingWorkflowItem)
     {
         /** @var IndexingWorkflowStep $workflow */
         $workflow = $indexingWorkflowItem->indexing_workflow_step;

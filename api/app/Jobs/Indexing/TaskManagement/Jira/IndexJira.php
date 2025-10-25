@@ -6,7 +6,7 @@ use App\Jobs\Indexing\TaskManagement\IndexIssue;
 use App\Models\Document;
 use App\Models\DocumentComment;
 use App\Models\DocumentWorklog;
-use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStepItem;
 use App\Models\IndexingWorkflowStep;
 use App\Models\JiraIntegration;
 use App\Models\JiraProject;
@@ -86,7 +86,7 @@ class IndexJira implements ShouldQueue
                         'priority' => $prio,
                         'metadata' => $issueData,
                     ]);
-                    $indexingItem = IndexingWorkflowItem::create([
+                    $indexingItem = IndexingWorkflowStepItem::create([
                         'indexing_workflow_step_id' => $indexing->id,
                         'data' => $issue,
                         'status' => 'queued',

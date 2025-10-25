@@ -5,7 +5,7 @@ namespace App\Jobs\Indexing\TaskManagement\Linear;
 use App\Jobs\Indexing\TaskManagement\IndexIssue;
 use App\Models\Document;
 use App\Models\DocumentComment;
-use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStepItem;
 use App\Models\IndexingWorkflowStep;
 use App\Models\Participant;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
@@ -79,7 +79,7 @@ class IndexLinear implements ShouldQueue
             'title' => $issue->title,
             'metadata' => $issue,
         ]);
-        $indexingItem = IndexingWorkflowItem::create([
+        $indexingItem = IndexingWorkflowStepItem::create([
             'indexing_workflow_step_id' => $indexingWorkflow->id,
             'data' => $issue,
             'status' => 'queued',

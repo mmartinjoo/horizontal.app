@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Document;
-use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -11,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('indexing_workflow_items', function (Blueprint $table) {
+        Schema::create('indexing_workflow_step_items', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(IndexingWorkflowStep::class)->constrained()->cascadeOnDelete();
             $table->jsonb('data');
@@ -25,6 +24,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('indexing_workflow_items');
+        Schema::dropIfExists('indexing_workflow_step_items');
     }
 };

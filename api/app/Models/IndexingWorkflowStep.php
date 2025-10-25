@@ -12,6 +12,6 @@ class IndexingWorkflowStep extends Model
 
     public function items()
     {
-        return $this->hasMany(IndexingWorkflowItem::class);
+        return $this->hasMany(IndexingWorkflowStepItem::class);
     }
 }

@@ -6,7 +6,7 @@ use App\Exceptions\NoContentToIndexException;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentComment;
-use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStepItem;
 use App\Models\IndexingWorkflowStep;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
@@ -41,7 +41,7 @@ class IndexPullRequest implements ShouldQueue
                 'metadata' => $this->pullRequest,
             ]);
             
-            $indexingItem = IndexingWorkflowItem::create([
+            $indexingItem = IndexingWorkflowStepItem::create([
                 'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
                 'data' => $this->pullRequest,
                 'status' => 'processing',

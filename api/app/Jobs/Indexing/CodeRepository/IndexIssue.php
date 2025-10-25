@@ -5,7 +5,7 @@ namespace App\Jobs\Indexing\CodeRepository;
 use App\Exceptions\NoContentToIndexException;
 use App\Models\Document;
 use App\Models\DocumentChunk;
-use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStepItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Issue;
@@ -34,7 +34,7 @@ class IndexIssue implements ShouldQueue
             'metadata' => $this->issue,
         ]);
         
-        $indexingItem = IndexingWorkflowItem::create([
+        $indexingItem = IndexingWorkflowStepItem::create([
             'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
             'data' => $this->issue,
             'status' => 'processing',
@@ -96,7 +96,7 @@ class IndexIssue implements ShouldQueue
         return $participant;
     }
 
-    private function updateWorkflowStatus(IndexingWorkflowItem $indexingItem): void
+    private function updateWorkflowStatus(IndexingWorkflowStepItem $indexingItem): void
     {
         $workflow = $indexingItem->indexing_workflow_step;
         if (!$workflow) {
