@@ -11,6 +11,7 @@ use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
 use Exception;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
 
@@ -137,6 +138,11 @@ class GitHub implements CodeRepository
                 }
 
                 foreach ($issues as $issue) {
+                    // In GitHub API PRs are also issues
+                    $pullRequest = Arr::get($issue, 'pull_request');
+                    if ($pullRequest) {
+                        continue;
+                    }
                     yield Issue::fromGithub($issue);
                 }
 
