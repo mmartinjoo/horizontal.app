@@ -10,18 +10,14 @@ use App\Jobs\Indexing\KnowledgeGraph\BuildKnowledgeGraph;
 use App\Jobs\Indexing\KnowledgeGraph\BuildRelatedNodes;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
+use App\Services\Indexing\Orchestrator\Orchestrator;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 
 class TestController extends Controller
 {
-    public function index(GitHub $github)
+    public function index(Orchestrator $orchestrator)
     {
-        IndexGitHub::dispatch();
-        // foreach ($github->repositories() as $repo) {
-        //     foreach ($github->issues($repo) as $issue) {
-        //         dump($issue);
-        //     }
-        // }
+        $orchestrator->schedule();
     }
 
     public function token()

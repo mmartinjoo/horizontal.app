@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Indexing\Storage\GoogleDrive;
 
+use App\Jobs\Indexing\IndexingStepJob;
 use App\Jobs\Indexing\Storage\IndexFile;
 use App\Models\Document;
 use App\Models\IndexingWorkflowStep;
@@ -10,7 +11,7 @@ use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
-class IndexGoogleDrive implements ShouldQueue
+class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue
 {
     use Queueable;
 

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('status');
             $table->foreignIdFor(Document::class)->nullable()->constrained()->cascadeOnDelete();
             $table->text('error_message')->nullable();
-            $table->jsonb('job_ids')->nullable();
+            $table->string('job_id')->nullable();
             $table->timestamps();
         });
     }

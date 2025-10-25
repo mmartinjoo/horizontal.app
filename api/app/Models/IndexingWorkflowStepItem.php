@@ -12,7 +12,6 @@ class IndexingWorkflowStepItem extends Model
 
     protected $casts = [
         'data' => 'array',
-        'job_ids' => 'array',
     ];
 
     public function indexing_workflow_step()

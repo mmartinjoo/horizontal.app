@@ -39,7 +39,7 @@ class IndexIssue implements ShouldQueue
             'data' => $this->issue,
             'status' => 'processing',
             'document_id' => $doc->id,
-            'job_ids' => [$this->job->payload()['uuid']],
+            'job_id' => $this->job->payload()['uuid'],
         ]);
 
         $preview = $this->issue->title;

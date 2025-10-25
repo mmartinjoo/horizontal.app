@@ -4,6 +4,7 @@ namespace App\Jobs\Indexing\CodeRepository\GitHub;
 
 use App\Jobs\Indexing\CodeRepository\IndexIssues;
 use App\Jobs\Indexing\CodeRepository\IndexPullRequests;
+use App\Jobs\Indexing\IndexingStepJob;
 use App\Models\IndexingWorkflowStep;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
@@ -11,17 +12,17 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\LazyCollection;
 
-class IndexGitHub implements ShouldQueue
+class IndexGitHub extends IndexingStepJob implements ShouldQueue
 {
     use Queueable;
 
     public function handle(
         GitHub $github,
     ): void {
-        /** @var IndexingWorkflowStep $indexing */
-        $indexing = IndexingWorkflowStep::create([
-            'integration' => 'github',
-            'status' => 'syncing',
+        /** @var IndexingWorkflowStep $indexingWorkflowStep */
+        $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
+        $indexingWorkflowStep->update([
+            'status' => 'processing',
             'job_id' => $this->job->payload()['uuid'],
         ]);
 
@@ -30,8 +31,8 @@ class IndexGitHub implements ShouldQueue
 
         /** @var Repository $repo */
         foreach ($repositories as $repo) {
-            IndexPullRequests::dispatch($repo, $github, $indexing->id);
-            IndexIssues::dispatch($repo, $github, $indexing->id);
+            IndexPullRequests::dispatch($repo, $github, $indexingWorkflowStep->id);
+            IndexIssues::dispatch($repo, $github, $indexingWorkflowStep->id);
         }
     }
 }

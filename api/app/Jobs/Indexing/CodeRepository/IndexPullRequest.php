@@ -41,25 +41,25 @@ class IndexPullRequest implements ShouldQueue
                 'metadata' => $this->pullRequest,
             ]);
             
-            $indexingItem = IndexingWorkflowStepItem::create([
+            $indexingWorkflowStepItem = IndexingWorkflowStepItem::create([
                 'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
                 'data' => $this->pullRequest,
                 'status' => 'processing',
                 'document_id' => $doc->id,
-                'job_ids' => [$this->job->payload()['uuid']],
+                'job_id' => $this->job->payload()['uuid'],
             ]);
 
             $preview = $this->pullRequest->title;
             if ($this->pullRequest->description) {
                 $chunks = $textChunker->chunk($this->pullRequest->description);
                 if (count($chunks) === 0) {
-                    $indexingItem->update([
+                    $indexingWorkflowStepItem->update([
                         'status' => 'warning',
                     ]);
                     throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->pullRequest));
                 }
                 if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
-                    $indexingItem->update([
+                    $indexingWorkflowStepItem->update([
                         'status' => 'warning',
                     ]);
                     throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->pullRequest));
@@ -101,12 +101,12 @@ class IndexPullRequest implements ShouldQueue
                 'preview' => $preview,
                 'indexed_at' => now(),
             ]);
-            $indexingItem->update([
+            $indexingWorkflowStepItem->update([
                 'status' => 'completed',
             ]);
             $this->updateWorkflowStepStatus($indexingWorkflowStep);
         } catch (Exception $e) {
-            $indexingItem->update([
+            $indexingWorkflowStepItem->update([
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
             ]);

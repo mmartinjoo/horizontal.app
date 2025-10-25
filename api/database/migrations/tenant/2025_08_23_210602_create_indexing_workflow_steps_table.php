@@ -12,12 +12,13 @@ return new class extends Migration
         Schema::create('indexing_workflow_steps', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(IndexingWorkflow::class)->constrained()->cascadeOnDelete();
-            $table->string('integration');
+            $table->string('name');
+            $table->string('status');            
             $table->integer('overall_items')->default(0);
-            $table->string('status');
-            $table->string('job_id')->nullable();
             $table->integer('deleted_items')->default(0);
             $table->integer('skipped_items')->default(0);
+            $table->string('service');
+            $table->string('job_id')->nullable();
             $table->timestamps();
         });
     }

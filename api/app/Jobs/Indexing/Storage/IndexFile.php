@@ -48,7 +48,7 @@ class IndexFile implements ShouldQueue
                 'data' => $this->file,
                 'status' => 'downloading',
                 'document_id' => $document->id,
-                'job_ids' => [$this->job->payload()['uuid']],
+                'job_id' => $this->job->payload()['uuid'],
             ]);
 
             $drive->downloadFile($this->file);

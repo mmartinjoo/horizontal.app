@@ -18,20 +18,20 @@ class IndexPullRequests implements ShouldQueue
     public function __construct(
         private Repository $repository,
         private CodeRepository $connector,
-        private int $indexingWorkflowId,
+        private int $indexingWorkflowStepId,
     ) {}
 
     public function handle()
     {
-        $indexingWorkflow = IndexingWorkflowStep::findOrFail($this->indexingWorkflowId);
+        $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
         $pullRequests = $this->connector->pullRequests($this->repository);
 
-        $indexingWorkflow->increment('overall_items', count($pullRequests));
+        $indexingWorkflowStep->increment('overall_items', count($pullRequests));
 
         /** @var PullRequest $pullRequest */
         foreach ($pullRequests as $i => $pullRequest) {
             if (! $this->pullRequestNeedsIndexing($pullRequest)) {
-                $indexingWorkflow->increment('skipped_items', 1);
+                $indexingWorkflowStep->increment('skipped_items', 1);
 
                 continue;
             }
@@ -42,9 +42,9 @@ class IndexPullRequests implements ShouldQueue
                 ->where('source_id', $pullRequest->id)
                 ->delete();
 
-            $indexingWorkflow->increment('deleted_items', $count);
+            $indexingWorkflowStep->increment('deleted_items', $count);
 
-            IndexPullRequest::dispatch($pullRequest, $this->connector, $indexingWorkflow->id);
+            IndexPullRequest::dispatch($pullRequest, $this->connector, $indexingWorkflowStep->id);
         }
     }
 
