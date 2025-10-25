@@ -16,7 +16,12 @@ class TestController extends Controller
 {
     public function index(GitHub $github)
     {
-        IndexGoogleDrive::dispatch();
+        IndexGitHub::dispatch();
+        // foreach ($github->repositories() as $repo) {
+        //     foreach ($github->issues($repo) as $issue) {
+        //         dump($issue);
+        //     }
+        // }
     }
 
     public function token()
