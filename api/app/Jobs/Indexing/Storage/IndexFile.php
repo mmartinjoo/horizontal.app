@@ -5,8 +5,8 @@ namespace App\Jobs\Indexing\Storage;
 use App\Exceptions\NoContentToIndexException;
 use App\Models\Document;
 use App\Models\DocumentChunk;
-use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStep;
 use App\Models\Participant;
 use App\Services\File\PdfParser;
 use App\Services\Indexing\TextChunker;
@@ -20,15 +20,14 @@ use Illuminate\Support\Facades\Storage;
 
 class IndexFile implements ShouldQueue
 {
-    use Queueable;
     use Batchable;
+    use Queueable;
 
-    public function __construct(        
+    public function __construct(
         private File $file,
-        private int $indexingWorkflowId,        
+        private int $indexingWorkflowStepId,
         private string $vendor,
-    ) {
-    }
+    ) {}
 
     public function handle(
         GoogleDrive $drive,
@@ -45,7 +44,7 @@ class IndexFile implements ShouldQueue
                 'priority' => 'high',
             ]);
             $indexingWorkflowItem = IndexingWorkflowItem::create([
-                'indexing_workflow_id' => $this->indexingWorkflowId,
+                'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
                 'data' => $this->file,
                 'status' => 'downloading',
                 'document_id' => $document->id,
@@ -63,6 +62,7 @@ class IndexFile implements ShouldQueue
                     'status' => 'completed',
                 ]);
                 $this->updateWorkflowStatus($indexingWorkflowItem);
+
                 return;
             } else {
                 $content = Storage::read($this->file->path());
@@ -72,7 +72,7 @@ class IndexFile implements ShouldQueue
                 $indexingWorkflowItem->update([
                     'status' => 'warning',
                 ]);
-                throw new NoContentToIndexException('File is empty: ' . json_encode($this->file));
+                throw new NoContentToIndexException('File is empty: '.json_encode($this->file));
             }
 
             $chunks = $textChunker->chunk($content);
@@ -80,20 +80,20 @@ class IndexFile implements ShouldQueue
                 $indexingWorkflowItem->update([
                     'status' => 'warning',
                 ]);
-                throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->file) . '; content: ' . $content);
+                throw new NoContentToIndexException('Chunk is empty: '.json_encode($this->file).'; content: '.$content);
             }
             if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
                 $indexingWorkflowItem->update([
                     'status' => 'warning',
                 ]);
-                throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->file) . '; content: ' . $content);
+                throw new NoContentToIndexException('Chunk contains one empty item: '.json_encode($this->file).'; content: '.$content);
             }
 
             foreach ($chunks as $i => $chunk) {
                 DocumentChunk::create([
                     'document_id' => $document->id,
                     'body' => $chunk,
-                    'position' => $i+1,
+                    'position' => $i + 1,
                 ]);
             }
 
@@ -112,8 +112,7 @@ class IndexFile implements ShouldQueue
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
             ]);
-        }
-        finally {
+        } finally {
             Storage::delete($this->file->path());
         }
     }
@@ -177,7 +176,7 @@ class IndexFile implements ShouldQueue
                 DocumentChunk::create([
                     'document_id' => $indexingWorkflowItem->document->id,
                     'body' => $chunk,
-                    'position' => $i+1,
+                    'position' => $i + 1,
                 ]);
             }
         }
@@ -191,16 +190,15 @@ class IndexFile implements ShouldQueue
         ]);
     }
 
-
     private function updateWorkflowStatus(IndexingWorkflowItem $indexingWorkflowItem)
     {
-        /** @var IndexingWorkflow $workflow */
-        $workflow = $indexingWorkflowItem->indexing_workflow;
+        /** @var IndexingWorkflowStep $workflow */
+        $workflow = $indexingWorkflowItem->indexing_workflow_step;
         $hasQueuedItems = $workflow->items()
             ->whereIn('status', ['queued', 'processing'])
             ->exists();
 
-        if (!$hasQueuedItems) {
+        if (! $hasQueuedItems) {
             $workflow->update([
                 'status' => 'completed',
             ]);

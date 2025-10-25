@@ -4,7 +4,7 @@ namespace App\Jobs\Indexing\Storage\GoogleDrive;
 
 use App\Jobs\Indexing\Storage\IndexFile;
 use App\Models\Document;
-use App\Models\IndexingWorkflow;
+use App\Models\IndexingWorkflowStep;
 use App\Services\Integration\Storage\DataTransferObjects\File;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,8 +17,8 @@ class IndexGoogleDrive implements ShouldQueue
     public function handle(
         GoogleDrive $drive,
     ): void {
-        /** @var IndexingWorkflow $indexing */
-        $indexing = IndexingWorkflow::create([
+        /** @var IndexingWorkflowStep $indexing */
+        $indexing = IndexingWorkflowStep::create([
             'integration' => 'google_drive',
             'status' => 'downloading',
             'job_id' => $this->job->payload()['uuid'],
@@ -31,13 +31,14 @@ class IndexGoogleDrive implements ShouldQueue
         ]);
 
         foreach ($files as $i => $file) {
-            if (!$this->fileNeedsIndexing($file)) {
+            if (! $this->fileNeedsIndexing($file)) {
                 $indexing->increment('skipped_items', 1);
                 if ($i === count($files) - 1) {
                     $indexing->update([
                         'status' => 'completed',
                     ]);
                 }
+
                 continue;
             }
 

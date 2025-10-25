@@ -6,8 +6,8 @@ use App\Jobs\Indexing\TaskManagement\IndexIssue;
 use App\Models\Document;
 use App\Models\DocumentComment;
 use App\Models\DocumentWorklog;
-use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStep;
 use App\Models\JiraIntegration;
 use App\Models\JiraProject;
 use App\Models\Participant;
@@ -27,8 +27,8 @@ class IndexJira implements ShouldQueue
     public function handle(
         Jira $jira,
     ): void {
-        /** @var IndexingWorkflow $indexing */
-        $indexing = IndexingWorkflow::create([
+        /** @var IndexingWorkflowStep $indexing */
+        $indexing = IndexingWorkflowStep::create([
             'integration' => 'jira',
             'status' => 'syncing',
             'job_id' => $this->job->payload()['uuid'],
@@ -41,7 +41,7 @@ class IndexJira implements ShouldQueue
                 ->where('key', $projectData['key'])
                 ->first();
 
-            if (!$project) {
+            if (! $project) {
                 JiraProject::create([
                     'jira_integration_id' => $jiraIntegration->id,
                     'title' => $projectData['name'],
@@ -52,7 +52,7 @@ class IndexJira implements ShouldQueue
 
             $prios = ['high', 'medium', 'low'];
             foreach ($prios as $prio) {
-                $dateRange = match($prio) {
+                $dateRange = match ($prio) {
                     'high' => ['from' => now()->subMonths(1), 'to' => now()],
                     'medium' => ['from' => now()->subMonths(3), 'to' => now()->subMonths(1)],
                     'low' => ['from' => now()->subMonths(6), 'to' => now()->subMonths(3)],
@@ -62,13 +62,14 @@ class IndexJira implements ShouldQueue
                 foreach ($issues as $i => $issueData) {
                     $description = $this->extractTextFromDocument($issueData['fields']['description'] ?? []);
                     $issue = Issue::fromJira($issueData, $description);
-                    if (!$this->issueNeedsIndexing($issue)) {
+                    if (! $this->issueNeedsIndexing($issue)) {
                         $indexing->increment('skipped_items', 1);
                         if ($i === count($issues) - 1) {
                             $indexing->update([
                                 'status' => 'completed',
                             ]);
                         }
+
                         continue;
                     }
                     $count = Document::query()
@@ -86,7 +87,7 @@ class IndexJira implements ShouldQueue
                         'metadata' => $issueData,
                     ]);
                     $indexingItem = IndexingWorkflowItem::create([
-                        'indexing_workflow_id' => $indexing->id,
+                        'indexing_workflow_step_id' => $indexing->id,
                         'data' => $issue,
                         'status' => 'queued',
                         'document_id' => $doc->id,
@@ -150,7 +151,7 @@ class IndexJira implements ShouldQueue
                     }
 
                     $watchersData = $jira->getWatchers($issue);
-                    $watchers = collect($watchersData)->map(fn($watcher) => $watcher['displayName']);
+                    $watchers = collect($watchersData)->map(fn ($watcher) => $watcher['displayName']);
                     foreach ($watchers as $watcher) {
                         $p = Participant::updateOrCreate(
                             [
@@ -198,11 +199,12 @@ class IndexJira implements ShouldQueue
                 $textParts[] = $value;
             } elseif (is_array($value)) {
                 $nestedText = $this->extractTextFromDocument($value);
-                if (!empty($nestedText)) {
+                if (! empty($nestedText)) {
                     $textParts[] = $nestedText;
                 }
             }
         }
+
         return implode(' ', $textParts);
     }
 

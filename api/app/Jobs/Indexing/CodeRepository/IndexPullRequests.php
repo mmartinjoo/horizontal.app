@@ -3,7 +3,7 @@
 namespace App\Jobs\Indexing\CodeRepository;
 
 use App\Models\Document;
-use App\Models\IndexingWorkflow;
+use App\Models\IndexingWorkflowStep;
 use App\Services\Integration\CodeRepository\CodeRepository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
@@ -19,20 +19,20 @@ class IndexPullRequests implements ShouldQueue
         private Repository $repository,
         private CodeRepository $connector,
         private int $indexingWorkflowId,
-    ) {
-    }
+    ) {}
 
     public function handle()
     {
-        $indexingWorkflow = IndexingWorkflow::findOrFail($this->indexingWorkflowId);
+        $indexingWorkflow = IndexingWorkflowStep::findOrFail($this->indexingWorkflowId);
         $pullRequests = $this->connector->pullRequests($this->repository);
 
         $indexingWorkflow->increment('overall_items', count($pullRequests));
 
         /** @var PullRequest $pullRequest */
         foreach ($pullRequests as $i => $pullRequest) {
-            if (!$this->pullRequestNeedsIndexing($pullRequest)) {
+            if (! $this->pullRequestNeedsIndexing($pullRequest)) {
                 $indexingWorkflow->increment('skipped_items', 1);
+
                 continue;
             }
 

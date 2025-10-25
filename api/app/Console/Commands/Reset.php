@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Document;
-use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStep;
 use App\Models\JiraProject;
 use App\Models\Participant;
 use App\Models\Tenant;
@@ -13,7 +13,6 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Stancl\Tenancy\Concerns\HasATenantArgument;
-use Stancl\Tenancy\Concerns\HasATenantsOption;
 
 class Reset extends Command
 {
@@ -30,7 +29,7 @@ class Reset extends Command
 
         $graphDB = app(GraphDB::class);
         $sure = $this->confirm('This will clean everything except integration-related data such as tokens, refresh tokens, etc. Are you sure?', true);
-        if (!$sure) {
+        if (! $sure) {
             return;
         }
         if (App::environment('production')) {
@@ -39,12 +38,12 @@ class Reset extends Command
         Document::all()->each->delete();
         Participant::all()->each->delete();
         JiraProject::all()->each->delete();
-        IndexingWorkflow::all()->each->delete();
+        IndexingWorkflowStep::all()->each->delete();
         IndexingWorkflowItem::all()->each->delete();
         $graphDB->query('MATCH (n) DETACH DELETE n');
 
         tenancy()->end();
         DB::table('jobs')->delete();
-        DB::table('failed_jobs')->delete();        
+        DB::table('failed_jobs')->delete();
     }
 }

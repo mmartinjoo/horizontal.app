@@ -3,7 +3,7 @@
 namespace App\Jobs\Indexing\CodeRepository;
 
 use App\Models\Document;
-use App\Models\IndexingWorkflow;
+use App\Models\IndexingWorkflowStep;
 use App\Services\Integration\CodeRepository\CodeRepository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Issue;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
@@ -18,20 +18,20 @@ class IndexIssues implements ShouldQueue
         private Repository $repository,
         private CodeRepository $connector,
         private int $indexingWorkflowId,
-    ) {
-    }
+    ) {}
 
     public function handle()
     {
-        $indexingWorkflow = IndexingWorkflow::findOrFail($this->indexingWorkflowId);
+        $indexingWorkflow = IndexingWorkflowStep::findOrFail($this->indexingWorkflowId);
         $issues = $this->connector->issues($this->repository);
 
         $indexingWorkflow->increment('overall_items', count($issues));
 
         /** @var Issue $issue */
         foreach ($issues as $issue) {
-            if (!$this->issueNeedsIndexing($issue)) {
-                $indexingWorkflow->increment('skipped_items', 1);                
+            if (! $this->issueNeedsIndexing($issue)) {
+                $indexingWorkflow->increment('skipped_items', 1);
+
                 continue;
             }
 
@@ -51,7 +51,7 @@ class IndexIssues implements ShouldQueue
      */
     private function issueNeedsIndexing(Issue $issue): bool
     {
-        return !Document::query()
+        return ! Document::query()
             ->where('source_id', $issue->externalId)
             ->where('source_type', 'github_issue')
             ->exists();

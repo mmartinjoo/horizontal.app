@@ -19,7 +19,7 @@ class IndexIssue implements ShouldQueue
 
     public function __construct(
         private Issue $issue,
-        private int $indexingWorkflowId,
+        private int $indexingWorkflowStepId,
     ) {
     }
 
@@ -35,7 +35,7 @@ class IndexIssue implements ShouldQueue
         ]);
         
         $indexingItem = IndexingWorkflowItem::create([
-            'indexing_workflow_id' => $this->indexingWorkflowId,
+            'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
             'data' => $this->issue,
             'status' => 'processing',
             'document_id' => $doc->id,
@@ -98,7 +98,7 @@ class IndexIssue implements ShouldQueue
 
     private function updateWorkflowStatus(IndexingWorkflowItem $indexingItem): void
     {
-        $workflow = $indexingItem->indexing_workflow;
+        $workflow = $indexingItem->indexing_workflow_step;
         if (!$workflow) {
             return;
         }

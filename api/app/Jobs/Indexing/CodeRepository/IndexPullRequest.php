@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentComment;
 use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStep;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\CodeRepository\CodeRepository;
@@ -23,12 +24,14 @@ class IndexPullRequest implements ShouldQueue
     public function __construct(
         private PullRequest $pullRequest,
         private CodeRepository $codeRepository,
-        private int $indexingWorkflowId,
+        private int $indexingWorkflowStepId,
     ) {}
 
     public function handle(TextChunker $textChunker): void
     {
         try {
+            $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
+            
             $doc = Document::create([
                 'source_type' => 'github_pr',
                 'source_id' => $this->pullRequest->id,
@@ -39,7 +42,7 @@ class IndexPullRequest implements ShouldQueue
             ]);
             
             $indexingItem = IndexingWorkflowItem::create([
-                'indexing_workflow_id' => $this->indexingWorkflowId,
+                'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
                 'data' => $this->pullRequest,
                 'status' => 'processing',
                 'document_id' => $doc->id,
@@ -101,7 +104,7 @@ class IndexPullRequest implements ShouldQueue
             $indexingItem->update([
                 'status' => 'completed',
             ]);
-            $this->updateWorkflowStatus($indexingItem);
+            $this->updateWorkflowStepStatus($indexingWorkflowStep);
         } catch (Exception $e) {
             $indexingItem->update([
                 'status' => 'failed',
@@ -129,19 +132,14 @@ class IndexPullRequest implements ShouldQueue
         return $participant;
     }
 
-    private function updateWorkflowStatus(IndexingWorkflowItem $indexingItem): void
+    private function updateWorkflowStepStatus(IndexingWorkflowStep $indexingWorkflowStep): void
     {
-        $workflow = $indexingItem->indexing_workflow;
-        if (!$workflow) {
-            return;
-        }
-
-        $hasQueuedItems = $workflow->items()
+        $hasQueuedItems = $indexingWorkflowStep->items()
             ->whereIn('status', ['queued', 'processing'])
             ->exists();
 
         if (!$hasQueuedItems) {
-            $workflow->update([
+            $indexingWorkflowStep->update([
                 'status' => 'completed',
             ]);
         }

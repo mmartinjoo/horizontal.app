@@ -5,8 +5,8 @@ namespace App\Jobs\Indexing\TaskManagement\Linear;
 use App\Jobs\Indexing\TaskManagement\IndexIssue;
 use App\Models\Document;
 use App\Models\DocumentComment;
-use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStep;
 use App\Models\Participant;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use App\Services\Integration\TaskManagement\DataTransferObjects\IssueComment;
@@ -21,8 +21,8 @@ class IndexLinear implements ShouldQueue
 
     public function handle(Linear $linear): void
     {
-        /** @var IndexingWorkflow $indexing */
-        $indexingWorkflow = IndexingWorkflow::create([
+        /** @var IndexingWorkflowStep $indexing */
+        $indexingWorkflow = IndexingWorkflowStep::create([
             'integration' => 'linear',
             'status' => 'syncing',
             'job_id' => $this->job->payload()['uuid'],
@@ -32,13 +32,14 @@ class IndexLinear implements ShouldQueue
         $indexingWorkflow->increment('overall_items', count($issues));
 
         foreach ($issues as $i => $issue) {
-            if (!$this->issueNeedsIndexing($issue)) {
+            if (! $this->issueNeedsIndexing($issue)) {
                 $indexingWorkflow->increment('skipped_items', 1);
                 if ($i === count($issues) - 1) {
                     $indexingWorkflow->update([
                         'status' => 'completed',
                     ]);
                 }
+
                 continue;
             }
 
@@ -60,7 +61,7 @@ class IndexLinear implements ShouldQueue
         return $issue->getLastUpdatedAt()->gt($existingContent->indexed_at ?? now()->subYears(100));
     }
 
-    private function processIssue(Linear $linear, Issue $issue, IndexingWorkflow $indexingWorkflow): void
+    private function processIssue(Linear $linear, Issue $issue, IndexingWorkflowStep $indexingWorkflow): void
     {
         // Delete existing document if it exists
         $count = Document::query()
@@ -79,7 +80,7 @@ class IndexLinear implements ShouldQueue
             'metadata' => $issue,
         ]);
         $indexingItem = IndexingWorkflowItem::create([
-            'indexing_workflow_id' => $indexingWorkflow->id,
+            'indexing_workflow_step_id' => $indexingWorkflow->id,
             'data' => $issue,
             'status' => 'queued',
             'document_id' => $doc->id,

@@ -5,8 +5,8 @@ namespace App\Jobs\Indexing\TaskManagement;
 use App\Exceptions\NoContentToIndexException;
 use App\Models\Document;
 use App\Models\DocumentChunk;
-use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStep;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
@@ -22,32 +22,31 @@ class IndexIssue implements ShouldQueue
         private Document $document,
         private Issue $issue,
         private int $indexingWorkflowItemId,
-    ) {
-    }
+    ) {}
 
     public function handle(
         TextChunker $textChunker,
     ): void {
         $indexingWorkflowItem = IndexingWorkflowItem::findOrFail($this->indexingWorkflowItemId);
-        $chunks = $textChunker->chunk($this->issue->title . ' ' . $this->issue->description);
+        $chunks = $textChunker->chunk($this->issue->title.' '.$this->issue->description);
         if (count($chunks) === 0) {
             $indexingWorkflowItem->update([
                 'status' => 'warning',
             ]);
-            throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->issue) . '; content: ' . $this->issue->toString());
+            throw new NoContentToIndexException('Chunk is empty: '.json_encode($this->issue).'; content: '.$this->issue->toString());
         }
         if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
             $indexingWorkflowItem->update([
                 'status' => 'warning',
             ]);
-            throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->issue) . '; content: ' . $this->issue->toString());
+            throw new NoContentToIndexException('Chunk contains one empty item: '.json_encode($this->issue).'; content: '.$this->issue->toString());
         }
 
         foreach ($chunks as $i => $chunk) {
             DocumentChunk::create([
                 'document_id' => $indexingWorkflowItem->document->id,
                 'body' => $chunk,
-                'position' => $i+1,
+                'position' => $i + 1,
             ]);
         }
         $indexingWorkflowItem->document()->update([
@@ -80,13 +79,13 @@ class IndexIssue implements ShouldQueue
 
     private function updateWorkflowStatus(IndexingWorkflowItem $indexingWorkflowItem)
     {
-        /** @var IndexingWorkflow $workflow */
-        $workflow = $indexingWorkflowItem->indexing_workflow;
+        /** @var IndexingWorkflowStep $workflow */
+        $workflow = $indexingWorkflowItem->indexing_workflow_step;
         $hasQueuedItems = $workflow->items()
             ->where('status', 'queued')
             ->exists();
 
-        if (!$hasQueuedItems) {
+        if (! $hasQueuedItems) {
             $workflow->update([
                 'status' => 'completed',
             ]);

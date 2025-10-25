@@ -15,9 +15,9 @@ class IndexingWorkflowItem extends Model
         'job_ids' => 'array',
     ];
 
-    public function indexing_workflow()
+    public function indexing_workflow_step()
     {
-        return $this->belongsTo(IndexingWorkflow::class);
+        return $this->belongsTo(IndexingWorkflowStep::class);
     }
 
     public function document(): BelongsTo
@@ -27,6 +27,6 @@ class IndexingWorkflowItem extends Model
 
     public function user(): HasManyThrough
     {
-        return $this->hasManyThrough(User::class, IndexingWorkflow::class);
+        return $this->hasManyThrough(User::class, IndexingWorkflowStep::class);
     }
 }

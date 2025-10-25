@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('indexing_workflows', function (Blueprint $table) {
+        Schema::create('indexing_workflow_steps', function (Blueprint $table) {
             $table->id();
             $table->string('integration');
             $table->integer('overall_items')->default(0);
@@ -22,6 +22,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('indexing_workflows');
+        Schema::dropIfExists('indexing_workflow_steps');
     }
 };

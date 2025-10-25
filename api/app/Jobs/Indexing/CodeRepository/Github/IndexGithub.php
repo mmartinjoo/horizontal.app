@@ -4,7 +4,7 @@ namespace App\Jobs\Indexing\CodeRepository\GitHub;
 
 use App\Jobs\Indexing\CodeRepository\IndexIssues;
 use App\Jobs\Indexing\CodeRepository\IndexPullRequests;
-use App\Models\IndexingWorkflow;
+use App\Models\IndexingWorkflowStep;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,8 +18,8 @@ class IndexGitHub implements ShouldQueue
     public function handle(
         GitHub $github,
     ): void {
-        /** @var IndexingWorkflow $indexing */
-        $indexing = IndexingWorkflow::create([
+        /** @var IndexingWorkflowStep $indexing */
+        $indexing = IndexingWorkflowStep::create([
             'integration' => 'github',
             'status' => 'syncing',
             'job_id' => $this->job->payload()['uuid'],

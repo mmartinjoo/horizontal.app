@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class IndexingWorkflow extends Model
+class IndexingWorkflowStep extends Model
 {
+    protected $table = 'indexing_workflow_steps';
+
     protected $guarded = [];
 
     public function items()
