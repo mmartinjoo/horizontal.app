@@ -12,11 +12,11 @@ use App\Services\File\PdfParser;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\Storage\DataTransferObjects\File;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
-use Exception;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class IndexFile implements ShouldQueue
 {
@@ -103,11 +103,23 @@ class IndexFile implements ShouldQueue
                 'status' => 'completed',
             ]);
             $this->updateWorkflowStatus($indexingWorkflowItem);
-        } catch (Exception $e) {
-            $indexingWorkflowItem->update([
-                'status' => 'failed',
-                'error_message' => $e->getMessage(),
-            ]);
+        } catch (Throwable $e) {
+            // if the file is a weird, unknown format Postgres can throw a "Character not in repertoire invalid byte sequence for encoding 'UTF8'" exception
+            // which cannot be saved in the `error_message` column. so instead of saving the message
+            // `update` would throw another exception
+            try {
+                $indexingWorkflowItem->update([
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                ]);
+            } catch (Throwable $e) {
+                $indexingWorkflowItem->update([
+                    'status' => 'failed',
+                    'error_message' => 'probably "Character not in repertoire". check the related job ID',
+                ]);
+                throw $e;
+            }
+            throw $e;
         } finally {
             Storage::delete($this->file->path());
         }

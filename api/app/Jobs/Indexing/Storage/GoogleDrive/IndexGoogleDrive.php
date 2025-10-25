@@ -18,9 +18,9 @@ class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue
     public function handle(
         GoogleDrive $drive,
     ): void {
-        /** @var IndexingWorkflowStep $indexing */
-        $indexing = IndexingWorkflowStep::create([
-            'integration' => 'google_drive',
+        /** @var IndexingWorkflowStep $indexingWorkflowStep */
+        $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
+        $indexingWorkflowStep->update([
             'status' => 'processing',
             'job_id' => $this->job->payload()['uuid'],
         ]);
@@ -28,13 +28,7 @@ class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue
         $files = $drive->listDirectoryContents();
         foreach ($files as $i => $file) {
             if (! $this->fileNeedsIndexing($file)) {
-                $indexing->increment('skipped_items', 1);
-                if ($i === count($files) - 1) {
-                    $indexing->update([
-                        'status' => 'completed',
-                    ]);
-                }
-
+                $indexingWorkflowStep->increment('skipped_items', 1);
                 continue;
             }
 
@@ -43,8 +37,8 @@ class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue
                 ->where('source_id', $file->extraMetadata()['id'])
                 ->delete();
 
-            $indexing->increment('deleted_items', $count);
-            IndexFile::dispatch($file, $indexing->id, 'google_drive');
+            $indexingWorkflowStep->increment('deleted_items', $count);
+            IndexFile::dispatch($file, $indexingWorkflowStep->id, 'google_drive');
         }
     }
 
