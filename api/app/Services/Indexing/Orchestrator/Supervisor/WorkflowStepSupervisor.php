@@ -52,7 +52,7 @@ class WorkflowStepSupervisor
                 ->where('status', WorkflowStepItemStatus::Failed->value)
                 ->count();
 
-            // finished with errors
+            // completely failed
             if ($this->failedCount !== 0) {
                 if ($this->failedCount === $this->workflowStep->processed_items) {
                     $this->workflowStep->update([
@@ -65,6 +65,7 @@ class WorkflowStepSupervisor
                     );
                 }
 
+                // finished with errors
                 $this->workflowStep->update([
                     'status' => WorkflowStepStatus::CompletedWithErrors->value,
                 ]);
@@ -74,6 +75,7 @@ class WorkflowStepSupervisor
                     nextAction: 'terminate',
                 );
             } else {
+                // perfect
                 $this->workflowStep->update([
                     'status' => WorkflowStepStatus::Completed->value,
                 ]);
