@@ -23,7 +23,7 @@ class Orchestrator
         ]);
 
         // This will be merged into one `integrations` table
-        $integrations = ['github', 'google_drive'];
+        $integrations = ['github'];
         $jobs = [];
 
         foreach ($integrations as $integration) {
@@ -48,7 +48,8 @@ class Orchestrator
     
         foreach ($jobs as $jobData) {
             dispatch($jobData['indexing_job']);
-            dispatch($jobData['supervisor_job']);
+            dispatch($jobData['supervisor_job'])
+                ->delay(now()->addSeconds(5));
         }
 
         $workflow->update([

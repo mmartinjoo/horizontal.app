@@ -16,6 +16,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class IndexPullRequest implements ShouldQueue
 {
@@ -104,7 +105,6 @@ class IndexPullRequest implements ShouldQueue
             $indexingWorkflowStepItem->update([
                 'status' => 'completed',
             ]);
-            $this->updateWorkflowStepStatus($indexingWorkflowStep);
         } catch (Exception $e) {
             $indexingWorkflowStepItem->update([
                 'status' => 'failed',
@@ -112,6 +112,15 @@ class IndexPullRequest implements ShouldQueue
             ]);
 
             throw $e;
+        } finally {
+            DB::transaction(function () {
+                $indexingWorkflowStep = IndexingWorkflowStep::query()                    
+                    ->where('id', $this->indexingWorkflowStepId)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $indexingWorkflowStep->increment('processed_items');
+            });
         }
     }
 
@@ -130,18 +139,5 @@ class IndexPullRequest implements ShouldQueue
         }
 
         return $participant;
-    }
-
-    private function updateWorkflowStepStatus(IndexingWorkflowStep $indexingWorkflowStep): void
-    {
-        $hasQueuedItems = $indexingWorkflowStep->items()
-            ->whereIn('status', ['queued', 'processing'])
-            ->exists();
-
-        if (!$hasQueuedItems) {
-            $indexingWorkflowStep->update([
-                'status' => 'completed',
-            ]);
-        }
     }
 }

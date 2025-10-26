@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Indexing\CodeRepository\GitHub;
 
+use App\Enums\Indexing\WorkflowStepStatus;
 use App\Jobs\Indexing\CodeRepository\IndexIssues;
 use App\Jobs\Indexing\CodeRepository\IndexPullRequests;
 use App\Jobs\Indexing\IndexingStepJob;
@@ -10,6 +11,7 @@ use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\LazyCollection;
 
 class IndexGitHub extends IndexingStepJob implements ShouldQueue
@@ -22,7 +24,7 @@ class IndexGitHub extends IndexingStepJob implements ShouldQueue
         /** @var IndexingWorkflowStep $indexingWorkflowStep */
         $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
         $indexingWorkflowStep->update([
-            'status' => 'processing',
+            // 'status' => WorkflowStepStatus::Processing->value,
             'job_id' => $this->job->payload()['uuid'],
         ]);
 

@@ -8,12 +8,14 @@ use App\Services\Integration\CodeRepository\CodeRepository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use Carbon\Carbon;
+use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
 class IndexPullRequests implements ShouldQueue
 {
     use Queueable;
+    use Batchable;
 
     public function __construct(
         private Repository $repository,
@@ -31,8 +33,8 @@ class IndexPullRequests implements ShouldQueue
         /** @var PullRequest $pullRequest */
         foreach ($pullRequests as $i => $pullRequest) {
             if (! $this->pullRequestNeedsIndexing($pullRequest)) {
+                $indexingWorkflowStep->increment('processed_items', 1);
                 $indexingWorkflowStep->increment('skipped_items', 1);
-
                 continue;
             }
 
@@ -42,6 +44,7 @@ class IndexPullRequests implements ShouldQueue
                 ->where('source_id', $pullRequest->id)
                 ->delete();
 
+            $indexingWorkflowStep->increment('processed_items', $count);
             $indexingWorkflowStep->increment('deleted_items', $count);
 
             IndexPullRequest::dispatch($pullRequest, $this->connector, $indexingWorkflowStep->id);

@@ -10,9 +10,8 @@ use App\Services\Indexing\Orchestrator\DataTransferObject\SupervisorResult;
 
 class WorkflowStepSupervisor
 {
+    private IndexingWorkflowStep $workflowStep;
     private int $failedCount;
-    private int $processingCount;
-    private int $overallCount;
 
     public function __construct(private int $workflowStepId)
     {
@@ -20,24 +19,13 @@ class WorkflowStepSupervisor
 
     public function supervise(): SupervisorResult
     {
-        $workflowStep = IndexingWorkflowStep::findOrFail($this->workflowStepId);
-
-        $this->failedCount = IndexingWorkflowStepItem::query()
-            ->where('indexing_workflow_step_id', $workflowStep->id)
-            ->where('status', WorkflowStepItemStatus::Failed->value)
-            ->count();
-
-        $this->processingCount = IndexingWorkflowStepItem::query()
-            ->where('indexing_workflow_step_id', $workflowStep->id)
-            ->where('status', WorkflowStepItemStatus::Processing->value)
-            ->count();
-
-        $this->overallCount = IndexingWorkflowStepItem::query()
-            ->where('indexing_workflow_step_id', $workflowStep->id)
-            ->count();
+        $this->workflowStep = IndexingWorkflowStep::findOrFail($this->workflowStepId);
 
         // not started yet
-        if ($this->overallCount === 0) {
+        if ($this->workflowStep->overall_items === 0) {
+            $this->workflowStep->update([
+                'status' => WorkflowStepStatus::Starting->value,
+            ]);
             return new SupervisorResult(
                 status: WorkflowStepStatus::Starting->value,
                 isExpectedStatus: true,
@@ -45,19 +33,9 @@ class WorkflowStepSupervisor
             );
         }
 
-        if ($workflowStep->skipped_items === $this->overallCount) {
-            $workflowStep->update([
-                'status' => WorkflowStepStatus::Completed->value,
-            ]);
-            return new SupervisorResult(
-                status: WorkflowStepStatus::Completed->value,
-                isExpectedStatus: true,
-                nextAction: 'terminate',
-            );
-        }
-
-        if ($this->processingCount !== 0) {
-            $workflowStep->update([
+        // started
+        if ($this->workflowStep->overall_items !== 0 && ($this->workflowStep->overall_items !== $this->workflowStep->processed_items)) {
+            $this->workflowStep->update([
                 'status' => WorkflowStepStatus::Processing->value,
             ]);
             return new SupervisorResult(
@@ -67,69 +45,66 @@ class WorkflowStepSupervisor
             );
         }
 
-        if ($this->hasAllItemFailed()) {
-            $workflowStep->update([
-                'status' => WorkflowStepStatus::Failed->value,
-            ]);
-            return new SupervisorResult(
-                status: WorkflowStepStatus::Failed->value,
-                isExpectedStatus: true,
-                nextAction: 'terminate',
-            );
+        // finished
+        if ($this->workflowStep->overall_items === $this->workflowStep->processed_items) {
+            $this->failedCount = IndexingWorkflowStepItem::query()
+                ->where('indexing_workflow_step_id', $this->workflowStep->id)
+                ->where('status', WorkflowStepItemStatus::Failed->value)
+                ->count();
+
+            // finished with errors
+            if ($this->failedCount !== 0) {
+                if ($this->failedCount === $this->workflowStep->processed_items) {
+                    $this->workflowStep->update([
+                        'status' => WorkflowStepStatus::Failed->value,
+                    ]);
+                    return new SupervisorResult(
+                        status: WorkflowStepStatus::Failed->value,
+                        isExpectedStatus: true,
+                        nextAction: 'terminate',
+                    );
+                }
+
+                $this->workflowStep->update([
+                    'status' => WorkflowStepStatus::CompletedWithErrors->value,
+                ]);
+                return new SupervisorResult(
+                    status: WorkflowStepStatus::CompletedWithErrors->value,
+                    isExpectedStatus: true,
+                    nextAction: 'terminate',
+                );
+            } else {
+                $this->workflowStep->update([
+                    'status' => WorkflowStepStatus::Completed->value,
+                ]);
+                return new SupervisorResult(
+                    status: WorkflowStepStatus::Completed->value,
+                    isExpectedStatus: true,
+                    nextAction: 'terminate',
+                );
+            }
         }
 
-        if ($this->hasCompletedWithFailures()) {
-            $workflowStep->update([
-                'status' => WorkflowStepStatus::CompletedWithErrors->value,
-            ]);
-            return new SupervisorResult(
-                status: WorkflowStepStatus::CompletedWithErrors->value,
-                isExpectedStatus: true,
-                nextAction: 'terminate',
-            );
-        }
-
-        if ($this->hasCompletedSuccesfully()) {
-            $workflowStep->update([
-                'status' => WorkflowStepStatus::Completed->value,
-            ]);
-            return new SupervisorResult(
-                status: WorkflowStepStatus::Completed->value,
-                isExpectedStatus: true,
-                nextAction: 'terminate',
-            );
-        }
         return new SupervisorResult(
-            status: 'unknown',
+            status: WorkflowStepStatus::Unknown->value,
             isExpectedStatus: false,
             nextAction: 'wait',
             timeoutInSecond: 30,
         );
     }
 
-    public function markAsFailed(): void
+    public function timeout(): void
     {
         $workflowStep = IndexingWorkflowStep::findOrFail($this->workflowStepId);
+        if ($workflowStep->status === WorkflowStepStatus::UpToDate->value) {
+            $workflowStep->update([
+                'status' => WorkflowStepStatus::Completed->value,
+            ]);
+            return;
+        }
+
         $workflowStep->update([
             'status' => WorkflowStepStatus::Failed->value,
         ]);
-    }
-
-    private function hasAllItemFailed(): bool
-    {
-        return $this->processingCount === 0 
-            && $this->failedCount === $this->overallCount;
-    }
-
-    private function hasCompletedWithFailures(): bool
-    {
-        return $this->processingCount === 0 
-            && $this->failedCount !== 0;
-    }
-
-    private function hasCompletedSuccesfully(): bool
-    {
-        return $this->processingCount === 0 
-            && $this->failedCount === 0;
     }
 }

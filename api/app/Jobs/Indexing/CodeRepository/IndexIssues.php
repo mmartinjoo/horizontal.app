@@ -7,12 +7,14 @@ use App\Models\IndexingWorkflowStep;
 use App\Services\Integration\CodeRepository\CodeRepository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Issue;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
+use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
 class IndexIssues implements ShouldQueue
 {
     use Queueable;
+    use Batchable;
 
     public function __construct(
         private Repository $repository,
@@ -31,7 +33,7 @@ class IndexIssues implements ShouldQueue
         foreach ($issues as $issue) {
             if (!$this->issueNeedsIndexing($issue)) {
                 $indexingWorkflowStep->increment('skipped_items', 1);
-
+                $indexingWorkflowStep->increment('processed_items', 1);
                 continue;
             }
 
@@ -42,6 +44,8 @@ class IndexIssues implements ShouldQueue
                 ->delete();
 
             $indexingWorkflowStep->increment('deleted_items', $count);
+            $indexingWorkflowStep->increment('processed_items', $count);
+
             IndexIssue::dispatch($issue, $indexingWorkflowStep->id);
         }
     }

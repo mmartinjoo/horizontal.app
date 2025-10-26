@@ -57,8 +57,6 @@ class IndexFile implements ShouldQueue
                 $indexingWorkflowItem->update([
                     'status' => 'completed',
                 ]);
-                $this->updateWorkflowStatus($indexingWorkflowItem);
-
                 return;
             } else {
                 $content = Storage::read($this->file->path());
@@ -102,7 +100,6 @@ class IndexFile implements ShouldQueue
             $indexingWorkflowItem->update([
                 'status' => 'completed',
             ]);
-            $this->updateWorkflowStatus($indexingWorkflowItem);
         } catch (Throwable $e) {
             // if the file is a weird, unknown format Postgres can throw a "Character not in repertoire invalid byte sequence for encoding 'UTF8'" exception
             // which cannot be saved in the `error_message` column. so instead of saving the message
@@ -196,20 +193,5 @@ class IndexFile implements ShouldQueue
         $indexingWorkflowItem->update([
             'status' => 'prepared',
         ]);
-    }
-
-    private function updateWorkflowStatus(IndexingWorkflowStepItem $indexingWorkflowItem)
-    {
-        /** @var IndexingWorkflowStep $workflow */
-        $workflow = $indexingWorkflowItem->indexing_workflow_step;
-        $hasQueuedItems = $workflow->items()
-            ->whereIn('status', ['queued', 'processing'])
-            ->exists();
-
-        if (! $hasQueuedItems) {
-            $workflow->update([
-                'status' => 'completed',
-            ]);
-        }
     }
 }
