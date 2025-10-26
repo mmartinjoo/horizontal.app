@@ -10,6 +10,8 @@ use App\Jobs\Indexing\KnowledgeGraph\BuildKnowledgeGraph;
 use App\Jobs\Indexing\KnowledgeGraph\BuildRelatedNodes;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
+use App\Models\IndexingWorkflow;
+use App\Models\IndexingWorkflowStep;
 use App\Services\Indexing\Orchestrator\Orchestrator;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 
