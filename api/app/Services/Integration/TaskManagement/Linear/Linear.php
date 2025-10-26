@@ -2,21 +2,24 @@
 
 namespace App\Services\Integration\TaskManagement\Linear;
 
+use App\Jobs\Indexing\TaskManagement\TaskManagement;
 use App\Models\LinearIntegration;
+use App\Services\Integration\CodeRepository\DataTransferObjects\Comment;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
+use App\Services\Integration\TaskManagement\DataTransferObjects\IssueComment;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
 use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
 
-class Linear
+class Linear implements TaskManagement
 {
     public function __construct(
         private LinearTokenManager $tokenManager
     ) {}
 
-    public function projects(int $first = 250): LazyCollection
+    public function projects(): LazyCollection
     {
         return LazyCollection::make(function () {
             $after = null;
@@ -39,13 +42,12 @@ class Linear
                 usleep(50_000);
             }            
         });
-        
     }
 
     /**
      * @return LazyCollection<Issue>
      */
-    public function issues(): LazyCollection
+    public function issues(Project $project): LazyCollection
     {
         $after = null;
         $hasNextPage = true;
@@ -73,20 +75,32 @@ class Linear
         });
     }
 
-    public function comments(Issue $issue, int $first = 50): array
+    /**
+     * @return LazyCollection<IssueComment>
+     */
+    public function comments(Issue $issue): LazyCollection
     {
-        $response = $this->makeGraphQLRequest($this->getIssueCommentsQuery(), [
-            'issueId' => $issue->id,
-            'first' => $first,
-        ]);
+        return LazyCollection::make(function () {
+            $after = null;
+            $hasNextPage = true;
+            while ($hasNextPage) {
+                $result = $this->getCommentsPaginated(
+                    limit: 100,
+                    after: $after,
+                );
+                $hasNextPage = $result['pageInfo']['hasNextPage'];
+                $after = $result['pageInfo']['endCursor'];
 
-        $data = $response->json('data.issue.comments.nodes');
+                foreach ($result['comments'] as $commentData) {
+                    yield IssueComment::fromLinear(
+                        $commentData,
+                    );
+                }
 
-        if (! $data) {
-            return [];
-        }
-
-        return $data;
+                // 50ms delay to avoid rate limits
+                usleep(50_000);
+            }            
+        });
     }
 
     public function watchers(Issue $issue, int $first = 50): array
@@ -175,7 +189,7 @@ class Linear
     }
 
     /**
-     * @return array{'issues': array, 'pageInfo': array}
+     * @return array{'projects': array, 'pageInfo': array}
      */
     private function getProjectsPaginated(int $limit = 100, ?string $after = null): array
     {
@@ -188,6 +202,29 @@ class Linear
         $data = $response->json('data.projects');
         if (!$data) {
             throw new Exception('No project data received from Linear API');
+        }
+
+        return [
+            'projects' => $data['nodes'],
+            'pageInfo' => $data['pageInfo'],
+        ];
+    }
+
+    /**
+     * @return array{'comments': array, 'pageInfo': array}
+     */
+    private function getCommentsPaginated(int $limit = 100, ?string $after = null): array
+    {
+        $variables = ['first' => $limit];
+        if ($after) {
+            $variables['after'] = $after;
+        }
+
+        $response = $this->makeGraphQLRequest($this->getIssueCommentsQuery(), $variables);
+        dd($response);
+        $data = $response->json('data.projects');
+        if (! $data) {
+            throw new Exception('No comment data received from Linear API');
         }
 
         return [

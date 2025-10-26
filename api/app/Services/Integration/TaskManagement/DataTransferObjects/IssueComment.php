@@ -32,6 +32,16 @@ class IssueComment
         return $comments;
     }
 
+    public static function fromLinear(array $data): self
+    {
+        return new static(
+            id: $data['id'],
+            body: $data['body'] ?? '',
+            author: $data['user']['displayName'] ?? '',
+            createdAt: Carbon::parse($data['createdAt']),
+        );
+    }
+
     /**
      * @return Collection<IssueComment>
      */

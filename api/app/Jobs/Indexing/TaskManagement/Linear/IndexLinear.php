@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Indexing\TaskManagement\Linear;
 
+use App\Jobs\Indexing\IndexingStepJob;
 use App\Jobs\Indexing\TaskManagement\IndexIssue;
 use App\Models\Document;
 use App\Models\DocumentComment;
@@ -15,27 +16,31 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;
 
-class IndexLinear implements ShouldQueue
+class IndexLinear extends IndexingStepJob implements ShouldQueue
 {
     use Queueable;
 
     public function handle(Linear $linear): void
     {
-        /** @var IndexingWorkflowStep $indexing */
-        $indexingWorkflow = IndexingWorkflowStep::create([
-            'integration' => 'linear',
-            'status' => 'syncing',
+        /** @var IndexingWorkflowStep $indexingWorkflowStep */
+        $step = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
+        $step->update([
+            'started_at' => now(),
             'job_id' => $this->job->payload()['uuid'],
         ]);
 
-        $issues = $linear->issues();
-        $indexingWorkflow->increment('overall_items', count($issues));
+        $projects = $linear->projects();
+        $step->increment('overall_items', count($projects));
+
+        foreach ($projects as $project) {
+            
+        }
 
         foreach ($issues as $i => $issue) {
             if (! $this->issueNeedsIndexing($issue)) {
-                $indexingWorkflow->increment('skipped_items', 1);
+                $step->increment('skipped_items', 1);
                 if ($i === count($issues) - 1) {
-                    $indexingWorkflow->update([
+                    $step->update([
                         'status' => 'completed',
                     ]);
                 }
@@ -43,7 +48,7 @@ class IndexLinear implements ShouldQueue
                 continue;
             }
 
-            $this->processIssue($linear, $issue, $indexingWorkflow);
+            $this->processIssue($linear, $issue, $step);
         }
     }
 

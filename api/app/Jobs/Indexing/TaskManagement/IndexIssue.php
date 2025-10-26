@@ -2,93 +2,120 @@
 
 namespace App\Jobs\Indexing\TaskManagement;
 
+use App\Enums\Indexing\WorkflowStepItemStatus;
 use App\Exceptions\NoContentToIndexException;
+use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\IndexingWorkflowStepItem;
-use App\Models\IndexingWorkflowStep;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Str;
+use Throwable;
 
-class IndexIssue implements ShouldQueue
+class IndexIssue extends IndexingStepItemJob implements ShouldQueue
 {
     use Queueable;
 
+    private ?int $createdIndexingWorkflowItemId = null;
+
     public function __construct(
-        private Document $document,
         private Issue $issue,
-        private int $indexingWorkflowItemId,
+        private TaskManagement $adapter,
     ) {}
 
     public function handle(
         TextChunker $textChunker,
     ): void {
-        $indexingWorkflowItem = IndexingWorkflowStepItem::findOrFail($this->indexingWorkflowItemId);
-        $chunks = $textChunker->chunk($this->issue->title.' '.$this->issue->description);
-        if (count($chunks) === 0) {
-            $indexingWorkflowItem->update([
-                'status' => 'warning',
+        try {
+            $document = Document::create([
+                'source_type' => 'linear',
+                'source_id' => $this->issue->id,
+                'source_url' => $this->issue->url,
+                'title' => $this->issue->title,
+                'metadata' => $this->issue,
             ]);
-            throw new NoContentToIndexException('Chunk is empty: '.json_encode($this->issue).'; content: '.$this->issue->toString());
-        }
-        if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
-            $indexingWorkflowItem->update([
-                'status' => 'warning',
+            $indexingWorkflowItem = IndexingWorkflowStepItem::create([
+                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
+                'data' => $this->issue,
+                'status' => WorkflowStepItemStatus::Processing->value,
+                'document_id' => $document->id,
+                'job_id' => $this->job->payload()['uuid'],
             ]);
-            throw new NoContentToIndexException('Chunk contains one empty item: '.json_encode($this->issue).'; content: '.$this->issue->toString());
-        }
+            $this->createdIndexingWorkflowItemId = $indexingWorkflowItem->id;
 
-        foreach ($chunks as $i => $chunk) {
-            DocumentChunk::create([
-                'document_id' => $indexingWorkflowItem->document->id,
-                'body' => $chunk,
-                'position' => $i + 1,
-            ]);
-        }
-        $indexingWorkflowItem->document()->update([
-            'preview' => $chunks->first(),
-            'indexed_at' => now(),
-        ]);
-        $indexingWorkflowItem->update([
-            'status' => 'prepared',
-        ]);
+            $chunks = $textChunker->chunk($this->issue->title.' '.$this->issue->description);
+            if (count($chunks) === 0) {
+                $indexingWorkflowItem->update([
+                    'status' => 'warning',
+                ]);
+                throw new NoContentToIndexException('Chunk is empty: '.json_encode($this->issue).'; content: '.$this->issue->toString());
+            }
+            if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
+                $indexingWorkflowItem->update([
+                    'status' => 'warning',
+                ]);
+                throw new NoContentToIndexException('Chunk contains one empty item: '.json_encode($this->issue).'; content: '.$this->issue->toString());
+            }
 
-        if ($this->issue->assignee) {
-            $assignee = Participant::updateOrCreate(
+            foreach ($chunks as $i => $chunk) {
+                DocumentChunk::create([
+                    'document_id' => $indexingWorkflowItem->document->id,
+                    'body' => $chunk,
+                    'position' => $i + 1,
+                ]);
+            }
+            $document->update([
+                'preview' => $chunks->first(),
+                'indexed_at' => now(),
+            ]);        
+
+            if ($this->issue->assignee) {
+                $assignee = Participant::getOrCreate($this->issue->assignee);
+                $document->participants()->attach($assignee->id, [
+                    'context' => 'assignee',
+                ]);
+            }
+        } catch (Throwable $e) {
+            if ($this->createdIndexingWorkflowItemId) {
+                $item = IndexingWorkflowStepItem::findOrFail($this->createdIndexingWorkflowItemId);
+                $item->update(attributes: [
+                    'status' => WorkflowStepItemStatus::Failed->value,
+                    'error_message' => $e->getMessage(),
+                ]); 
+            }                       
+            throw $e;
+        }
+    }
+
+    private function processIssueComments(Document $document, Issue $issue): void
+    {
+        $commentsData = $this->adapter->comments($issue);
+        $comments = IssueComment::collectLinear($commentsData);
+
+        foreach ($comments as $comment) {
+            $p = Participant::updateOrCreate(
                 [
-                    'slug' => Str::slug($this->issue->assignee),
+                    'slug' => Str::slug($comment->author),
                     'type' => 'person',
                 ],
                 [
-                    'slug' => Str::slug($this->issue->assignee),
-                    'name' => $this->issue->assignee,
+                    'slug' => Str::slug($comment->author),
+                    'name' => $comment->author,
                     'type' => 'person',
                 ],
             );
-            $this->document->participants()->attach($assignee->id, [
-                'context' => 'assignee',
+
+            DocumentComment::create([
+                'document_id' => $doc->id,
+                'author_id' => $p->id,
+                'body' => $comment->body,
+                'commented_at' => $comment->createdAt,
+                'comment_id' => $comment->id,
+                'metadata' => $comment,
             ]);
         }
-
-        // $this->updateWorkflowStatus($indexingWorkflowItem);
     }
-
-    // private function updateWorkflowStatus(IndexingWorkflowStepItem $indexingWorkflowItem)
-    // {
-    //     /** @var IndexingWorkflowStep $workflow */
-    //     $workflow = $indexingWorkflowItem->indexing_workflow_step;
-    //     $hasQueuedItems = $workflow->items()
-    //         ->where('status', 'queued')
-    //         ->exists();
-
-    //     if (! $hasQueuedItems) {
-    //         $workflow->update([
-    //             'status' => 'completed',
-    //         ]);
-    //     }
-    // }
 }

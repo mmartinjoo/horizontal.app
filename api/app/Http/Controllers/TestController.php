@@ -14,12 +14,20 @@ use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
 use App\Services\Indexing\Orchestrator\Orchestrator;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
+use App\Services\Integration\TaskManagement\Linear\Linear;
 
 class TestController extends Controller
 {
-    public function index(Orchestrator $orchestrator)
+    public function index(Linear $linear)
     {
-        $orchestrator->schedule();
+        foreach ($linear->projects() as $project) {
+            dump($project);
+            foreach ($linear->issues($project) as $issue) {
+                dump($issue);
+                foreach ($linear->comments($issue) as $comment)
+                    dump($comment);
+            }
+        }
     }
 
     public function token()
