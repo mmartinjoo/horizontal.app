@@ -7,10 +7,12 @@ use App\Exceptions\NoContentToIndexException;
 use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
 use App\Models\DocumentChunk;
+use App\Models\DocumentComment;
 use App\Models\IndexingWorkflowStepItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
+use App\Services\Integration\TaskManagement\DataTransferObjects\IssueComment;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
@@ -78,6 +80,10 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
                     'context' => 'assignee',
                 ]);
             }
+
+            $indexingWorkflowItem->update([
+                'status' => WorkflowStepItemStatus::Completed->value,
+            ]);
         } catch (Throwable $e) {
             if ($this->createdIndexingWorkflowItemId) {
                 $item = IndexingWorkflowStepItem::findOrFail($this->createdIndexingWorkflowItemId);
@@ -92,24 +98,13 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
 
     private function processIssueComments(Document $document, Issue $issue): void
     {
-        $commentsData = $this->adapter->comments($issue);
-        $comments = IssueComment::collectLinear($commentsData);
+        $comments = $this->adapter->comments($issue);
 
+        /** @var IssueComment $comment */
         foreach ($comments as $comment) {
-            $p = Participant::updateOrCreate(
-                [
-                    'slug' => Str::slug($comment->author),
-                    'type' => 'person',
-                ],
-                [
-                    'slug' => Str::slug($comment->author),
-                    'name' => $comment->author,
-                    'type' => 'person',
-                ],
-            );
-
+            $p = Participant::getOrCreate($comment->author);
             DocumentComment::create([
-                'document_id' => $doc->id,
+                'document_id' => $document->id,
                 'author_id' => $p->id,
                 'body' => $comment->body,
                 'commented_at' => $comment->createdAt,

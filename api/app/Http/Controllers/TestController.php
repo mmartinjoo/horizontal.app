@@ -18,15 +18,9 @@ use App\Services\Integration\TaskManagement\Linear\Linear;
 
 class TestController extends Controller
 {
-    public function index(Linear $linear)
+    public function index(Orchestrator $orchestrator)
     {
-        foreach ($linear->projects() as $project) {
-            foreach ($linear->issues($project) as $issue) {
-                foreach ($linear->comments($issue) as $comment) {
-                    dump($comment);
-                }
-            }
-        }
+        $orchestrator->schedule();
     }
 
     public function token()

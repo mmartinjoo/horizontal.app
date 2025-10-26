@@ -23,7 +23,7 @@ class IndexProject
 
         $bucket->increment(
             'overall_items', 
-            count($$issues),
+            count($issues),
         );
 
         foreach ($issues as $i => $issue) {
@@ -33,7 +33,7 @@ class IndexProject
                 continue;
             }
 
-            $job = new IndexIssue($issue);
+            $job = new IndexIssue($issue, $this->adapter);
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
             dispatch($job);
         }
