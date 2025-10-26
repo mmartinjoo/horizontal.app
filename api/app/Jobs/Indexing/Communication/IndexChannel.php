@@ -9,7 +9,6 @@ use App\Services\Integration\Communication\DataTransferObjects\Message;
 use App\Services\Integration\Communication\Slack\Slack;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\DB;
 
 class IndexChannel implements ShouldQueue
 {
@@ -23,54 +22,39 @@ class IndexChannel implements ShouldQueue
 
     public function handle()
     {
-        return DB::transaction(function () {
-            $indexingWorkflowStepBucket = IndexingWorkflowStepBucket::findOrFail($this->indexingWorkflowStepBucketId);
+        $indexingWorkflowStepBucket = IndexingWorkflowStepBucket::findOrFail($this->indexingWorkflowStepBucketId);
 
-            $messages = $this->slack->messages($this->channel);
-            $indexingWorkflowStepBucket->increment('overall_items', count($messages));
-            foreach ($messages as $message) {
-                if (!$this->messageNeedsIndexing($message)) {
-                    $indexingWorkflowStepBucket->increment('processed_items', 1);
-                    $indexingWorkflowStepBucket->increment('skipped_items', 1);
-                    continue;
-                }
+        $messages = $this->slack->messages($this->channel);
+        $threads = $this->slack->threads($this->channel);
 
-                $job = new IndexMessage($message, 'slack');
-                $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
+        $indexingWorkflowStepBucket->increment(
+            'overall_items', 
+            count($messages)+count($threads)
+        );
 
-                // we delay the jobs so multiple `IndexChannel` can be started parallel
-                // which is important to calculate `overall_items` in advance
-                //
-                // otherwise, after processing one channel the state would be:
-                //   - overall_items: 5 (number of messages in one channel)
-                //   - processed_items: 5 (the channel is fully processed)
-                //
-                // then supervisor thinks the step is completed but
-                // there are other channels waiting to be processed
-                dispatch($job)
-                    ->delay(5)
-                    ->afterCommit();
+        foreach ($messages as $message) {
+            if (!$this->messageNeedsIndexing($message)) {
+                $indexingWorkflowStepBucket->increment('processed_items', 1);
+                $indexingWorkflowStepBucket->increment('skipped_items', 1);
+                continue;
             }
 
-            $threads = $this->slack->threads($this->channel);
-            $indexingWorkflowStepBucket->increment('overall_items', count($threads));
-            foreach ($threads as $thread) {
-                if (!$this->messageNeedsIndexing($thread)) {
-                    $indexingWorkflowStepBucket->increment('processed_items', 1);
-                    $indexingWorkflowStepBucket->increment('skipped_items', 1);
-                    continue;
-                }    
-                
-                $job = new IndexThread($thread);
-                $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
-
-                // we delay the jobs so multiple `IndexChannels` can be started parallel
-                // see above
-                dispatch($job)
-                    ->delay(5)
-                    ->afterCommit();
-            }
-        });        
+            $job = new IndexMessage($message, 'slack');
+            $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
+            dispatch($job);
+        }
+        
+        foreach ($threads as $thread) {
+            if (!$this->messageNeedsIndexing($thread)) {
+                $indexingWorkflowStepBucket->increment('processed_items', 1);
+                $indexingWorkflowStepBucket->increment('skipped_items', 1);
+                continue;
+            }    
+            
+            $job = new IndexThread($thread);
+            $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
+            dispatch($job);
+        }
     }
 
     private function messageNeedsIndexing(Message $message): bool
