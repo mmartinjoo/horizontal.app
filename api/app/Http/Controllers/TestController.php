@@ -21,11 +21,10 @@ class TestController extends Controller
     public function index(Linear $linear)
     {
         foreach ($linear->projects() as $project) {
-            dump($project);
             foreach ($linear->issues($project) as $issue) {
-                dump($issue);
-                foreach ($linear->comments($issue) as $comment)
+                foreach ($linear->comments($issue) as $comment) {
                     dump($comment);
+                }
             }
         }
     }

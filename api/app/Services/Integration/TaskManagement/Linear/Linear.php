@@ -52,11 +52,12 @@ class Linear implements TaskManagement
         $after = null;
         $hasNextPage = true;
 
-        return LazyCollection::make(function () use ($hasNextPage, $after) {
+        return LazyCollection::make(function () use ($project, $hasNextPage, $after) {
             while ($hasNextPage) {
                 $result = $this->getIssuesPaginated(
                     limit: 100,
                     after: $after,
+                    projectId: $project->id,
                 );
                 $hasNextPage = $result['pageInfo']['hasNextPage'];
                 $after = $result['pageInfo']['endCursor'];
@@ -80,13 +81,14 @@ class Linear implements TaskManagement
      */
     public function comments(Issue $issue): LazyCollection
     {
-        return LazyCollection::make(function () {
+        return LazyCollection::make(function () use ($issue) {
             $after = null;
             $hasNextPage = true;
             while ($hasNextPage) {
                 $result = $this->getCommentsPaginated(
                     limit: 100,
                     after: $after,
+                    issueId: $issue->id,
                 );
                 $hasNextPage = $result['pageInfo']['hasNextPage'];
                 $after = $result['pageInfo']['endCursor'];
@@ -169,11 +171,14 @@ class Linear implements TaskManagement
     /**
      * @return array{'issues': array, 'pageInfo': array}
      */
-    private function getIssuesPaginated(int $limit = 250, ?string $after = null): array
+    private function getIssuesPaginated(int $limit = 250, ?string $after = null, ?string $projectId = null): array
     {
         $variables = ['first' => $limit];
         if ($after) {
             $variables['after'] = $after;
+        }
+        if ($projectId) {
+            $variables['projectId'] = $projectId;
         }
 
         $response = $this->makeGraphQLRequest($this->getIssuesQuery(), $variables);
@@ -213,22 +218,22 @@ class Linear implements TaskManagement
     /**
      * @return array{'comments': array, 'pageInfo': array}
      */
-    private function getCommentsPaginated(int $limit = 100, ?string $after = null): array
+    private function getCommentsPaginated($issueId, int $limit = 100, ?string $after = null): array
     {
         $variables = ['first' => $limit];
         if ($after) {
             $variables['after'] = $after;
         }
+        $variables['issueId'] = $issueId;
 
         $response = $this->makeGraphQLRequest($this->getIssueCommentsQuery(), $variables);
-        dd($response);
-        $data = $response->json('data.projects');
-        if (! $data) {
+        $data = $response->json('data.issue.comments');
+        if (!$data) {
             throw new Exception('No comment data received from Linear API');
         }
 
         return [
-            'projects' => $data['nodes'],
+            'comments' => $data['nodes'],
             'pageInfo' => $data['pageInfo'],
         ];
     }
@@ -315,8 +320,8 @@ class Linear implements TaskManagement
     private function getIssuesQuery(): string
     {
         return '
-            query GetIssues($first: Int, $after: String) {
-                issues(first: $first, after: $after) {
+            query GetIssues($first: Int, $after: String, $projectId: ID) {
+                issues(first: $first, after: $after, filter: { project: { id: { eq: $projectId } } }) {
                     nodes {
                         id
                         identifier
