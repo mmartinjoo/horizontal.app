@@ -3,26 +3,26 @@
 namespace App\Jobs\Indexing\CodeRepository;
 
 use App\Exceptions\NoContentToIndexException;
+use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
 use App\Models\DocumentChunk;
-use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Issue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
 
-class IndexIssue implements ShouldQueue
+class IndexIssue extends IndexingStepItemJob implements ShouldQueue
 {
     use Queueable;
 
+    private ?int $createdIndexingWorkflowItemId = null;
+
     public function __construct(
         private Issue $issue,
-        private int $indexingWorkflowStepId,
     ) {
     }
 
@@ -38,25 +38,26 @@ class IndexIssue implements ShouldQueue
                 'metadata' => $this->issue,
             ]);
             
-            $indexingItem = IndexingWorkflowStepItem::create([
-                'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
+            $indexingWorkflowItem = IndexingWorkflowStepItem::create([
+                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
                 'data' => $this->issue,
                 'status' => 'processing',
                 'document_id' => $doc->id,
                 'job_id' => $this->job->payload()['uuid'],
             ]);
+            $this->createdIndexingWorkflowItemId = $indexingWorkflowItem->id;
 
             $preview = $this->issue->title;
             if ($this->issue->body) {
                 $chunks = $textChunker->chunk($this->issue->body);
                 if (count($chunks) === 0) {
-                    $indexingItem->update([
+                    $indexingWorkflowItem->update([
                         'status' => 'warning',
                     ]);
                     throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->issue));
                 }
                 if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
-                    $indexingItem->update([
+                    $indexingWorkflowItem->update([
                         'status' => 'warning',
                     ]);
                     throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->issue));
@@ -77,23 +78,15 @@ class IndexIssue implements ShouldQueue
                 'preview' => $preview,
                 'indexed_at' => now(),
             ]);
-            $indexingItem->update([
+            $indexingWorkflowItem->update([
                 'status' => 'completed',
             ]);
         } catch (Throwable $e) {
-            $indexingItem->update([
+            $indexingWorkflowItem->update([
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
             ]);
-                    
             throw $e;
-        } finally {
-            $indexingWorkflowStep = IndexingWorkflowStep::query()                    
-                ->where('id', $this->indexingWorkflowStepId)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $indexingWorkflowStep->increment('processed_items');
         }
         
     }

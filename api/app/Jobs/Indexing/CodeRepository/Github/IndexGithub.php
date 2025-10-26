@@ -2,15 +2,16 @@
 
 namespace App\Jobs\Indexing\CodeRepository\GitHub;
 
-use App\Jobs\Indexing\CodeRepository\IndexIssues;
-use App\Jobs\Indexing\CodeRepository\IndexPullRequests;
+use App\Jobs\Indexing\CodeRepository\IndexRepository;
 use App\Jobs\Indexing\IndexingStepJob;
 use App\Models\IndexingWorkflowStep;
+use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\LazyCollection;
+use Illuminate\Support\Str;
 
 class IndexGitHub extends IndexingStepJob implements ShouldQueue
 {
@@ -28,11 +29,21 @@ class IndexGitHub extends IndexingStepJob implements ShouldQueue
 
         /** @var LazyCollection<Repository> $repositories */
         $repositories = $github->repositories();
+        $indexingWorkflowStep->increment('overall_items', count($repositories));
 
         /** @var Repository $repo */
         foreach ($repositories as $repo) {
-            IndexPullRequests::dispatch($repo, $github, $indexingWorkflowStep->id);
-            IndexIssues::dispatch($repo, $github, $indexingWorkflowStep->id);
+            $bucket = IndexingWorkflowStepBucket::create([
+                'indexing_workflow_step_id' => $indexingWorkflowStep->id,
+                'title' => "repository_" . Str::lower($repo->name),
+                'status' => 'starting',
+            ]);
+            $job = new IndexRepository(
+                repository: $repo,
+                adapter: $github,
+                indexingWorkflowStepBucketId: $bucket->id,
+            );
+            dispatch($job);
         }
     }
 }

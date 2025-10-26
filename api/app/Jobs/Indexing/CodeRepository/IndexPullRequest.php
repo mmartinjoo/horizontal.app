@@ -3,11 +3,11 @@
 namespace App\Jobs\Indexing\CodeRepository;
 
 use App\Exceptions\NoContentToIndexException;
+use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentComment;
 use App\Models\IndexingWorkflowStepItem;
-use App\Models\IndexingWorkflowStep;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\CodeRepository\CodeRepository;
@@ -16,23 +16,19 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;
 use Exception;
-use Illuminate\Support\Facades\DB;
 
-class IndexPullRequest implements ShouldQueue
+class IndexPullRequest extends IndexingStepItemJob implements ShouldQueue
 {
     use Queueable;
 
     public function __construct(
         private PullRequest $pullRequest,
         private CodeRepository $codeRepository,
-        private int $indexingWorkflowStepId,
     ) {}
 
     public function handle(TextChunker $textChunker): void
     {
         try {
-            $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
-            
             $doc = Document::create([
                 'source_type' => 'github_pr',
                 'source_id' => $this->pullRequest->id,
@@ -43,7 +39,7 @@ class IndexPullRequest implements ShouldQueue
             ]);
             
             $indexingWorkflowStepItem = IndexingWorkflowStepItem::create([
-                'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
+                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
                 'data' => $this->pullRequest,
                 'status' => 'processing',
                 'document_id' => $doc->id,
@@ -112,13 +108,6 @@ class IndexPullRequest implements ShouldQueue
             ]);
 
             throw $e;
-        } finally {
-            $indexingWorkflowStep = IndexingWorkflowStep::query()                    
-                ->where('id', $this->indexingWorkflowStepId)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $indexingWorkflowStep->increment('processed_items');
         }
     }
 

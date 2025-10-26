@@ -132,7 +132,7 @@ class WorkflowStepBucketSupervisor
         $bucket->fresh();
 
         // not started yet
-        if ($bucket->overall_items === 0) {
+        if ($bucket->overall_items === 0 && $bucket->status !== WorkflowStepStatus::Completed->value) {
             $bucket->update([
                 'status' => WorkflowStepStatus::Starting->value,
             ]);

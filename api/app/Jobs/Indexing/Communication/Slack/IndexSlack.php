@@ -32,6 +32,7 @@ class IndexSlack extends IndexingStepJob implements ShouldQueue
         ]);
 
         $channels = $slack->channels();
+        
         /** @var Channel $channel */
         foreach ($channels as $channel) {
             $bucket = IndexingWorkflowStepBucket::create([
