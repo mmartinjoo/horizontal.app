@@ -9,6 +9,5 @@ enum WorkflowStepStatus: string
     case Failed = 'failed';
     case CompletedWithErrors = 'completed_with_errors';
     case Completed = 'completed';
-    case UpToDate = 'up_to_date';
     case Unknown = 'unknown';
 }

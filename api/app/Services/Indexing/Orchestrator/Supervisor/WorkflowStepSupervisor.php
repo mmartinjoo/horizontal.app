@@ -105,13 +105,6 @@ class WorkflowStepSupervisor
     public function timeout(): void
     {
         $workflowStep = IndexingWorkflowStep::findOrFail($this->workflowStepId);
-        if ($workflowStep->status === WorkflowStepStatus::UpToDate->value) {
-            $workflowStep->update([
-                'status' => WorkflowStepStatus::Completed->value,
-            ]);
-            return;
-        }
-
         $workflowStep->update([
             'status' => WorkflowStepStatus::Failed->value,
         ]);
