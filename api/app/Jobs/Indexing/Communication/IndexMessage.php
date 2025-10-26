@@ -21,6 +21,8 @@ class IndexMessage extends IndexingStepItemJob implements ShouldQueue
 {
     use Queueable;
 
+    private ?int $createdIndexingWorkflowItemId = null;
+
     public function __construct(
         private Message $message,
         private string $sourceType,
@@ -45,6 +47,7 @@ class IndexMessage extends IndexingStepItemJob implements ShouldQueue
                 'document_id' => $document->id,
                 'job_id' => $this->job->payload()['uuid'],
             ]);
+            $this->createdIndexingWorkflowItemId = $indexingWorkflowItem->id;
 
             $chunks = $textChunker->chunk($this->message->message);
             if (count($chunks) === 0) {
@@ -85,10 +88,13 @@ class IndexMessage extends IndexingStepItemJob implements ShouldQueue
                 'status' => WorkflowStepItemStatus::Completed->value,
             ]);
         } catch (Throwable $e) {
-            $indexingWorkflowItem->update(attributes: [
-                'status' => WorkflowStepItemStatus::Failed->value,
-                'error_message' => $e->getMessage(),
-            ]);            
+            if ($this->createdIndexingWorkflowItemId) {
+                $item = IndexingWorkflowStepItem::findOrFail($this->createdIndexingWorkflowItemId);
+                $item->update(attributes: [
+                    'status' => WorkflowStepItemStatus::Failed->value,
+                    'error_message' => $e->getMessage(),
+                ]); 
+            }                       
             throw $e;
         } finally {
             $indexingWorkflowStep = IndexingWorkflowStep::query()                    

@@ -32,7 +32,7 @@ class IndexPullRequests implements ShouldQueue
 
         /** @var PullRequest $pullRequest */
         foreach ($pullRequests as $pullRequest) {
-            if (! $this->pullRequestNeedsIndexing($pullRequest)) {
+            if (!$this->pullRequestNeedsIndexing($pullRequest)) {
                 $indexingWorkflowStep->increment('processed_items', 1);
                 $indexingWorkflowStep->increment('skipped_items', 1);
                 continue;

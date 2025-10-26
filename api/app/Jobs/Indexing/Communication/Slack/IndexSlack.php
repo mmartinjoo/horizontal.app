@@ -2,8 +2,7 @@
 
 namespace App\Jobs\Indexing\Communication\Slack;
 
-use App\Jobs\Indexing\Communication\IndexMessage;
-use App\Jobs\Indexing\Communication\IndexThread;
+use App\Jobs\Indexing\Communication\IndexChannel;
 use App\Jobs\Indexing\IndexingStepJob;
 use App\Models\Document;
 use App\Models\IndexingWorkflowStep;
@@ -31,33 +30,12 @@ class IndexSlack extends IndexingStepJob implements ShouldQueue
 
         $channels = $slack->channels();
         foreach ($channels as $channel) {
-            $messages = $slack->messages($channel);
-            $indexingWorkflowStep->increment('overall_items', count($messages));
-            foreach ($messages as $message) {
-                if (!$this->messageNeedsIndexing($message)) {
-                    $indexingWorkflowStep->increment('processed_items', 1);
-                    $indexingWorkflowStep->increment('skipped_items', 1);
-                    continue;
-                }
-
-                $job = new IndexMessage($message, 'slack');
-                $job->setIndexingWorkflowStepId($this->indexingWorkflowStepId);
-                dispatch($job);
-            }
-
-            // $threads = $slack->threads($channel);
-            // $indexingWorkflowStep->increment('overall_items', count($threads));
-            // foreach ($threads as $thread) { 
-            //     if (!$this->messageNeedsIndexing($message)) {
-            //         $indexingWorkflowStep->increment('processed_items', 1);
-            //         $indexingWorkflowStep->increment('skipped_items', 1);
-            //         continue;
-            //     }    
-
-            //     $job = new IndexThread($thread);
-            //     $job->setIndexingWorkflowStepId($this->indexingWorkflowStepId);
-            //     dispatch($job);
-            // }
+            $job = new IndexChannel(
+                channel: $channel,
+                slack: $slack,
+                indexingWorkflowStepId: $indexingWorkflowStep->id,
+            );
+            dispatch($job);
         }
     }
 

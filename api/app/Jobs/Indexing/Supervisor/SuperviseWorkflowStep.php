@@ -14,9 +14,9 @@ class SuperviseWorkflowStep implements ShouldQueue
     public $timeout = 1800;
 
     // 30 minutes
-    private int $timeoutInSecond = 1790;
+    private int $timeoutInSecond = 90;
     private int $timeSpentInSecond = 0;
-    private int $intervalInSecond = 5;
+    private int $intervalInSecond = 10;
 
     public function __construct(
         private int $workflowStepId,

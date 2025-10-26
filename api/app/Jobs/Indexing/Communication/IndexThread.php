@@ -5,7 +5,6 @@ namespace App\Jobs\Indexing\Communication;
 use App\Enums\Indexing\WorkflowStepItemStatus;
 use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
-use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepItem;
 use App\Models\Participant;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
@@ -18,6 +17,8 @@ class IndexThread extends IndexingStepItemJob implements ShouldQueue
 {
     use Queueable;
 
+    private ?int $createdIndexingWorkStepItemId = null;
+
     public function __construct(private Message $thread)
     {
     }
@@ -25,19 +26,21 @@ class IndexThread extends IndexingStepItemJob implements ShouldQueue
     public function handle()
     {
         try {
-            IndexMessage::dispatchSync($this->thread, 'slack');
+            $indexMessageJob = new IndexMessage($this->thread, 'slack');
+            $indexMessageJob->setIndexingWorkflowStepId($this->indexingWorkflowStepId);
+            dispatch_sync($indexMessageJob);
+
             $document = Document::query()
                 ->where('source_type', 'slack')
                 ->where('source_id', $this->thread->externalId)
                 ->firstOrFail();
 
-            $indexingWorkflowItem = IndexingWorkflowStepItem::create([
-                'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
-                'data' => $this->thread,
-                'status' => WorkflowStepItemStatus::Processing->value,
-                'document_id' => $document->id,
-                'job_id' => $this->job->payload()['uuid'],
-            ]);
+            $indexingWorkflowItem = IndexingWorkflowStepItem::query()
+                ->where('indexing_workflow_step_id', $this->indexingWorkflowStepId)
+                ->where('document_id', $document->id)
+                ->firstOrFail();
+
+            $this->createdIndexingWorkStepItemId = $indexingWorkflowItem->id;
 
             /** @var User $mentionedUser */
             foreach ($this->thread->mentions as $mentionedUser) {
@@ -70,18 +73,15 @@ class IndexThread extends IndexingStepItemJob implements ShouldQueue
                 'status' => WorkflowStepItemStatus::Completed->value,
             ]);
         } catch (Throwable $e) {
-            $indexingWorkflowItem->update(attributes: [
-                'status' => WorkflowStepItemStatus::Failed->value,
-                'error_message' => $e->getMessage(),
-            ]);            
+            if ($this->createdIndexingWorkStepItemId) {
+                $item = IndexingWorkflowStepItem::findOrFail($this->createdIndexingWorkStepItemId);
+                $item->update(attributes: [
+                    'status' => WorkflowStepItemStatus::Failed->value,
+                    'error_message' => $e->getMessage(),
+                ]); 
+            }
+                       
             throw $e;
-        } finally {
-            $indexingWorkflowStep = IndexingWorkflowStep::query()                    
-                ->where('id', $this->indexingWorkflowStepId)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $indexingWorkflowStep->increment('processed_items');
-        }          
+        }       
     }
 }
