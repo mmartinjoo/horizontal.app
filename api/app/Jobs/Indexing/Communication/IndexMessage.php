@@ -2,67 +2,101 @@
 
 namespace App\Jobs\Indexing\Communication;
 
+use App\Enums\Indexing\WorkflowStepItemStatus;
 use App\Exceptions\NoContentToIndexException;
+use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
 use App\Models\DocumentChunk;
+use App\Models\IndexingWorkflowStep;
+use App\Models\IndexingWorkflowStepItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
 use App\Services\Integration\Communication\DataTransferObjects\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Throwable;
 
-class IndexMessage implements ShouldQueue
+class IndexMessage extends IndexingStepItemJob implements ShouldQueue
 {
     use Queueable;
 
     public function __construct(
         private Message $message,
         private string $sourceType,
-    ) {
-
-    }
+    ) {}
 
     public function handle(TextChunker $textChunker)
     {
-        $chunks = $textChunker->chunk($this->message->message);
-        if (count($chunks) === 0) {
-            throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->message));
-        }
-        if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
-            throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->message));
-        }
-
-        $document = Document::create([
-            'source_type' => $this->sourceType,
-            'source_id' => $this->message->externalId,
-            'source_url' => $this->message->url,
-            'title' => "{$this->message->author->realName}'s message in #{$this->message->channel->name}",
-            'preview' => $chunks->first(),
-            'priority' => 'high',
-            'metadata' => $this->message,
-        ]);
-        if ($this->message->author) {
-            $author = Participant::getOrCreate($this->message->author?->realName);
-            $document->participants()->attach($author->id, [
-                'context' => 'author',
+        try {
+            $document = Document::create([
+                'source_type' => $this->sourceType,
+                'source_id' => $this->message->externalId,
+                'source_url' => $this->message->url,
+                'title' => "{$this->message->author->realName}'s message in #{$this->message->channel->name}",
+                'priority' => 'high',
+                'metadata' => $this->message,
             ]);
-        }
 
-        /** @var User $mentionedUser */
-        foreach ($this->message->mentions as $mentionedUser) {
-            $p = Participant::getOrCreate($mentionedUser->realName);
-            $document->participants()->attach($p->id, [
-                'context' => 'mentioned',
-            ]);
-        }
-
-        foreach ($chunks as $i => $chunk) {
-            DocumentChunk::create([
+            $indexingWorkflowItem = IndexingWorkflowStepItem::create([
+                'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
+                'data' => $this->message,
+                'status' => WorkflowStepItemStatus::Processing->value,
                 'document_id' => $document->id,
-                'body' => $chunk,
-                'position' => $i+1,
+                'job_id' => $this->job->payload()['uuid'],
             ]);
-        }
+
+            $chunks = $textChunker->chunk($this->message->message);
+            if (count($chunks) === 0) {
+                throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->message));
+            }
+            if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
+                throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->message));
+            }
+
+            $document->update([
+                'preview' => $chunks->first(),
+            ]);
+            
+            if ($this->message->author) {
+                $author = Participant::getOrCreate($this->message->author?->realName);
+                $document->participants()->attach($author->id, [
+                    'context' => 'author',
+                ]);
+            }
+
+            /** @var User $mentionedUser */
+            foreach ($this->message->mentions as $mentionedUser) {
+                $p = Participant::getOrCreate($mentionedUser->realName);
+                $document->participants()->attach($p->id, [
+                    'context' => 'mentioned',
+                ]);
+            }
+
+            foreach ($chunks as $i => $chunk) {
+                DocumentChunk::create([
+                    'document_id' => $document->id,
+                    'body' => $chunk,
+                    'position' => $i+1,
+                ]);
+            }
+
+            $indexingWorkflowItem->update([
+                'status' => WorkflowStepItemStatus::Completed->value,
+            ]);
+        } catch (Throwable $e) {
+            $indexingWorkflowItem->update(attributes: [
+                'status' => WorkflowStepItemStatus::Failed->value,
+                'error_message' => $e->getMessage(),
+            ]);            
+            throw $e;
+        } finally {
+            $indexingWorkflowStep = IndexingWorkflowStep::query()                    
+                ->where('id', $this->indexingWorkflowStepId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $indexingWorkflowStep->increment('processed_items');
+        }  
     }
 }

@@ -29,7 +29,7 @@ class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue
         $indexingWorkflowStep->increment('overall_items', count($files));
 
         foreach ($files as $file) {
-            if (! $this->fileNeedsIndexing($file)) {
+            if (!$this->fileNeedsIndexing($file)) {
                 $indexingWorkflowStep->increment('processed_items', 1);
                 $indexingWorkflowStep->increment('skipped_items', 1);
                 continue;

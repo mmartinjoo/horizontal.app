@@ -4,14 +4,15 @@ namespace App\Jobs\Indexing\Communication\Slack;
 
 use App\Jobs\Indexing\Communication\IndexMessage;
 use App\Jobs\Indexing\Communication\IndexThread;
+use App\Jobs\Indexing\IndexingStepJob;
 use App\Models\Document;
+use App\Models\IndexingWorkflowStep;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
 use App\Services\Integration\Communication\Slack\Slack;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\LazyCollection;
 
-class IndexSlack implements ShouldQueue
+class IndexSlack extends IndexingStepJob implements ShouldQueue
 {
     use Queueable;
 
@@ -21,40 +22,50 @@ class IndexSlack implements ShouldQueue
 
     public function handle(Slack $slack)
     {
+        /** @var IndexingWorkflowStep $indexingWorkflowStep */
+        $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
+        $indexingWorkflowStep->update([
+            'started_at' => now(),
+            'job_id' => $this->job->payload()['uuid'],
+        ]);
+
         $channels = $slack->channels();
         foreach ($channels as $channel) {
             $messages = $slack->messages($channel);
-            $newMessages = $this->rejectExistingMessages($messages);
-            foreach ($newMessages as $message) {
-                IndexMessage::dispatch($message, 'slack');
+            $indexingWorkflowStep->increment('overall_items', count($messages));
+            foreach ($messages as $message) {
+                if (!$this->messageNeedsIndexing($message)) {
+                    $indexingWorkflowStep->increment('processed_items', 1);
+                    $indexingWorkflowStep->increment('skipped_items', 1);
+                    continue;
+                }
+
+                $job = new IndexMessage($message, 'slack');
+                $job->setIndexingWorkflowStepId($this->indexingWorkflowStepId);
+                dispatch($job);
             }
 
-            $threads = $slack->threads($channel);
-            $newThreads = $this->rejectExistingMessages($threads);
-            foreach ($newThreads as $thread) {
-                IndexThread::dispatch($thread);
-            }
+            // $threads = $slack->threads($channel);
+            // $indexingWorkflowStep->increment('overall_items', count($threads));
+            // foreach ($threads as $thread) { 
+            //     if (!$this->messageNeedsIndexing($message)) {
+            //         $indexingWorkflowStep->increment('processed_items', 1);
+            //         $indexingWorkflowStep->increment('skipped_items', 1);
+            //         continue;
+            //     }    
+
+            //     $job = new IndexThread($thread);
+            //     $job->setIndexingWorkflowStepId($this->indexingWorkflowStepId);
+            //     dispatch($job);
+            // }
         }
     }
 
-    /**
-     * @param LazyCollection<Message> $messages
-     * @return LazyCollection<Message> $messages
-     */
-    private function rejectExistingMessages(LazyCollection $messages): LazyCollection
+    private function messageNeedsIndexing(Message $message): bool
     {
-        return LazyCollection::make(function () use ($messages) {
-            /** @var Message $message */
-            foreach ($messages as $message) {
-                $exists = Document::query()
-                    ->where('source_type', 'slack')
-                    ->where('source_id', $message->externalId)
-                    ->exists();
-
-                if (!$exists) {
-                    yield $message;
-                }
-            }
-        });
+        return !Document::query()
+            ->where('source_type', 'slack')
+            ->where('source_id', $message->externalId)
+            ->exists();
     }
 }

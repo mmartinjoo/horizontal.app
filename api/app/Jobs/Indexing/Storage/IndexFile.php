@@ -16,7 +16,6 @@ use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -48,7 +47,7 @@ class IndexFile implements ShouldQueue
             $indexingWorkflowItem = IndexingWorkflowStepItem::create([
                 'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
                 'data' => $this->file,
-                'status' => 'processing',
+                'status' => WorkflowStepItemStatus::Processing->value,
                 'document_id' => $document->id,
                 'job_id' => $this->job->payload()['uuid'],
             ]);
@@ -57,7 +56,7 @@ class IndexFile implements ShouldQueue
             if ($this->file->mimeType() === 'application/pdf') {
                 $this->indexPDF($pdfParser, $textChunker, $indexingWorkflowItem);
                 $indexingWorkflowItem->update([
-                    'status' => 'completed',
+                    'status' => WorkflowStepItemStatus::Completed->value,
                 ]);
                 return;
             } else {
@@ -66,7 +65,7 @@ class IndexFile implements ShouldQueue
 
             if (strlen($content) === 0) {
                 $indexingWorkflowItem->update([
-                    'status' => 'completed',
+                    'status' => WorkflowStepItemStatus::Completed->value,
                 ]);
                 throw new NoContentToIndexException('File is empty: '.json_encode($this->file));
             }
@@ -74,13 +73,13 @@ class IndexFile implements ShouldQueue
             $chunks = $textChunker->chunk($content);
             if (count($chunks) === 0) {
                 $indexingWorkflowItem->update([
-                    'status' => 'completed',
+                    'status' => WorkflowStepItemStatus::Completed->value,
                 ]);
                 throw new NoContentToIndexException('Chunk is empty: '.json_encode($this->file).'; content: '.$content);
             }
             if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
                 $indexingWorkflowItem->update([
-                    'status' => 'completed',
+                    'status' => WorkflowStepItemStatus::Completed->value,
                 ]);
                 throw new NoContentToIndexException('Chunk contains one empty item: '.json_encode($this->file).'; content: '.$content);
             }
@@ -100,7 +99,7 @@ class IndexFile implements ShouldQueue
                 'indexed_at' => now(),
             ]);
             $indexingWorkflowItem->update([
-                'status' => 'completed',
+                'status' => WorkflowStepItemStatus::Completed->value,
             ]);
         } catch (Throwable $e) {
             // if the file is a weird, unknown format Postgres can throw a "Character not in repertoire invalid byte sequence for encoding 'UTF8'" exception

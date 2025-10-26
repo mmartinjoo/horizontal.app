@@ -2,13 +2,19 @@
 
 namespace App\Jobs\Indexing\Communication;
 
+use App\Enums\Indexing\WorkflowStepItemStatus;
+use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
+use App\Models\IndexingWorkflowStep;
+use App\Models\IndexingWorkflowStepItem;
 use App\Models\Participant;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
+use App\Services\Integration\Communication\DataTransferObjects\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Throwable;
 
-class IndexThread implements ShouldQueue
+class IndexThread extends IndexingStepItemJob implements ShouldQueue
 {
     use Queueable;
 
@@ -18,39 +24,64 @@ class IndexThread implements ShouldQueue
 
     public function handle()
     {
-        IndexMessage::dispatchSync($this->thread);
-        $document = Document::query()
-            ->where('source_type', 'slack')
-            ->where('source_id', $this->thread->externalId)
-            ->firstOrFail();
+        try {
+            IndexMessage::dispatchSync($this->thread, 'slack');
+            $document = Document::query()
+                ->where('source_type', 'slack')
+                ->where('source_id', $this->thread->externalId)
+                ->firstOrFail();
 
-        /** @var User $mentionedUser */
-        foreach ($this->thread->mentions as $mentionedUser) {
-            $p = Participant::getOrCreate($mentionedUser->realName);
-            $document->participants()->attach($p->id, [
-                'context' => 'mentioned',
-            ]);
-        }
-
-        /** @var Message $reply */
-        foreach ($this->thread->replies as $reply) {
-            $p = Participant::getOrCreate($reply->author->realName);
-            $comment = $document->comments()->create([
-                'author_id' => $p->id,
-                'body' => $reply->message,
-                'commented_at' => now(),
-                'comment_id' => $reply->externalId,
-                'metadata' => $reply,
-                'commented_at' => $reply->createdAt,
+            $indexingWorkflowItem = IndexingWorkflowStepItem::create([
+                'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
+                'data' => $this->thread,
+                'status' => WorkflowStepItemStatus::Processing->value,
+                'document_id' => $document->id,
+                'job_id' => $this->job->payload()['uuid'],
             ]);
 
             /** @var User $mentionedUser */
-            foreach ($reply->mentions as $mentionedUser) {
+            foreach ($this->thread->mentions as $mentionedUser) {
                 $p = Participant::getOrCreate($mentionedUser->realName);
-                $comment->participants()->attach($p->id, [
+                $document->participants()->attach($p->id, [
                     'context' => 'mentioned',
                 ]);
             }
-        }
+
+            /** @var Message $reply */
+            foreach ($this->thread->replies as $reply) {
+                $p = Participant::getOrCreate($reply->author->realName);
+                $comment = $document->comments()->create([
+                    'author_id' => $p->id,
+                    'body' => $reply->message,
+                    'comment_id' => $reply->externalId,
+                    'metadata' => $reply,
+                    'commented_at' => $reply->createdAt,
+                ]);
+
+                /** @var User $mentionedUser */
+                foreach ($reply->mentions as $mentionedUser) {
+                    $p = Participant::getOrCreate($mentionedUser->realName);
+                    $comment->participants()->attach($p->id, [
+                        'context' => 'mentioned',
+                    ]);
+                }
+            }
+            $indexingWorkflowItem->update([
+                'status' => WorkflowStepItemStatus::Completed->value,
+            ]);
+        } catch (Throwable $e) {
+            $indexingWorkflowItem->update(attributes: [
+                'status' => WorkflowStepItemStatus::Failed->value,
+                'error_message' => $e->getMessage(),
+            ]);            
+            throw $e;
+        } finally {
+            $indexingWorkflowStep = IndexingWorkflowStep::query()                    
+                ->where('id', $this->indexingWorkflowStepId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $indexingWorkflowStep->increment('processed_items');
+        }          
     }
 }
