@@ -41,7 +41,7 @@ class IndexMessage extends IndexingStepItemJob implements ShouldQueue
             ]);
 
             $indexingWorkflowItem = IndexingWorkflowStepItem::create([
-                'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
+                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
                 'data' => $this->message,
                 'status' => WorkflowStepItemStatus::Processing->value,
                 'document_id' => $document->id,
@@ -96,13 +96,6 @@ class IndexMessage extends IndexingStepItemJob implements ShouldQueue
                 ]); 
             }                       
             throw $e;
-        } finally {
-            $indexingWorkflowStep = IndexingWorkflowStep::query()                    
-                ->where('id', $this->indexingWorkflowStepId)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $indexingWorkflowStep->increment('processed_items');
-        }  
+        }
     }
 }

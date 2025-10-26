@@ -9,10 +9,10 @@ abstract class IndexingStepItemJob implements ShouldQueue
 {
     use Queueable;
 
-    protected int $indexingWorkflowStepId;
+    protected int $indexingWorkflowStepBucketId;
 
-    public function setIndexingWorkflowStepId(int $indexingWorkflowStepId): void
+    public function setIndexingWorkflowStepBucketId(int $indexingWorkflowStepBucketId): void
     {
-        $this->indexingWorkflowStepId = $indexingWorkflowStepId;
+        $this->indexingWorkflowStepBucketId = $indexingWorkflowStepBucketId;
     }
 }

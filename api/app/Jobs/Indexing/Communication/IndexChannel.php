@@ -3,7 +3,7 @@
 namespace App\Jobs\Indexing\Communication;
 
 use App\Models\Document;
-use App\Models\IndexingWorkflowStep;
+use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\Communication\DataTransferObjects\Channel;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
 use App\Services\Integration\Communication\Slack\Slack;
@@ -18,25 +18,25 @@ class IndexChannel implements ShouldQueue
     public function __construct(
         private Channel $channel,
         private Slack $slack,
-        private int $indexingWorkflowStepId,
+        private int $indexingWorkflowStepBucketId,
     ) {}
 
     public function handle()
     {
         return DB::transaction(function () {
-            $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
+            $indexingWorkflowStepBucket = IndexingWorkflowStepBucket::findOrFail($this->indexingWorkflowStepBucketId);
 
             $messages = $this->slack->messages($this->channel);
-            $indexingWorkflowStep->increment('overall_items', count($messages));
+            $indexingWorkflowStepBucket->increment('overall_items', count($messages));
             foreach ($messages as $message) {
                 if (!$this->messageNeedsIndexing($message)) {
-                    $indexingWorkflowStep->increment('processed_items', 1);
-                    $indexingWorkflowStep->increment('skipped_items', 1);
+                    $indexingWorkflowStepBucket->increment('processed_items', 1);
+                    $indexingWorkflowStepBucket->increment('skipped_items', 1);
                     continue;
                 }
 
                 $job = new IndexMessage($message, 'slack');
-                $job->setIndexingWorkflowStepId($this->indexingWorkflowStepId);
+                $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
 
                 // we delay the jobs so multiple `IndexChannel` can be started parallel
                 // which is important to calculate `overall_items` in advance
@@ -53,16 +53,16 @@ class IndexChannel implements ShouldQueue
             }
 
             $threads = $this->slack->threads($this->channel);
-            $indexingWorkflowStep->increment('overall_items', count($threads));
-            foreach ($threads as $thread) { 
+            $indexingWorkflowStepBucket->increment('overall_items', count($threads));
+            foreach ($threads as $thread) {
                 if (!$this->messageNeedsIndexing($thread)) {
-                    $indexingWorkflowStep->increment('processed_items', 1);
-                    $indexingWorkflowStep->increment('skipped_items', 1);
+                    $indexingWorkflowStepBucket->increment('processed_items', 1);
+                    $indexingWorkflowStepBucket->increment('skipped_items', 1);
                     continue;
                 }    
                 
                 $job = new IndexThread($thread);
-                $job->setIndexingWorkflowStepId($this->indexingWorkflowStepId);
+                $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
 
                 // we delay the jobs so multiple `IndexChannels` can be started parallel
                 // see above

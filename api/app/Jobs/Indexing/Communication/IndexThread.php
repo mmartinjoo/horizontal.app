@@ -27,7 +27,7 @@ class IndexThread extends IndexingStepItemJob implements ShouldQueue
     {
         try {
             $indexMessageJob = new IndexMessage($this->thread, 'slack');
-            $indexMessageJob->setIndexingWorkflowStepId($this->indexingWorkflowStepId);
+            $indexMessageJob->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
             dispatch_sync($indexMessageJob);
 
             $document = Document::query()
@@ -36,7 +36,6 @@ class IndexThread extends IndexingStepItemJob implements ShouldQueue
                 ->firstOrFail();
 
             $indexingWorkflowItem = IndexingWorkflowStepItem::query()
-                ->where('indexing_workflow_step_id', $this->indexingWorkflowStepId)
                 ->where('document_id', $document->id)
                 ->firstOrFail();
 
