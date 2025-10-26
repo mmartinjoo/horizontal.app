@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Indexing\Storage;
 
+use App\Enums\Indexing\WorkflowStepItemStatus;
 use App\Exceptions\NoContentToIndexException;
 use App\Models\Document;
 use App\Models\DocumentChunk;
@@ -15,6 +16,7 @@ use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -106,12 +108,12 @@ class IndexFile implements ShouldQueue
             // `update` would throw another exception
             try {
                 $indexingWorkflowItem->update([
-                    'status' => 'failed',
+                    'status' => WorkflowStepItemStatus::Failed->value,
                     'error_message' => $e->getMessage(),
                 ]);
             } catch (Throwable $e) {
                 $indexingWorkflowItem->update([
-                    'status' => 'failed',
+                    'status' => WorkflowStepItemStatus::Failed->value,
                     'error_message' => 'probably "Character not in repertoire". check the related job ID',
                 ]);
                 throw $e;
@@ -119,6 +121,13 @@ class IndexFile implements ShouldQueue
             throw $e;
         } finally {
             Storage::delete($this->file->path());
+
+            $indexingWorkflowStep = IndexingWorkflowStep::query()                    
+                ->where('id', $this->indexingWorkflowStepId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $indexingWorkflowStep->increment('processed_items');
         }
     }
 

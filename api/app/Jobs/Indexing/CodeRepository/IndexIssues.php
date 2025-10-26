@@ -44,7 +44,6 @@ class IndexIssues implements ShouldQueue
                 ->delete();
 
             $indexingWorkflowStep->increment('deleted_items', $count);
-            $indexingWorkflowStep->increment('processed_items', $count);
 
             IndexIssue::dispatch($issue, $indexingWorkflowStep->id);
         }

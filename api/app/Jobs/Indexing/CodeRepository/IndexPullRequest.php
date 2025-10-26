@@ -113,14 +113,12 @@ class IndexPullRequest implements ShouldQueue
 
             throw $e;
         } finally {
-            DB::transaction(function () {
-                $indexingWorkflowStep = IndexingWorkflowStep::query()                    
-                    ->where('id', $this->indexingWorkflowStepId)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+            $indexingWorkflowStep = IndexingWorkflowStep::query()                    
+                ->where('id', $this->indexingWorkflowStepId)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-                $indexingWorkflowStep->increment('processed_items');
-            });
+            $indexingWorkflowStep->increment('processed_items');
         }
     }
 

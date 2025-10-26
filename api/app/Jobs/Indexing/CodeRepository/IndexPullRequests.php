@@ -31,7 +31,7 @@ class IndexPullRequests implements ShouldQueue
         $indexingWorkflowStep->increment('overall_items', count($pullRequests));
 
         /** @var PullRequest $pullRequest */
-        foreach ($pullRequests as $i => $pullRequest) {
+        foreach ($pullRequests as $pullRequest) {
             if (! $this->pullRequestNeedsIndexing($pullRequest)) {
                 $indexingWorkflowStep->increment('processed_items', 1);
                 $indexingWorkflowStep->increment('skipped_items', 1);
@@ -44,7 +44,6 @@ class IndexPullRequests implements ShouldQueue
                 ->where('source_id', $pullRequest->id)
                 ->delete();
 
-            $indexingWorkflowStep->increment('processed_items', $count);
             $indexingWorkflowStep->increment('deleted_items', $count);
 
             IndexPullRequest::dispatch($pullRequest, $this->connector, $indexingWorkflowStep->id);
