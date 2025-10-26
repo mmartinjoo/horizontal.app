@@ -21,6 +21,7 @@ class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue
         /** @var IndexingWorkflowStep $indexingWorkflowStep */
         $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
         $indexingWorkflowStep->update([
+            'started_at' => now(),
             'job_id' => $this->job->payload()['uuid'],
         ]);
 

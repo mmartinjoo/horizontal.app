@@ -47,6 +47,10 @@ class WorkflowStepSupervisor
 
         // finished
         if ($this->workflowStep->overall_items === $this->workflowStep->processed_items) {
+            $this->workflowStep->update([
+                'finished_at' => now(),
+            ]);
+
             $this->failedCount = IndexingWorkflowStepItem::query()
                 ->where('indexing_workflow_step_id', $this->workflowStep->id)
                 ->where('status', WorkflowStepItemStatus::Failed->value)
@@ -87,6 +91,9 @@ class WorkflowStepSupervisor
             }
         }
 
+        $this->workflowStep->update([
+            'finished_at' => now(),
+        ]);
         return new SupervisorResult(
             status: WorkflowStepStatus::Unknown->value,
             isExpectedStatus: false,

@@ -2,7 +2,6 @@
 
 namespace App\Jobs\Indexing\CodeRepository\GitHub;
 
-use App\Enums\Indexing\WorkflowStepStatus;
 use App\Jobs\Indexing\CodeRepository\IndexIssues;
 use App\Jobs\Indexing\CodeRepository\IndexPullRequests;
 use App\Jobs\Indexing\IndexingStepJob;
@@ -23,6 +22,7 @@ class IndexGitHub extends IndexingStepJob implements ShouldQueue
         /** @var IndexingWorkflowStep $indexingWorkflowStep */
         $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
         $indexingWorkflowStep->update([
+            'started_at' => now(),
             'job_id' => $this->job->payload()['uuid'],
         ]);
 
