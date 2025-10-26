@@ -24,7 +24,7 @@ class Orchestrator
         ]);
 
         // This will be merged into one `integrations` table
-        $integrations = ['slack'];
+        $integrations = ['slack', 'google_drive', 'github'];
         $jobs = [];
 
         foreach ($integrations as $integration) {
