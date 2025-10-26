@@ -28,8 +28,8 @@ class IndexProject
 
         foreach ($issues as $i => $issue) {
             if (!$this->issueNeedsIndexing($issue)) {
-                $$bucket->increment('skipped_items', 1);
-                $$bucket->increment('processed_items', 1);
+                $bucket->increment('skipped_items', 1);
+                $bucket->increment('processed_items', 1);
                 continue;
             }
 
