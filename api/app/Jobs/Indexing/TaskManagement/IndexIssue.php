@@ -74,21 +74,21 @@ class IndexIssue implements ShouldQueue
             ]);
         }
 
-        $this->updateWorkflowStatus($indexingWorkflowItem);
+        // $this->updateWorkflowStatus($indexingWorkflowItem);
     }
 
-    private function updateWorkflowStatus(IndexingWorkflowStepItem $indexingWorkflowItem)
-    {
-        /** @var IndexingWorkflowStep $workflow */
-        $workflow = $indexingWorkflowItem->indexing_workflow_step;
-        $hasQueuedItems = $workflow->items()
-            ->where('status', 'queued')
-            ->exists();
+    // private function updateWorkflowStatus(IndexingWorkflowStepItem $indexingWorkflowItem)
+    // {
+    //     /** @var IndexingWorkflowStep $workflow */
+    //     $workflow = $indexingWorkflowItem->indexing_workflow_step;
+    //     $hasQueuedItems = $workflow->items()
+    //         ->where('status', 'queued')
+    //         ->exists();
 
-        if (! $hasQueuedItems) {
-            $workflow->update([
-                'status' => 'completed',
-            ]);
-        }
-    }
+    //     if (! $hasQueuedItems) {
+    //         $workflow->update([
+    //             'status' => 'completed',
+    //         ]);
+    //     }
+    // }
 }

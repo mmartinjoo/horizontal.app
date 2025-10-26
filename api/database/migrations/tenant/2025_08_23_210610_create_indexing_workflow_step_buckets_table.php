@@ -18,6 +18,8 @@ return new class extends Migration
             $table->integer('processed_items')->default(0);
             $table->integer('deleted_items')->default(0);
             $table->integer('skipped_items')->default(0);            
+            $table->dateTime('started_at')->nullable();
+            $table->dateTime('finished_at')->nullable();
             $table->timestamps();
         });
     }

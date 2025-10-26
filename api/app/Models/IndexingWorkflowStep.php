@@ -10,8 +10,8 @@ class IndexingWorkflowStep extends Model
 
     protected $guarded = [];
 
-    public function items()
+    public function buckets()
     {
-        return $this->hasMany(IndexingWorkflowStepItem::class);
+        return $this->hasMany(IndexingWorkflowStepBucket::class);
     }
 }

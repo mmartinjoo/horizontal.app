@@ -11,7 +11,7 @@ use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Jobs\Indexing\Supervisor\SuperviseWorkflowStep;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
-use App\Services\Indexing\Orchestrator\Supervisor\WorkflowStepSupervisor;
+use App\Services\Indexing\Orchestrator\Supervisor\WorkflowStepBucketSupervisor;
 use Exception;
 
 class Orchestrator
@@ -72,7 +72,7 @@ class Orchestrator
     {
         return new SuperviseWorkflowStep(
             $workflowStep->id,
-            new WorkflowStepSupervisor(
+            new WorkflowStepBucketSupervisor(
                 $workflowStep->id
             ),
         );

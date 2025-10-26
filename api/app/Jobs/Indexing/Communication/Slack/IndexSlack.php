@@ -34,11 +34,11 @@ class IndexSlack extends IndexingStepJob implements ShouldQueue
         $channels = $slack->channels();
         /** @var Channel $channel */
         foreach ($channels as $channel) {
-            $messages = $slack->messages($channel);
+            // $messages = $slack->messages($channel);
             $bucket = IndexingWorkflowStepBucket::create([
                 'indexing_workflow_step_id' => $indexingWorkflowStep->id,
                 'title' => "channel_" . Str::lower($channel->name),
-                'overall_items' => count($messages),
+                // 'overall_items' => count($messages),
                 'status' => 'starting',
             ]);
             $indexingWorkflowStep->increment('overall_items');

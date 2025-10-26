@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Indexing\Supervisor;
 
-use App\Services\Indexing\Orchestrator\Supervisor\WorkflowStepSupervisor;
+use App\Services\Indexing\Orchestrator\Supervisor\WorkflowStepBucketSupervisor;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -16,11 +16,11 @@ class SuperviseWorkflowStep implements ShouldQueue
     // 30 minutes
     private int $timeoutInSecond = 90;
     private int $timeSpentInSecond = 0;
-    private int $intervalInSecond = 10;
+    private int $intervalInSecond = 5;
 
     public function __construct(
         private int $workflowStepId,
-        private WorkflowStepSupervisor $supervisor,
+        private WorkflowStepBucketSupervisor $supervisor,
         int $timeSpentInSecond = 0,
     ) {
         $this->timeSpentInSecond = $timeSpentInSecond;
