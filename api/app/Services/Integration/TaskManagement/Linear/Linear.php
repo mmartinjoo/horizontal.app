@@ -4,6 +4,7 @@ namespace App\Services\Integration\TaskManagement\Linear;
 
 use App\Models\LinearIntegration;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
+use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
 use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -15,6 +16,32 @@ class Linear
         private LinearTokenManager $tokenManager
     ) {}
 
+    public function projects(int $first = 250): LazyCollection
+    {
+        return LazyCollection::make(function () {
+            $after = null;
+            $hasNextPage = true;
+            while ($hasNextPage) {
+                $result = $this->getProjectsPaginated(
+                    limit: 100,
+                    after: $after,
+                );
+                $hasNextPage = $result['pageInfo']['hasNextPage'];
+                $after = $result['pageInfo']['endCursor'];
+
+                foreach ($result['projects'] as $projectData) {
+                    yield Project::fromLinear(
+                        $projectData,
+                    );
+                }
+
+                // 50ms delay to avoid rate limits
+                usleep(50_000);
+            }            
+        });
+        
+    }
+
     /**
      * @return LazyCollection<Issue>
      */
@@ -22,6 +49,7 @@ class Linear
     {
         $after = null;
         $hasNextPage = true;
+
         return LazyCollection::make(function () use ($hasNextPage, $after) {
             while ($hasNextPage) {
                 $result = $this->getIssuesPaginated(
@@ -34,7 +62,7 @@ class Linear
                 foreach ($result['issues'] as $issueData) {
                     $transformedIssue = $this->transformIssueForDocument($issueData);
                     yield Issue::fromLinear(
-                        $transformedIssue, 
+                        $transformedIssue,
                         $transformedIssue['description']
                     );
                 }
@@ -54,7 +82,7 @@ class Linear
 
         $data = $response->json('data.issue.comments.nodes');
 
-        if (!$data) {
+        if (! $data) {
             return [];
         }
 
@@ -70,7 +98,7 @@ class Linear
 
         $data = $response->json('data.issue.subscribers.nodes');
 
-        if (!$data) {
+        if (! $data) {
             return [];
         }
 
@@ -102,8 +130,8 @@ class Linear
             }
         }
 
-        if (!$response->successful()) {
-            throw new Exception('Linear GraphQL request failed: ' . $response->body());
+        if (! $response->successful()) {
+            throw new Exception('Linear GraphQL request failed: '.$response->body());
         }
 
         return $response;
@@ -117,7 +145,7 @@ class Linear
 
         $document = json_decode($documentJson, true);
 
-        if (!$document || !isset($document['content'])) {
+        if (! $document || ! isset($document['content'])) {
             return $documentJson;
         }
 
@@ -136,13 +164,35 @@ class Linear
 
         $response = $this->makeGraphQLRequest($this->getIssuesQuery(), $variables);
         $data = $response->json('data.issues');
-        if (!$data) {
+        if (! $data) {
             throw new Exception('No issues data received from Linear API');
         }
 
         return [
             'issues' => $data['nodes'],
-            'pageInfo' => $data['pageInfo']
+            'pageInfo' => $data['pageInfo'],
+        ];
+    }
+
+    /**
+     * @return array{'issues': array, 'pageInfo': array}
+     */
+    private function getProjectsPaginated(int $limit = 100, ?string $after = null): array
+    {
+        $variables = ['first' => $limit];
+        if ($after) {
+            $variables['after'] = $after;
+        }
+
+        $response = $this->makeGraphQLRequest($this->getProjectsQuery(), $variables);
+        $data = $response->json('data.projects');
+        if (!$data) {
+            throw new Exception('No project data received from Linear API');
+        }
+
+        return [
+            'projects' => $data['nodes'],
+            'pageInfo' => $data['pageInfo'],
         ];
     }
 
@@ -151,7 +201,7 @@ class Linear
         $textParts = [];
 
         foreach ($nodes as $node) {
-            if (!is_array($node)) {
+            if (! is_array($node)) {
                 continue;
             }
 
@@ -161,7 +211,7 @@ class Linear
 
             if (isset($node['content']) && is_array($node['content'])) {
                 $nestedText = $this->extractTextFromNodes($node['content']);
-                if (!empty($nestedText)) {
+                if (! empty($nestedText)) {
                     $textParts[] = $nestedText;
                 }
             }
@@ -219,7 +269,6 @@ class Linear
             'raw_data' => $userData,
         ];
     }
-
 
     private function getApiUrl(): string
     {
@@ -305,16 +354,47 @@ class Linear
         ';
     }
 
+    private function getProjectsQuery(): string
+    {
+        return '
+            query GetProjects($first: Int) {
+                projects(first: $first) {
+                    nodes {
+                        id
+                        name
+                        description
+                        state
+                        startDate
+                        targetDate
+                        completedAt
+                        createdAt
+                        updatedAt
+                        url
+                        lead {
+                            id
+                            displayName
+                            email
+                        }
+                    }
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
+                }
+            }
+        ';
+    }
+
     private function getValidIntegration(): LinearIntegration
     {
         $integration = LinearIntegration::first();
 
-        if (!$integration) {
+        if (! $integration) {
             throw new Exception('No Linear integration found');
         }
 
         // Ensure token is valid (refresh if needed)
-        if (!$this->tokenManager->ensureValidToken($integration)) {
+        if (! $this->tokenManager->ensureValidToken($integration)) {
             throw new Exception('Unable to obtain valid Linear token');
         }
 
