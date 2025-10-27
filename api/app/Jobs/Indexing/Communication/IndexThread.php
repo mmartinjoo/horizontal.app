@@ -19,8 +19,10 @@ class IndexThread extends IndexingStepItemJob implements ShouldQueue
 
     private ?int $createdIndexingWorkStepItemId = null;
 
-    public function __construct(private Message $thread)
-    {
+    public function __construct(
+        private Message $thread,
+        private string $vendor,
+    ) {
         $this->onQueue('indexing');
     }
 
@@ -32,7 +34,8 @@ class IndexThread extends IndexingStepItemJob implements ShouldQueue
             dispatch_sync($indexMessageJob);
 
             $document = Document::query()
-                ->where('source_type', 'slack')
+                ->where('source', $this->vendor)
+                ->where('source_type', 'message')
                 ->where('source_id', $this->thread->externalId)
                 ->firstOrFail();
 

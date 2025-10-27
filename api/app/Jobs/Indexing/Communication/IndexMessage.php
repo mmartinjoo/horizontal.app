@@ -24,7 +24,7 @@ class IndexMessage extends IndexingStepItemJob implements ShouldQueue
 
     public function __construct(
         private Message $message,
-        private string $sourceType,
+        private string $vendor,
     ) {
         $this->onQueue('indexing');
     }
@@ -33,7 +33,8 @@ class IndexMessage extends IndexingStepItemJob implements ShouldQueue
     {
         try {
             $document = Document::create([
-                'source_type' => $this->sourceType,
+                'source' => $this->vendor,
+                'source_type' => 'message',
                 'source_id' => $this->message->externalId,
                 'source_url' => $this->message->url,
                 'title' => "{$this->message->author->realName}'s message in #{$this->message->channel->name}",

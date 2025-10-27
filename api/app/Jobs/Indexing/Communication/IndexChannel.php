@@ -51,7 +51,7 @@ class IndexChannel implements ShouldQueue
 
             $bucket->increment('overall_items');
             
-            $job = new IndexThread($thread);
+            $job = new IndexThread($thread, $this->vendor);
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
             $jobs[] = $job;
         }
@@ -71,7 +71,8 @@ class IndexChannel implements ShouldQueue
     private function messageNeedsIndexing(Message $message): bool
     {
         return !Document::query()
-            ->where('source_type', $this->vendor)
+            ->where('source', $this->vendor)
+            ->where('source_type', 'message')
             ->where('source_id', $message->externalId)
             ->exists();
     }
