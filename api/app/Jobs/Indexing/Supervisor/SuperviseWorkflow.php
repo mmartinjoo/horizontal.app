@@ -3,18 +3,15 @@
 namespace App\Jobs\Indexing\Supervisor;
 
 use App\Services\Indexing\Orchestrator\Supervisor\WorkflowSupervisor;
-use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Exception;
 
 class SuperviseWorkflow implements ShouldQueue
 {
     use Queueable;
 
-    public $timeout = 1800;
-
-    // 30 minutes
-    private int $timeoutInSecond = 90;
+    private int $timeoutInSecond = 3600;
     private int $timeSpentInSecond = 0;
     private int $intervalInSecond = 5;
 
@@ -24,6 +21,8 @@ class SuperviseWorkflow implements ShouldQueue
         int $timeSpentInSecond = 0,
     ) {
         $this->timeSpentInSecond = $timeSpentInSecond;
+        $this->timeoutInSecond = config('supervisor.timeout');
+        $this->intervalInSecond = config('supervisor.interval');
     }
 
     public function handle()

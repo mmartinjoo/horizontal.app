@@ -2,8 +2,6 @@
 
 namespace App\Services\Indexing\Orchestrator\DataTransferObject;
 
-use App\Enums\Indexing\WorkflowStatus;
-
 class SupervisorResult
 {
     public function __construct(
