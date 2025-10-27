@@ -7,7 +7,6 @@ use App\Models\JiraIntegration;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use App\Services\Integration\TaskManagement\DataTransferObjects\IssueComment;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
@@ -47,6 +46,7 @@ class Jira implements TaskManagement
                 if ($data['isLast']) {
                     break;
                 }
+                $currentPage++;
                 usleep(50_000);
             }
         });
@@ -62,7 +62,8 @@ class Jira implements TaskManagement
             $perPage = 100;
             while (true) {
                 $fromDate = now()->subMonths(3)->format('Y-m-d');
-                $toDate = now()->format('Y-m-d');
+                // +1 day to avoid time zone issues and get the newest issues as well
+                $toDate = now()->addDays(1)->format('Y-m-d');
                 $jql = "project={$project->id} and created>=\"$fromDate\" and created<=\"$toDate\" order by created desc";
 
                 $queryParams = [
@@ -97,17 +98,28 @@ class Jira implements TaskManagement
         });
     }
 
+    /**
+     * Since this API is pretty complicated in terms of pagination we don't use it
+     * It's unlikely that an issue has 100+ comments anyway
+     * @return LazyCollection<IssueComment>
+     */
     public function comments(Issue $issue): LazyCollection
     {
         return LazyCollection::make(function () use ($issue) {
-            $response = $this->makeRequest("/rest/api/3/issue/{$issue->id}/comment");
+            $currentPage = 0;
+            $perPage = 100;
+
+            $response = $this->makeRequest("/rest/api/3/issue/{$issue->id}/comment", [
+                'startAt' => $currentPage,
+                'maxResults' => $perPage,
+            ]);
 
             if (!$response->successful()) {
                 throw new Exception('Failed to fetch issue comments: ' . $response->body());
             }
 
-            $comments = $response->json('comments');
-            foreach ($comments as $comment) {
+            $data = $response->json();
+            foreach ($data['comments'] as $comment) {
                 yield IssueComment::fromJira($comment, $this->extractTextFromDocument($comment['body']));
             }
         });

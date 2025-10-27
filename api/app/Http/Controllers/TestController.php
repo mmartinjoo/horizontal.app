@@ -26,6 +26,9 @@ class TestController extends Controller
             dump($project);
             foreach ($jira->issues($project) as $issue) {
                 dump($issue);
+                foreach ($jira->comments($issue) as $comment) {
+                    dump($comment);
+                }
             }
         }
     }
