@@ -40,7 +40,6 @@ class DocumentSeeder extends Seeder
                         'department' => fake()->randomElement(['Engineering', 'Marketing', 'Sales', 'HR', 'Operations', 'Finance']),
                         'word_count' => str_word_count($content),
                     ],
-                    'indexed_at' => fake()->dateTimeBetween('-1 month', 'now'),
                 ]);
 
                 // Use TextChunker to create chunks
@@ -58,7 +57,7 @@ class DocumentSeeder extends Seeder
                 $commentCount = fake()->numberBetween(2, 6);
                 for ($j = 0; $j < $commentCount; $j++) {
                     $author = $participants->random();
-                    $commentedAt = fake()->dateTimeBetween($document->indexed_at, 'now');
+                    $commentedAt = now();
 
                     DocumentComment::create([
                         'document_id' => $document->id,

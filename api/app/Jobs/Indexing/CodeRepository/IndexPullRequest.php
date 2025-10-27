@@ -96,7 +96,6 @@ class IndexPullRequest extends IndexingStepItemJob implements ShouldQueue
 
             $doc->update([
                 'preview' => $preview,
-                'indexed_at' => now(),
             ]);
             $indexingWorkflowStepItem->update([
                 'status' => 'completed',

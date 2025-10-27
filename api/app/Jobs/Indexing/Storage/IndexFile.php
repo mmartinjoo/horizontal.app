@@ -98,7 +98,6 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
 
             $document->update([
                 'preview' => $chunks->first(),
-                'indexed_at' => now(),
             ]);
             $indexingWorkflowItem->update([
                 'status' => WorkflowStepItemStatus::Completed->value,
@@ -197,7 +196,6 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
 
         $indexingWorkflowItem->document()->update([
             'preview' => $firstChunk,
-            'indexed_at' => now(),
         ]);
         $indexingWorkflowItem->update([
             'status' => 'prepared',

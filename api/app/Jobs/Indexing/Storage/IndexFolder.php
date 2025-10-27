@@ -8,6 +8,7 @@ use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\Factory;
 use App\Services\Integration\Storage\DataTransferObjects\File;
 use App\Services\Integration\Storage\DataTransferObjects\Folder;
+use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -51,15 +52,22 @@ class IndexFolder implements ShouldQueue
 
     private function fileNeedsIndexing(File $file): bool
     {
-        $existingContent = Document::query()
+        $existingDocument = Document::query()
             ->where('source_id', $file->extraMetadata()['id'])
             ->where('source_type', $this->vendor)
             ->first();
 
-        if ($existingContent === null) {
+        if ($existingDocument === null) {
             return true;
         }
 
-        return $file->getUpdatedAt()->gt($existingContent->indexed_at ?? '1900-01-01 00:00:00');
+        $indexingItem = $existingDocument->indexingItem();
+        if (!$indexingItem) {
+            return true;
+        }
+
+        return $file->getUpdatedAt()->gt(
+            $indexingItem->created_at ?? Carbon::parse('1900-01-01 00:00:00')
+        );
     }
 }

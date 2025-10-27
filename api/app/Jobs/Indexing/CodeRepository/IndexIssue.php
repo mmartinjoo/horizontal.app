@@ -76,7 +76,6 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
 
             $doc->update([
                 'preview' => $preview,
-                'indexed_at' => now(),
             ]);
             $indexingWorkflowItem->update([
                 'status' => 'completed',

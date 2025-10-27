@@ -71,7 +71,6 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
             }
             $document->update([
                 'preview' => $chunks->first(),
-                'indexed_at' => now(),
             ]);        
 
             if ($this->issue->assignee) {

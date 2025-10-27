@@ -79,17 +79,23 @@ class IndexRepository implements ShouldQueue
 
     private function pullRequestNeedsIndexing(PullRequest $pullRequest): bool
     {
-        $existingContent = Document::query()
+        /** @var Document $existingDocument */
+        $existingDocument = Document::query()
             ->where('source_id', $pullRequest->id)
             ->where('source_type', 'github_pr')
             ->first();
 
-        if ($existingContent === null) {
+        if ($existingDocument === null) {
+            return true;
+        }
+
+        $indexingItem = $existingDocument->indexingItem();
+        if (!$indexingItem) {
             return true;
         }
 
         return $pullRequest->updatedAt->gt(
-            $existingContent->indexed_at ?? Carbon::parse('1900-01-01 00:00:00')
+            $indexingItem->created_at ?? Carbon::parse('1900-01-01 00:00:00')
         );
     }
 
@@ -98,7 +104,7 @@ class IndexRepository implements ShouldQueue
      */
     private function issueNeedsIndexing(Issue $issue): bool
     {
-        return ! Document::query()
+        return !Document::query()
             ->where('source_id', $issue->externalId)
             ->where('source_type', 'github_issue')
             ->exists();

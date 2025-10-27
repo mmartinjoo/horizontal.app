@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
+use Carbon\Carbon;
 
 class IndexProject
 {
@@ -54,15 +55,22 @@ class IndexProject
 
     private function issueNeedsIndexing(Issue $issue): bool
     {
-        $existingContent = Document::query()
+        $existingDocument = Document::query()
             ->where('source_id', $issue->id)
             ->where('source_type', 'linear')
             ->first();
 
-        if ($existingContent === null) {
+        if ($existingDocument === null) {
             return true;
         }
 
-        return $issue->getLastUpdatedAt()->gt($existingContent->indexed_at ?? now()->subYears(100));
+        $indexingItem = $existingDocument->indexingItem();
+        if (!$indexingItem) {
+            return true;
+        }
+
+        return $issue->getLastUpdatedAt()->gt(
+            $indexingItem->created_at ?? Carbon::parse('1900-01-01 00:00:00'),
+        );
     }
 }

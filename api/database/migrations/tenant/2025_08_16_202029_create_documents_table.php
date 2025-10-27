@@ -24,8 +24,6 @@ return new class extends Migration
             $table->string('priority')->nullable();
 
             $table->jsonb('metadata')->nullable();
-
-            $table->dateTime('indexed_at')->nullable();
             $table->timestamps();
         });
     }
