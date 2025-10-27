@@ -21,13 +21,13 @@ class IndexProject
         $bucket = IndexingWorkflowStepBucket::findOrFail($this->indexingWorkflowStepBucketId);
         $issues = $this->adapter->issues($this->project);
         $jobs = [];
-        
+
         foreach ($issues as $i => $issue) {
             if (!$this->issueNeedsIndexing($issue)) {                
                 continue;
             }
 
-            $bucket->increment('overall_items', 1);
+            $bucket->increment('overall_items');
 
             $job = new IndexIssue($issue, $this->adapter);
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
@@ -39,6 +39,7 @@ class IndexProject
                 'status' => WorkflowStepStatus::Completed->value,
                 'finished_at' => now(),
             ]);
+            return;
         }
 
         foreach ($jobs as $job) {

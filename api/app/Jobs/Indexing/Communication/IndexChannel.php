@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Indexing\Communication;
 
+use App\Enums\Indexing\WorkflowStepStatus;
 use App\Models\Document;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\Communication\DataTransferObjects\Channel;
@@ -22,37 +23,44 @@ class IndexChannel implements ShouldQueue
 
     public function handle()
     {
-        $indexingWorkflowStepBucket = IndexingWorkflowStepBucket::findOrFail($this->indexingWorkflowStepBucketId);
+        $bucket = IndexingWorkflowStepBucket::findOrFail($this->indexingWorkflowStepBucketId);
 
         $messages = $this->slack->messages($this->channel);
         $threads = $this->slack->threads($this->channel);
-
-        $indexingWorkflowStepBucket->increment(
-            'overall_items', 
-            count($messages)+count($threads)
-        );
+        $jobs = [];
 
         foreach ($messages as $message) {
             if (!$this->messageNeedsIndexing($message)) {
-                $indexingWorkflowStepBucket->increment('processed_items', 1);
-                $indexingWorkflowStepBucket->increment('skipped_items', 1);
                 continue;
             }
 
+            $bucket->increment('overall_items');
+
             $job = new IndexMessage($message, 'slack');
-            $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
-            dispatch($job);
+            $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);            
+            $jobs[] = $job;
         }
         
         foreach ($threads as $thread) {
             if (!$this->messageNeedsIndexing($thread)) {
-                $indexingWorkflowStepBucket->increment('processed_items', 1);
-                $indexingWorkflowStepBucket->increment('skipped_items', 1);
                 continue;
             }    
+
+            $bucket->increment('overall_items');
             
             $job = new IndexThread($thread);
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
+            $jobs[] = $job;
+        }
+
+        if (empty($jobs)) {
+            $bucket->update([
+                'status' => WorkflowStepStatus::Completed->value,
+                'finished_at' => now(),
+            ]);
+        }
+
+        foreach ($jobs as $job) {
             dispatch($job);
         }
     }
