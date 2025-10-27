@@ -18,6 +18,7 @@ class IndexGoogleChat extends IndexingStepJob implements ShouldQueue
 
     public function __construct()
     {
+        $this->onQueue('indexing');
     }
 
     public function handle(GoogleChat $googleChat)

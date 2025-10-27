@@ -19,7 +19,9 @@ class IndexChannel implements ShouldQueue
         private Channel $channel,
         private string $vendor,
         private int $indexingWorkflowStepBucketId,
-    ) {}
+    ) {
+        $this->onQueue('indexing');
+    }
 
     public function handle(Factory $factory)
     {

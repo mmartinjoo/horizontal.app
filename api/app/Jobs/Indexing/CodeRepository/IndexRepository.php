@@ -21,7 +21,9 @@ class IndexRepository implements ShouldQueue
         private Repository $repository,
         private string $vendor,
         private int $indexingWorkflowStepBucketId,
-    ) {}
+    ) {
+        $this->onQueue('indexing');
+    }
 
     public function handle(Factory $integrationFactory)
     {

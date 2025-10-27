@@ -9,14 +9,20 @@ use App\Services\Integration\Factory;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
 use Carbon\Carbon;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
 
-class IndexProject
+class IndexProject implements ShouldQueue
 {
+    use Queueable;
+    
     public function __construct(
         private Project $project,
         private string $vendor,
         private int $indexingWorkflowStepBucketId,
-    ) {}
+    ) {
+        $this->onQueue('indexing');
+    }
 
     public function handle(Factory $integrationFactory)
     {

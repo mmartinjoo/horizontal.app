@@ -17,6 +17,11 @@ class IndexKnowledgeBase implements ShouldQueue
 {
     use Queueable;
 
+    public function __construct()
+    {
+        $this->onQueue('indexing');
+    }
+
     public function handle(GraphDB $graphDB)
     {
         $graphDB->run('MATCH (n) DETACH DELETE n');

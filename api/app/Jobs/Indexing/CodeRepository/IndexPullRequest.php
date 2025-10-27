@@ -24,7 +24,9 @@ class IndexPullRequest extends IndexingStepItemJob implements ShouldQueue
     public function __construct(
         private PullRequest $pullRequest,
         private CodeRepository $codeRepository,
-    ) {}
+    ) {
+        $this->onQueue('indexing');
+    }
 
     public function handle(TextChunker $textChunker): void
     {

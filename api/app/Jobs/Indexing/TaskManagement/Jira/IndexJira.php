@@ -16,6 +16,11 @@ class IndexJira extends IndexingStepJob implements ShouldQueue
 {
     use Queueable;
 
+    public function __construct()
+    {
+        $this->onQueue('indexing');
+    }
+
     public function handle(
         Jira $jira,
     ): void {

@@ -30,7 +30,9 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
     public function __construct(
         private File $file,
         private string $vendor,
-    ) {}
+    ) {
+        $this->onQueue('indexing');
+    }
 
     public function handle(
         GoogleDrive $drive,

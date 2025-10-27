@@ -21,6 +21,7 @@ class IndexThread extends IndexingStepItemJob implements ShouldQueue
 
     public function __construct(private Message $thread)
     {
+        $this->onQueue('indexing');
     }
 
     public function handle()

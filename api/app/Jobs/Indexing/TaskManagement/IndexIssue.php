@@ -26,7 +26,9 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
     public function __construct(
         private Issue $issue,
         private TaskManagement $adapter,
-    ) {}
+    ) {
+        $this->onQueue('indexing');
+    }
 
     public function handle(
         TextChunker $textChunker,

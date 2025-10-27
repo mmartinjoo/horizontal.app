@@ -25,7 +25,9 @@ class IndexMessage extends IndexingStepItemJob implements ShouldQueue
     public function __construct(
         private Message $message,
         private string $sourceType,
-    ) {}
+    ) {
+        $this->onQueue('indexing');
+    }
 
     public function handle(TextChunker $textChunker)
     {

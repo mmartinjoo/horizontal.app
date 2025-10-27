@@ -21,6 +21,7 @@ class IndexGraphCommunity implements ShouldQueue
         // The full text from the original file chunk
         private string $context,
     ) {
+        $this->onQueue('indexing');
     }
 
     public function handle(

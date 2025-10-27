@@ -11,6 +11,11 @@ abstract class IndexingStepJob implements ShouldQueue
 {
     use Queueable;
 
+    public function __construct()
+    {
+        $this->onQueue('indexing');
+    }
+
     protected int $indexingWorkflowId;
     protected int $indexingWorkflowStepId;
 
@@ -22,13 +27,5 @@ abstract class IndexingStepJob implements ShouldQueue
     public function setIndexingWorkflowStepId(int $indexingWorkflowStepId): void
     {
         $this->indexingWorkflowStepId = $indexingWorkflowStepId;
-    }
-
-    public function markWorkflowStepAsProcessing(): void
-    {
-        $workflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
-        $workflowStep->update([
-            'status' => WorkflowStepStatus::Processing->value,
-        ]);
     }
 }

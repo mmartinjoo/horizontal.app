@@ -18,6 +18,7 @@ class IndexSlack extends IndexingStepJob implements ShouldQueue
 
     public function __construct()
     {
+        $this->onQueue('indexing');
     }
 
     public function handle(Slack $slack)

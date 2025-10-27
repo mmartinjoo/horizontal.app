@@ -20,7 +20,9 @@ class IndexFolder implements ShouldQueue
         private Folder $folder,
         private string $vendor,
         private int $indexingWorkflowStepBucketId,
-    ) {}
+    ) {
+        $this->onQueue('indexing');
+    }
 
     public function handle(Factory $factory)
     {
