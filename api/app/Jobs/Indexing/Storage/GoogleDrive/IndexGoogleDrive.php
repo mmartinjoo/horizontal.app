@@ -35,8 +35,6 @@ class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue
                 'title' => "folder_" . Str::lower($folder->path),
                 'status' => 'starting',
             ]);
-            $indexingWorkflowStep->increment('overall_items');
-
             $job = new IndexFolder(
                 folder: $folder,
                 vendor: 'google_drive',

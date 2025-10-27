@@ -29,7 +29,6 @@ class IndexGitHub extends IndexingStepJob implements ShouldQueue
 
         /** @var LazyCollection<Repository> $repositories */
         $repositories = $github->repositories();
-        $indexingWorkflowStep->increment('overall_items', count($repositories));
 
         /** @var Repository $repo */
         foreach ($repositories as $repo) {

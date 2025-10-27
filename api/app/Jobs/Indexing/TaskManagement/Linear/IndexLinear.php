@@ -26,7 +26,6 @@ class IndexLinear extends IndexingStepJob implements ShouldQueue
         ]);
 
         $projects = $linear->projects();
-        $step->increment('overall_items', count($projects));
 
         /** @var Project $project */
         foreach ($projects as $project) {
