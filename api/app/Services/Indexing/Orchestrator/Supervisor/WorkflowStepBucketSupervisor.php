@@ -146,25 +146,6 @@ class WorkflowStepBucketSupervisor
 
         // started
         if ($bucket->overall_items !== 0 && ($bucket->overall_items !== $bucket->processed_items)) {
-            if (
-                $bucket->status === WorkflowStepStatus::Starting->value
-                && $bucket->skipped_items !== 0
-            ) {
-                // there were no documents to index. everything was skipped            
-                if ($bucket->overall_items === $bucket->skipped_items) {
-                    $bucket->update([
-                        'status' => WorkflowStepStatus::Completed->value,
-                        'finished_at' => now(),
-                    ]);            
-                    return new SupervisorResult(
-                        status: WorkflowStepStatus::Completed->value,
-                        isExpectedStatus: true,
-                        finiteState: true,
-                        nextAction: 'terminate',
-                    );
-                }
-            }
-
             $bucket->update([
                 'status' => WorkflowStepStatus::Processing->value,
                 'started_at' => now(),

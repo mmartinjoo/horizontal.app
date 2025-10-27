@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Indexing\TaskManagement;
 
+use App\Enums\Indexing\WorkflowStepStatus;
 use App\Models\Document;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
@@ -18,23 +19,29 @@ class IndexProject
     public function handle()
     {
         $bucket = IndexingWorkflowStepBucket::findOrFail($this->indexingWorkflowStepBucketId);
-
         $issues = $this->adapter->issues($this->project);
-
-        $bucket->increment(
-            'overall_items', 
-            count($issues),
-        );
-
+        $jobs = [];
+        
         foreach ($issues as $i => $issue) {
-            if (!$this->issueNeedsIndexing($issue)) {
-                $bucket->increment('skipped_items', 1);
-                $bucket->increment('processed_items', 1);
+            if (!$this->issueNeedsIndexing($issue)) {                
                 continue;
             }
 
+            $bucket->increment('overall_items', 1);
+
             $job = new IndexIssue($issue, $this->adapter);
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
+            $jobs[] = $job;
+        }
+
+        if (empty($jobs)) {
+            $bucket->update([
+                'status' => WorkflowStepStatus::Completed->value,
+                'finished_at' => now(),
+            ]);
+        }
+
+        foreach ($jobs as $job) {
             dispatch($job);
         }
     }
