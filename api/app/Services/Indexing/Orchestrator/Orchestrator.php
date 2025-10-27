@@ -2,7 +2,7 @@
 
 namespace App\Services\Indexing\Orchestrator;
 
-use App\Enums\Indexing\WorkflowStepStatus;
+use App\Enums\Indexing\WorkflowStatus;
 use App\Jobs\Indexing\CodeRepository\GitHub\IndexGitHub;
 use App\Jobs\Indexing\Communication\GoogleChat\IndexGoogleChat;
 use App\Jobs\Indexing\Communication\Slack\IndexSlack;
@@ -22,11 +22,11 @@ class Orchestrator
     {
         $workflow = IndexingWorkflow::create([
             'started_at' => now(),
-            'status' => WorkflowStepStatus::Starting->value,
+            'status' => WorkflowStatus::Starting->value,
         ]);
 
         // This will be merged into one `integrations` table
-        $integrations = ['jira', 'slack', 'linear'];
+        $integrations = ['jira', 'slack', 'linear', 'google_drive'];
         $jobs = [];
 
         foreach ($integrations as $integration) {
@@ -34,7 +34,7 @@ class Orchestrator
             $workflowStep = IndexingWorkflowStep::create([
                 'indexing_workflow_id' => $workflow->id,
                 'name' => "index_{$integration}",
-                'status' => WorkflowStepStatus::Starting->value,
+                'status' => WorkflowStatus::Starting->value,
                 'service' => 'api',     // there are jobs in the graphbuilder service that need to be supervised as well
             ]);
 

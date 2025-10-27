@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Indexing\TaskManagement;
 
-use App\Enums\Indexing\WorkflowStepStatus;
+use App\Enums\Indexing\WorkflowStatus;
 use App\Models\Document;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\Factory;
@@ -51,7 +51,7 @@ class IndexProject implements ShouldQueue
 
         if (empty($jobs)) {
             $bucket->update([
-                'status' => WorkflowStepStatus::Completed->value,
+                'status' => WorkflowStatus::Completed->value,
                 'finished_at' => now(),
             ]);
             return;

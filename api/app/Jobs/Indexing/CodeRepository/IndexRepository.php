@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Indexing\CodeRepository;
 
-use App\Enums\Indexing\WorkflowStepStatus;
+use App\Enums\Indexing\WorkflowStatus;
 use App\Models\Document;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Issue;
@@ -71,7 +71,7 @@ class IndexRepository implements ShouldQueue
 
         if (empty($jobs)) {
             $bucket->update([
-                'status' => WorkflowStepStatus::Completed->value,
+                'status' => WorkflowStatus::Completed->value,
                 'finished_at' => now(),
             ]);
         }

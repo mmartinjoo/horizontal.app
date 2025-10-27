@@ -2,7 +2,7 @@
 
 namespace App\Enums\Indexing;
 
-enum WorkflowStepStatus: string
+enum WorkflowStatus: string
 {
     case Starting = 'starting';
     case Processing = 'processing';

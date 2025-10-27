@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Indexing\Communication;
 
-use App\Enums\Indexing\WorkflowStepStatus;
+use App\Enums\Indexing\WorkflowStatus;
 use App\Models\Document;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\Communication\DataTransferObjects\Channel;
@@ -58,7 +58,7 @@ class IndexChannel implements ShouldQueue
 
         if (empty($jobs)) {
             $bucket->update([
-                'status' => WorkflowStepStatus::Completed->value,
+                'status' => WorkflowStatus::Completed->value,
                 'finished_at' => now(),
             ]);
         }

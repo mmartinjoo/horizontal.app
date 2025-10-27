@@ -2,7 +2,7 @@
 
 namespace App\Services\Indexing\Orchestrator\DataTransferObject;
 
-use App\Enums\Indexing\WorkflowStepStatus;
+use App\Enums\Indexing\WorkflowStatus;
 
 class SupervisorResult
 {

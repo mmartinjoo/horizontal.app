@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Indexing\Communication;
 
-use App\Enums\Indexing\WorkflowStepStatus;
+use App\Enums\Indexing\WorkflowStatus;
 use App\Exceptions\NoContentToIndexException;
 use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
@@ -44,7 +44,7 @@ class IndexMessage extends IndexingStepItemJob implements ShouldQueue
             $indexingWorkflowItem = IndexingWorkflowStepItem::create([
                 'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
                 'data' => $this->message,
-                'status' => WorkflowStepStatus::Processing->value,
+                'status' => WorkflowStatus::Processing->value,
                 'document_id' => $document->id,
                 'job_id' => $this->job->payload()['uuid'],
             ]);
@@ -86,13 +86,13 @@ class IndexMessage extends IndexingStepItemJob implements ShouldQueue
             }
 
             $indexingWorkflowItem->update([
-                'status' => WorkflowStepStatus::Completed->value,
+                'status' => WorkflowStatus::Completed->value,
             ]);
         } catch (Throwable $e) {
             if ($this->createdIndexingWorkflowItemId) {
                 $item = IndexingWorkflowStepItem::findOrFail($this->createdIndexingWorkflowItemId);
                 $item->update(attributes: [
-                    'status' => WorkflowStepStatus::Failed->value,
+                    'status' => WorkflowStatus::Failed->value,
                     'error_message' => $e->getMessage(),
                 ]); 
             }                       
