@@ -136,7 +136,7 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
     private function addParticipants(Document $document, Factory $integrationFactory)
     {
         $storage = $integrationFactory->createStorage($this->vendor);
-        foreach ($storage->getRevisionAuthors($this->file) as $author) {
+        foreach ($storage->revisionAuthors($this->file) as $author) {
             $p = Participant::getOrCreate($author);
             $document->participants()->attach($p->id, [
                 'context' => 'revision author',
@@ -150,7 +150,7 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
             ]);
         }
 
-        foreach ($storage->getComments($this->file) as $comment) {
+        foreach ($storage->comments($this->file) as $comment) {
             $p = Participant::getOrCreate($comment['author']);
             $document->comments()->create([
                 'author_id' => $p->id,

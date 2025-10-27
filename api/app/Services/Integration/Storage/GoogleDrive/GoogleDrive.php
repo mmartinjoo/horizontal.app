@@ -51,12 +51,29 @@ class GoogleDrive implements StorageIntegration
     }
 
     /**
+     * @return LazyCollection<Folder>
+     */
+    public function folders(string $root = ''): LazyCollection
+    {
+        return LazyCollection::make(function () use ($root) {
+            $listing = $this->fs->listContents($root);
+            foreach ($listing as $listingItem) {                
+                if (!$listingItem instanceof DirectoryAttributes) {
+                    continue;
+                }
+
+                yield Folder::fromFlysystem($listingItem);
+            }
+        });
+    }
+
+    /**
      * @return LazyCollection<File>
      */
-    public function listDirectoryContents(string $directory = ''): LazyCollection
+    public function files(string $root = ''): LazyCollection
     {
-        return LazyCollection::make(function () use ($directory) {
-            $listing = $this->fs->listContents($directory, true);
+        return LazyCollection::make(function () use ($root) {
+            $listing = $this->fs->listContents($root, true);
             foreach ($listing as $listingItem) {
                 if (!$listingItem instanceof FileAttributes) {
                     continue;
@@ -83,23 +100,6 @@ class GoogleDrive implements StorageIntegration
         });
     }
 
-    /**
-     * @return LazyCollection<Folder>
-     */
-    public function folders(string $root = ''): LazyCollection
-    {
-        return LazyCollection::make(function () use ($root) {
-            $listing = $this->fs->listContents($root);
-            foreach ($listing as $listingItem) {                
-                if (!$listingItem instanceof DirectoryAttributes) {
-                    continue;
-                }
-
-                yield Folder::fromFlysystem($listingItem);
-            }
-        });
-    }
-
     public function downloadFile(File $file)
     {
         try {
@@ -119,7 +119,7 @@ class GoogleDrive implements StorageIntegration
         }
     }
 
-    public function getRevisionAuthors(File $file): array
+    public function revisionAuthors(File $file): array
     {
         $revisions = $this->drive->revisions->listRevisions($file->extraMetadata()['id'], [
             'fields' => 'revisions(id,modifiedTime,lastModifyingUser,size,mimeType,keepForever,published)',
@@ -132,7 +132,7 @@ class GoogleDrive implements StorageIntegration
         return $authors;
     }
 
-    public function getComments(File $file): array
+    public function comments(File $file): array
     {
         $comments = $this->drive->comments->listComments($file->extraMetadata()['id'], [
             'fields' => 'comments(id,createdTime,modifiedTime,author(displayName),content,replies)',

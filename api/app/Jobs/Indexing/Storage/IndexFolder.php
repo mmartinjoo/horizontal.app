@@ -29,11 +29,21 @@ class IndexFolder implements ShouldQueue
         $bucket = IndexingWorkflowStepBucket::findOrFail($this->indexingWorkflowStepBucketId);
         
         $integration = $factory->createStorage($this->vendor);
-        $files = $integration->listDirectoryContents($this->folder->path);
+        $files = $integration->files($this->folder->path);
         $jobs = [];
 
+        /** @var File $file */
         foreach ($files as $file) {
+            if (!$this->fileNeedsIndexing($file)) {
+                continue;
+            }
+
             $bucket->increment('overall_items');
+
+            Document::query()
+                ->where('source_type', $this->vendor)
+                ->where('source_id', $file->extraMetadata()['id'])
+                ->delete();            
 
             $job = new IndexFile($file, $this->vendor);
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);

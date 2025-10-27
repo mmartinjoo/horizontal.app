@@ -8,11 +8,15 @@ use Illuminate\Support\LazyCollection;
 
 interface Storage
 {
-    public function getRevisionAuthors(File $file): array;
-    public function getComments(File $file): array;
+    public function revisionAuthors(File $file): array;
+    public function comments(File $file): array;
 
     /**
      * @return LazyCollection<Folder>
      */
     public function folders(string $root = ''): LazyCollection;
+    /**
+     * @return LazyCollection<File>
+     */
+    public function files(string $root = ''): LazyCollection;
 }
