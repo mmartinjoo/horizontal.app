@@ -14,13 +14,16 @@ use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
 use App\Services\Indexing\Orchestrator\Orchestrator;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
+use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use App\Services\Integration\TaskManagement\Linear\Linear;
 
 class TestController extends Controller
 {
-    public function index(Orchestrator $orchestrator)
+    public function index(GoogleDrive $drive)
     {
-        $orchestrator->schedule();
+        foreach ($drive->folders() as $folder) {
+            dump($folder);
+        }
     }
 
     public function token()

@@ -5,6 +5,7 @@ namespace App\Services\Integration\Storage\GoogleDrive;
 use App\Exceptions\Storage\FileDownloadException;
 use App\Services\Indexing\FilePrioritizer;
 use App\Services\Integration\Storage\DataTransferObjects\File;
+use App\Services\Integration\Storage\DataTransferObjects\Folder;
 use App\Services\Integration\Storage\Storage as StorageIntegration;
 use Exception;
 use Google\Client;
@@ -12,6 +13,7 @@ use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\LazyCollection;
+use League\Flysystem\DirectoryAttributes;
 use League\Flysystem\Filesystem;
 use Masbug\Flysystem\GoogleDriveAdapter;
 use League\Flysystem\FileAttributes;
@@ -77,6 +79,23 @@ class GoogleDrive implements StorageIntegration
                 }
 
                 yield $file;
+            }
+        });
+    }
+
+    /**
+     * @return LazyCollection<Folder>
+     */
+    public function folders(string $directory = ''): LazyCollection
+    {
+        return LazyCollection::make(function () use ($directory) {
+            $listing = $this->fs->listContents($directory);
+            foreach ($listing as $listingItem) {                
+                if (!$listingItem instanceof DirectoryAttributes) {
+                    continue;
+                }
+
+                yield Folder::fromFlysystem($listingItem);
             }
         });
     }
