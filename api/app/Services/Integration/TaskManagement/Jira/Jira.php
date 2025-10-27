@@ -47,7 +47,6 @@ class Jira implements TaskManagement
                 if ($data['isLast']) {
                     break;
                 }
-                $currentPage++;
                 usleep(50_000);
             }
         });
@@ -59,30 +58,41 @@ class Jira implements TaskManagement
     public function issues(Project $project): LazyCollection
     {
         return LazyCollection::make(function () use ($project) {
-            $fromDate = now()->subMonths(3)->format('Y-m-d');
-            $toDate = now()->format('Y-m-d');
-            $jql = "project={$project->id} and created>=\"$fromDate\" and created<=\"$toDate\" order by created desc";
+            $pageToken = null;
+            $perPage = 100;
+            while (true) {
+                $fromDate = now()->subMonths(3)->format('Y-m-d');
+                $toDate = now()->format('Y-m-d');
+                $jql = "project={$project->id} and created>=\"$fromDate\" and created<=\"$toDate\" order by created desc";
 
-            $queryParams = [
-                'jql' => $jql,
-                'maxResults' => 1_000,
-                'fields' => 'summary,status,assignee,created,updated,description',
-            ];
+                $queryParams = [
+                    'jql' => $jql,
+                    'maxResults' => $perPage,
+                    'nextPageToken' => $pageToken,
+                    'fields' => 'summary,status,assignee,created,updated,description',
+                ];
 
-            $endpoint = '/rest/api/3/search/jql?' . http_build_query($queryParams);
-            $response = $this->makeRequest($endpoint);
+                $endpoint = '/rest/api/3/search/jql?' . http_build_query($queryParams);
+                $response = $this->makeRequest($endpoint);
 
-            if (!$response->successful()) {
-                throw new Exception('Failed to fetch Jira issues: ' . $response->body());
-            }
+                if (!$response->successful()) {
+                    throw new Exception('Failed to fetch Jira issues: ' . $response->body());
+                }
 
-            $issues = $response->json('issues');
-            foreach ($issues as $issue) {
-                $description = Arr::get($issue, 'fields.description')
-                    ? $this->extractTextFromDocument($issue['fields']['description'])
-                    : '';
+                $data = $response->json();
+                foreach ($data['issues'] as $issue) {
+                    $description = Arr::get($issue, 'fields.description')
+                        ? $this->extractTextFromDocument($issue['fields']['description'])
+                        : '';
 
-                yield Issue::fromJira($issue, $description);
+                    yield Issue::fromJira($issue, $description);
+                }
+
+                if ($data['isLast'] || empty($data['nextPageToken'])) {
+                    break;
+                }
+                $pageToken = $data['nextPageToken'];
+                usleep(50_000);
             }
         });
     }
