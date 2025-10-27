@@ -7,7 +7,7 @@ use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
-class SuperviseWorkflowStep implements ShouldQueue
+class SuperviseWorkflow implements ShouldQueue
 {
     use Queueable;
 
@@ -68,7 +68,7 @@ class SuperviseWorkflowStep implements ShouldQueue
     {
         logger()->info("waiting {$this->intervalInSecond}s...");
 
-        dispatch(new SuperviseWorkflowStep(
+        dispatch(new SuperviseWorkflow(
             workflowId: $this->workflowId,
             supervisor: $this->supervisor,
             timeSpentInSecond: $this->timeSpentInSecond += $this->intervalInSecond,

@@ -9,7 +9,7 @@ use App\Jobs\Indexing\Communication\GoogleChat\IndexGoogleChat;
 use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\IndexingStepJob;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
-use App\Jobs\Indexing\Supervisor\SuperviseWorkflowStep;
+use App\Jobs\Indexing\Supervisor\SuperviseWorkflow;
 use App\Jobs\Indexing\TaskManagement\Jira\IndexJira;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
 use App\Models\IndexingWorkflow;
@@ -27,7 +27,7 @@ class Orchestrator
         ]);
 
         // This will be merged into one `integrations` table
-        $integrations = ['slack', 'linear', 'google_drive', 'github'];
+        $integrations = ['slack', 'linear', 'github'];
         $jobs = [];
 
         foreach ($integrations as $integration) {
@@ -67,9 +67,9 @@ class Orchestrator
         };
     }
 
-    private function createSupervisorJob(IndexingWorkflow $workflow): SuperviseWorkflowStep
+    private function createSupervisorJob(IndexingWorkflow $workflow): SuperviseWorkflow
     {
-        return new SuperviseWorkflowStep(
+        return new SuperviseWorkflow(
             $workflow->id,
             new WorkflowSupervisor(),
         );
