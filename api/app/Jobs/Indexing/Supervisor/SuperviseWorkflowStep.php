@@ -29,7 +29,8 @@ class SuperviseWorkflowStep implements ShouldQueue
     public function handle()
     {
         logger()->info("supervising workflow step #{$this->workflowStepId}");
-        if ($this->timeSpentInSecond >= $this->timeoutInSecond) {                
+        if ($this->timeSpentInSecond >= $this->timeoutInSecond) {   
+            logger()->warning("timeout");             
             $this->supervisor->timeout();
             return;
         }

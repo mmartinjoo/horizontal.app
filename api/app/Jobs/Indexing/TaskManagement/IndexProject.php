@@ -22,13 +22,14 @@ class IndexProject
         $issues = $this->adapter->issues($this->project);
         $jobs = [];
 
+        /** @var Issue $issue */
         foreach ($issues as $i => $issue) {
             if (!$this->issueNeedsIndexing($issue)) {                
                 continue;
             }
 
             Document::query()
-                ->where('source_id', $issue->externalId)
+                ->where('source_id', $issue->id)
                 ->delete();
 
             $bucket->increment('overall_items');
