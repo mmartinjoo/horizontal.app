@@ -24,6 +24,7 @@ class IndexPullRequest extends IndexingStepItemJob implements ShouldQueue
     public function __construct(
         private PullRequest $pullRequest,
         private CodeRepository $codeRepository,
+        private string $vendor,
     ) {
         $this->onQueue('indexing');
     }
@@ -32,7 +33,8 @@ class IndexPullRequest extends IndexingStepItemJob implements ShouldQueue
     {
         try {
             $doc = Document::create([
-                'source_type' => 'github_pr',
+                'source' => $this->vendor,
+                'source_type' => 'pull_request',
                 'source_id' => $this->pullRequest->id,
                 'source_url' => $this->pullRequest->url,
                 'title' => $this->pullRequest->title,

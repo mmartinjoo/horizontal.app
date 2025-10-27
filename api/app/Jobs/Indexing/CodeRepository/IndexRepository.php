@@ -42,12 +42,18 @@ class IndexRepository implements ShouldQueue
             }
 
             Document::query()
+                ->where('source', $this->vendor)
+                ->where('source_type', 'pull_request')
                 ->where('source_id', $pullRequest->id)
                 ->delete();
 
             $bucket->increment('overall_items');
 
-            $job = new IndexPullRequest($pullRequest, $codeRepository);
+            $job = new IndexPullRequest(
+                pullRequest: $pullRequest,
+                codeRepository: $codeRepository,
+                vendor: $this->vendor,
+            );
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
             $jobs[] = $job;
         }
@@ -59,12 +65,17 @@ class IndexRepository implements ShouldQueue
             }
 
             Document::query()
+                ->where('source', $this->vendor)
+                ->where('source_type', 'issue')
                 ->where('source_id', $issue->externalId)
                 ->delete();
 
             $bucket->increment('overall_items');
 
-            $job = new IndexIssue($issue);
+            $job = new IndexIssue(
+                issue: $issue,
+                vendor: $this->vendor,
+            );
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
             $jobs[] = $job;
         }
@@ -85,8 +96,9 @@ class IndexRepository implements ShouldQueue
     {
         /** @var Document $existingDocument */
         $existingDocument = Document::query()
+            ->where('source', $this->vendor)
             ->where('source_id', $pullRequest->id)
-            ->where('source_type', 'github_pr')
+            ->where('source_type', 'pull_request')
             ->first();
 
         if ($existingDocument === null) {
@@ -109,8 +121,9 @@ class IndexRepository implements ShouldQueue
     private function issueNeedsIndexing(Issue $issue): bool
     {
         return !Document::query()
+            ->where('source', $this->vendor)
             ->where('source_id', $issue->externalId)
-            ->where('source_type', 'github_issue')
+            ->where('source_type', 'issue')
             ->exists();
     }
 }

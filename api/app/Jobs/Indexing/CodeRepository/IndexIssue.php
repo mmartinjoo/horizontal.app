@@ -23,6 +23,7 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
 
     public function __construct(
         private Issue $issue,
+        private string $vendor,
     ) {
         $this->onQueue('indexing');
     }
@@ -31,7 +32,8 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
     {
         try {
             $doc = Document::create([
-                'source_type' => 'github_issue',
+                'source' => $this->vendor,
+                'source_type' => 'issue',
                 'source_id' => $this->issue->externalId,
                 'source_url' => $this->issue->url,
                 'title' => $this->issue->title,

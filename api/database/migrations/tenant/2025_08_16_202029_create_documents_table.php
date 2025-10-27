@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
 
+            $table->string('source');
             $table->string('source_type');
             $table->string('source_id');
             $table->string('source_url')->nullable();
