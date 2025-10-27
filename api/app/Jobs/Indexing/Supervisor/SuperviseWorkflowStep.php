@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Indexing\Supervisor;
 
-use App\Services\Indexing\Orchestrator\Supervisor\WorkflowStepBucketSupervisor;
+use App\Services\Indexing\Orchestrator\Supervisor\WorkflowSupervisor;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -19,8 +19,8 @@ class SuperviseWorkflowStep implements ShouldQueue
     private int $intervalInSecond = 5;
 
     public function __construct(
-        private int $workflowStepId,
-        private WorkflowStepBucketSupervisor $supervisor,
+        private int $workflowId,
+        private WorkflowSupervisor $supervisor,
         int $timeSpentInSecond = 0,
     ) {
         $this->timeSpentInSecond = $timeSpentInSecond;
@@ -28,14 +28,14 @@ class SuperviseWorkflowStep implements ShouldQueue
 
     public function handle()
     {
-        logger()->info("supervising workflow step #{$this->workflowStepId}");
+        logger()->info("supervising workflow #{$this->workflowId}");
         if ($this->timeSpentInSecond >= $this->timeoutInSecond) {   
             logger()->warning("timeout");             
-            $this->supervisor->timeout();
+            $this->supervisor->timeout($this->workflowId);
             return;
         }
 
-        $result = $this->supervisor->supervise();
+        $result = $this->supervisor->superviseWorkflow($this->workflowId);
         logger()->info("supervisor: result: " . json_encode($result));
 
         if ($result->status === 'unknown') {
@@ -69,9 +69,10 @@ class SuperviseWorkflowStep implements ShouldQueue
         logger()->info("waiting {$this->intervalInSecond}s...");
 
         dispatch(new SuperviseWorkflowStep(
-            workflowStepId: $this->workflowStepId,
+            workflowId: $this->workflowId,
             supervisor: $this->supervisor,
             timeSpentInSecond: $this->timeSpentInSecond += $this->intervalInSecond,
-        ))->delay($this->intervalInSecond);
+        ))
+            ->delay($this->intervalInSecond);
     }
 }

@@ -10,4 +10,5 @@ enum WorkflowStepStatus: string
     case CompletedWithErrors = 'completed_with_errors';
     case Completed = 'completed';
     case Unknown = 'unknown';
+    case Timeout = 'timeout';
 }

@@ -14,7 +14,7 @@ use App\Jobs\Indexing\TaskManagement\Jira\IndexJira;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
-use App\Services\Indexing\Orchestrator\Supervisor\WorkflowStepBucketSupervisor;
+use App\Services\Indexing\Orchestrator\Supervisor\WorkflowSupervisor;
 use Exception;
 
 class Orchestrator
@@ -27,7 +27,7 @@ class Orchestrator
         ]);
 
         // This will be merged into one `integrations` table
-        $integrations = ['jira', 'linear', 'google_drive', 'slack'];
+        $integrations = ['slack', 'linear', 'google_drive', 'github'];
         $jobs = [];
 
         foreach ($integrations as $integration) {
@@ -43,22 +43,15 @@ class Orchestrator
             $job->setIndexingWorkflowId($workflow->id);
             $job->setIndexingWorkflowStepId($workflowStep->id);
 
-            // each indexing job gets one supervisor job
-            $jobs[] = [
-                'indexing_job' => $job,
-                'supervisor_job' => $this->createSupervisorJob($workflowStep),
-            ];
+            $jobs[] = $job;
         }
     
-        foreach ($jobs as $jobData) {
-            dispatch($jobData['indexing_job']);
-            dispatch($jobData['supervisor_job'])
-                ->delay(now()->addSeconds(5));
+        foreach ($jobs as $job) {
+            dispatch($job);
         }
 
-        $workflow->update([
-            'status' => WorkflowStatus::Processing,
-        ]);
+        $supervisor = $this->createSupervisorJob($workflow);
+        dispatch($supervisor);
     }
 
     private function createIndexingJob(string $integration): IndexingStepJob
@@ -74,13 +67,11 @@ class Orchestrator
         };
     }
 
-    private function createSupervisorJob(IndexingWorkflowStep $workflowStep): SuperviseWorkflowStep
+    private function createSupervisorJob(IndexingWorkflow $workflow): SuperviseWorkflowStep
     {
         return new SuperviseWorkflowStep(
-            $workflowStep->id,
-            new WorkflowStepBucketSupervisor(
-                $workflowStep->id
-            ),
+            $workflow->id,
+            new WorkflowSupervisor(),
         );
     }
 }

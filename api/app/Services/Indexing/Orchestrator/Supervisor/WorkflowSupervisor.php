@@ -11,21 +11,121 @@ use App\Models\IndexingWorkflowStepItem;
 use App\Services\Indexing\Orchestrator\DataTransferObject\SupervisorResult;
 use Illuminate\Support\Collection;
 
-class WorkflowStepBucketSupervisor
+class WorkflowSupervisor
 {
-    public function __construct(private int $workflowStepId)
+    public function superviseWorkflow(int $workflowId): SupervisorResult
     {
+        $workflow = IndexingWorkflow::findOrFail($workflowId);
+        $stepResults = collect();
+        foreach ($workflow->steps as $step) {
+            $stepResults[] = $this->superviseStep($step);
+        }
+
+        if ($stepResults->isEmpty()) {
+            $workflow->update([
+                'status' => WorkflowStepStatus::Starting->value,
+            ]);
+            return new SupervisorResult(
+                status: WorkflowStepStatus::Starting->value,
+                isExpectedStatus: true,
+                finiteState: false,
+                nextAction: 'wait',
+            );
+        }
+
+        $allFinite = $stepResults->every('finiteState', true);
+        if ($allFinite) {
+            $nextAction = 'terminate';
+
+            $workflow->update([
+                'finished_at' => now(),
+            ]);
+
+            $allFailed = $stepResults->every('status', WorkflowStepStatus::Failed->value);
+            if ($allFailed) {
+                $workflow->update([
+                    'status' => WorkflowStepStatus::Failed->value,
+                ]);
+                return new SupervisorResult(
+                    status: WorkflowStepStatus::Failed->value,
+                    isExpectedStatus: true,
+                    finiteState: true,
+                    nextAction: $nextAction,
+                );            
+            }
+
+            $allCompleted = $stepResults->every('status', WorkflowStepStatus::Completed->value);
+            if ($allCompleted) {
+                $workflow->update([
+                    'status' => WorkflowStepStatus::Completed->value,
+                ]);
+                return new SupervisorResult(
+                    status: WorkflowStepStatus::Completed->value,
+                    isExpectedStatus: true,
+                    finiteState: true,
+                    nextAction: $nextAction,
+                );            
+            }
+
+            $workflow->update([
+                'status' => WorkflowStepStatus::CompletedWithErrors->value,
+            ]);
+            return new SupervisorResult(
+                status: WorkflowStepStatus::CompletedWithErrors->value,
+                isExpectedStatus: true,
+                finiteState: true,
+                nextAction: $nextAction,
+            );  
+        }
+
+        if (!$allFinite) {
+            $nextAction = 'wait';
+            $hasProcessing = $stepResults->some('status', WorkflowStepStatus::Processing->value);
+
+            if ($hasProcessing) {
+                $workflow->update([
+                    'status' => WorkflowStepStatus::Processing->value,
+                ]);
+                return new SupervisorResult(
+                    status: WorkflowStepStatus::Processing->value,
+                    isExpectedStatus: true,
+                    finiteState: false,
+                    nextAction: $nextAction,
+                );  
+            }
+
+            if (!$hasProcessing) {
+                $workflow->update([
+                    'status' => WorkflowStepStatus::Starting->value,
+                ]);
+                return new SupervisorResult(
+                    status: WorkflowStepStatus::Starting->value,
+                    isExpectedStatus: true,
+                    finiteState: false,
+                    nextAction: $nextAction,
+                );  
+            }
+        }
+
+        return new SupervisorResult(
+            status: WorkflowStepStatus::Unknown->value,
+            isExpectedStatus: false,
+            finiteState: false,
+            nextAction: 'wait',
+            timeoutInSecond: 30,
+        );
     }
 
-    public function supervise(): SupervisorResult
+    private function superviseStep(IndexingWorkflowStep $workflowStep): SupervisorResult
     {
-        $workflowStep = IndexingWorkflowStep::findOrFail($this->workflowStepId);
-
-        /** @var Collection<SupervisorResult>  */
+        /** @var Collection<SupervisorResult> */
         $bucketResults = collect();
         foreach ($workflowStep->buckets as $bucket) {
             $bucketResults[] = $this->superviseBucket($bucket);
         }
+
+        logger()->warning('---- BUCKET RESULTS ----');
+        logger(json_encode($bucketResults));
 
         if ($bucketResults->isEmpty()) {
             $workflowStep->update([
@@ -52,7 +152,6 @@ class WorkflowStepBucketSupervisor
                 $workflowStep->update([
                     'status' => WorkflowStepStatus::Failed->value,
                 ]);
-                $this->superviseWorkflow($workflowStep->workflow);
                 return new SupervisorResult(
                     status: WorkflowStepStatus::Failed->value,
                     isExpectedStatus: true,
@@ -66,7 +165,6 @@ class WorkflowStepBucketSupervisor
                 $workflowStep->update([
                     'status' => WorkflowStepStatus::Completed->value,
                 ]);
-                $this->superviseWorkflow($workflowStep->workflow);
                 return new SupervisorResult(
                     status: WorkflowStepStatus::Completed->value,
                     isExpectedStatus: true,
@@ -78,7 +176,6 @@ class WorkflowStepBucketSupervisor
             $workflowStep->update([
                 'status' => WorkflowStepStatus::CompletedWithErrors->value,
             ]);
-            $this->superviseWorkflow($workflowStep->workflow);
             return new SupervisorResult(
                 status: WorkflowStepStatus::CompletedWithErrors->value,
                 isExpectedStatus: true,
@@ -94,7 +191,6 @@ class WorkflowStepBucketSupervisor
                 $workflowStep->update([
                     'status' => WorkflowStepStatus::Processing->value,
                 ]);
-                $this->superviseWorkflow($workflowStep->workflow);
                 return new SupervisorResult(
                     status: WorkflowStepStatus::Processing->value,
                     isExpectedStatus: true,
@@ -116,7 +212,6 @@ class WorkflowStepBucketSupervisor
             }
         }
 
-        $this->superviseWorkflow($workflowStep->workflow);
         return new SupervisorResult(
             status: WorkflowStepStatus::Unknown->value,
             isExpectedStatus: false,
@@ -216,79 +311,11 @@ class WorkflowStepBucketSupervisor
         );
     }
 
-    private function superviseWorkflow(IndexingWorkflow $workflow): void
+    public function timeout(int $workflowId): void
     {
-        /** @var Collection<string> $stepStatuses */
-        $stepStatuses = collect();
-
-        /** @var IndexingWorkflowStep $step */
-        foreach ($workflow->steps as $step) {
-            $stepStatuses[] = $step->status;
-        }
-
-        $finiteStatuses = [
-            WorkflowStepStatus::Completed->value,
-            WorkflowStepStatus::CompletedWithErrors->value,
-            WorkflowStepStatus::Failed->value,
-        ];
-
-        $finiteSteps = $stepStatuses->filter(function (string $status) use ($finiteStatuses) {
-            return in_array($status, $finiteStatuses);
-        });
-        $allFinite = count($finiteSteps) === count($stepStatuses);
-        if ($allFinite) {
-            $allFailed = $stepStatuses->every(fn (string $status) => $status === WorkflowStepStatus::Failed->value);  
-            $allCompleted = $stepStatuses->every(fn (string $status) => $status === WorkflowStepStatus::Completed->value);  
-
-            if ($allFailed) {
-                $workflow->update([
-                    'status' => WorkflowStepStatus::Failed->value,
-                    'finished_at' => now(),
-                ]);
-                return;
-            }
-            if ($allCompleted) {
-                $workflow->update([
-                    'status' => WorkflowStepStatus::Completed->value,
-                    'finished_at' => now(),
-                ]);
-                return;
-            }
-            $workflow->update([
-                'status' => WorkflowStepStatus::CompletedWithErrors->value,
-                'finished_at' => now(),
-            ]);
-            return;
-        }
-
-        if (!$allFinite) {
-            $hasProcessing = $stepStatuses->some(fn (string $status) => $status === WorkflowStepStatus::Processing->value);
-            if ($hasProcessing) {
-                $workflow->update([
-                    'status' => WorkflowStepStatus::Processing->value
-                ]);
-                return;
-            }
-            if (!$hasProcessing) {
-                $workflow->update([
-                    'status' => WorkflowStepStatus::Starting->value
-                ]);
-                return;
-            }
-        }
-
+        $workflow = IndexingWorkflow::findOrFail($workflowId);
         $workflow->update([
-            'status' => WorkflowStepStatus::Unknown->value,
-            'finished_at' => now(),
-        ]);
-        return;
-    }
-
-    public function timeout(): void
-    {
-        $workflowStep = IndexingWorkflowStep::findOrFail($this->workflowStepId);
-        $workflowStep->update([
-            'status' => WorkflowStepStatus::Failed->value,
+            'status' => WorkflowStepStatus::Timeout->value,
             'finished_at' => now(),
         ]);
     }
