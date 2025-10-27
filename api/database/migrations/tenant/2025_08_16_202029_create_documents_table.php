@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
 
+            $table->string('source');
             $table->string('source_type');
             $table->string('source_id');
             $table->string('source_url')->nullable();
@@ -24,8 +25,6 @@ return new class extends Migration
             $table->string('priority')->nullable();
 
             $table->jsonb('metadata')->nullable();
-
-            $table->dateTime('indexed_at')->nullable();
             $table->timestamps();
         });
     }

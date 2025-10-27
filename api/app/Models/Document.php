@@ -19,7 +19,6 @@ class Document extends Model
 
     protected $casts = [
         'metadata' => 'array',
-        'indexed_at' => 'datetime',
     ];
 
     public function chunks(): HasMany
@@ -45,5 +44,12 @@ class Document extends Model
                 ->where('entity_type', get_class($document))
                 ->delete();
         });
+    }
+
+    public function indexingItem(): ?IndexingWorkflowStepItem
+    {
+        return IndexingWorkflowStepItem::query()
+            ->where('document_id', $this->id)
+            ->first();
     }
 }

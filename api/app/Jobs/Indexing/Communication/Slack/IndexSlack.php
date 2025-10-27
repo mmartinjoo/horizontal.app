@@ -2,59 +2,50 @@
 
 namespace App\Jobs\Indexing\Communication\Slack;
 
-use App\Jobs\Indexing\Communication\IndexMessage;
-use App\Jobs\Indexing\Communication\IndexThread;
-use App\Models\Document;
-use App\Services\Integration\Communication\DataTransferObjects\Message;
+use App\Jobs\Indexing\Communication\IndexChannel;
+use App\Jobs\Indexing\IndexingStepJob;
+use App\Models\IndexingWorkflowStep;
+use App\Models\IndexingWorkflowStepBucket;
+use App\Services\Integration\Communication\DataTransferObjects\Channel;
 use App\Services\Integration\Communication\Slack\Slack;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\LazyCollection;
+use Illuminate\Support\Str;
 
-class IndexSlack implements ShouldQueue
+class IndexSlack extends IndexingStepJob implements ShouldQueue
 {
     use Queueable;
 
     public function __construct()
     {
+        $this->onQueue('indexing');
     }
 
     public function handle(Slack $slack)
     {
+        /** @var IndexingWorkflowStep $indexingWorkflowStep */
+        $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
+        $indexingWorkflowStep->update([
+            'started_at' => now(),
+            'job_id' => $this->job->payload()['uuid'],
+        ]);
+
         $channels = $slack->channels();
+        
+        /** @var Channel $channel */
         foreach ($channels as $channel) {
-            $messages = $slack->messages($channel);
-            $newMessages = $this->rejectExistingMessages($messages);
-            foreach ($newMessages as $message) {
-                IndexMessage::dispatch($message, 'slack');
-            }
-
-            $threads = $slack->threads($channel);
-            $newThreads = $this->rejectExistingMessages($threads);
-            foreach ($newThreads as $thread) {
-                IndexThread::dispatch($thread);
-            }
+            $bucket = IndexingWorkflowStepBucket::create([
+                'indexing_workflow_step_id' => $indexingWorkflowStep->id,
+                'title' => "channel_" . Str::lower($channel->name),
+                'status' => 'starting',
+            ]);
+            
+            $job = new IndexChannel(
+                channel: $channel,
+                vendor: 'slack',
+                indexingWorkflowStepBucketId: $bucket->id,
+            );
+            dispatch($job);
         }
-    }
-
-    /**
-     * @param LazyCollection<Message> $messages
-     * @return LazyCollection<Message> $messages
-     */
-    private function rejectExistingMessages(LazyCollection $messages): LazyCollection
-    {
-        return LazyCollection::make(function () use ($messages) {
-            /** @var Message $message */
-            foreach ($messages as $message) {
-                $exists = Document::query()
-                    ->where('source_type', 'slack')
-                    ->where('source_id', $message->externalId)
-                    ->exists();
-
-                if (!$exists) {
-                    yield $message;
-                }
-            }
-        });
     }
 }

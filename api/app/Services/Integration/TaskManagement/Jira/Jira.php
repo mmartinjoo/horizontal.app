@@ -4,89 +4,125 @@ namespace App\Services\Integration\TaskManagement\Jira;
 
 use App\Models\JiraIntegration;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
-use Carbon\Carbon;
+use App\Services\Integration\TaskManagement\DataTransferObjects\IssueComment;
+use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
+use App\Services\Integration\TaskManagement\TaskManagement;
 use Exception;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\LazyCollection;
 
-class Jira
+class Jira implements TaskManagement
 {
     public function __construct(
         private JiraTokenManager $tokenManager
     ) {}
 
-    public function makeRequest(string $endpoint): Response
+    /**
+     * @return LazyCollection<Project>
+     */
+    public function projects(): LazyCollection
     {
-        $integration = $this->getValidIntegration();
+        return LazyCollection::make(function () {
+            $currentPage = 0;
+            $perPage = 100;
+            while (true) {
+                $response = $this->makeRequest('/rest/api/3/project/search', [
+                    'startAt' => $currentPage,
+                    'maxResults' => $perPage,
+                ]);
 
-        $url = $this->buildApiUrl($integration, $endpoint);
+                if (!$response->successful()) {
+                    throw new Exception('Failed to fetch Jira projects: ' . $response->body());
+                }
 
-        $response = Http::withToken($integration->access_token)
-            ->acceptJson()
-            ->throw()
-            ->get($url);
+                $data = $response->json();
+                foreach ($data['values'] as $projectData) {
+                    yield Project::fromJira($projectData);
+                }
 
-        // If token is invalid, try to refresh and retry once
-        if ($response->status() === 401) {
-            Log::info('Jira API returned 401, attempting token refresh', [
-                'integration_id' => $integration->id,
+                if ($data['isLast']) {
+                    break;
+                }
+                $currentPage++;
+                usleep(50_000);
+            }
+        });
+    }
+
+    /**
+     * @return LazyCollection<Issue>
+     */
+    public function issues(Project $project): LazyCollection
+    {
+        return LazyCollection::make(function () use ($project) {
+            $pageToken = null;
+            $perPage = 100;
+            while (true) {
+                $fromDate = now()->subMonths(3)->format('Y-m-d');
+                // +1 day to avoid time zone issues and get the newest issues as well
+                $toDate = now()->addDays(1)->format('Y-m-d');
+                $jql = "project={$project->id} and created>=\"$fromDate\" and created<=\"$toDate\" order by created desc";
+
+                $queryParams = [
+                    'jql' => $jql,
+                    'maxResults' => $perPage,
+                    'nextPageToken' => $pageToken,
+                    'fields' => 'summary,status,assignee,created,updated,description',
+                ];
+
+                $endpoint = '/rest/api/3/search/jql?' . http_build_query($queryParams);
+                $response = $this->makeRequest($endpoint);
+
+                if (!$response->successful()) {
+                    throw new Exception('Failed to fetch Jira issues: ' . $response->body());
+                }
+
+                $data = $response->json();
+                foreach ($data['issues'] as $issue) {
+                    $description = Arr::get($issue, 'fields.description')
+                        ? $this->extractTextFromDocument($issue['fields']['description'])
+                        : '';
+
+                    yield Issue::fromJira($issue, $description);
+                }
+
+                if ($data['isLast'] || empty($data['nextPageToken'])) {
+                    break;
+                }
+                $pageToken = $data['nextPageToken'];
+                usleep(50_000);
+            }
+        });
+    }
+
+    /**
+     * Since this API is pretty complicated in terms of pagination we don't use it
+     * It's unlikely that an issue has 100+ comments anyway
+     * @return LazyCollection<IssueComment>
+     */
+    public function comments(Issue $issue): LazyCollection
+    {
+        return LazyCollection::make(function () use ($issue) {
+            $currentPage = 0;
+            $perPage = 100;
+
+            $response = $this->makeRequest("/rest/api/3/issue/{$issue->id}/comment", [
+                'startAt' => $currentPage,
+                'maxResults' => $perPage,
             ]);
 
-            if ($this->tokenManager->refreshToken($integration)) {
-                // Retry with refreshed token
-                $integration->refresh();
-                $response = Http::withToken($integration->access_token)
-                    ->acceptJson()
-                    ->get($url);
+            if (!$response->successful()) {
+                throw new Exception('Failed to fetch issue comments: ' . $response->body());
             }
-        }
 
-        return $response;
-    }
-
-    public function getProjects(): array
-    {
-        $response = $this->makeRequest('/rest/api/3/project');
-
-        if (!$response->successful()) {
-            throw new Exception('Failed to fetch Jira projects: ' . $response->body());
-        }
-
-        return $response->json();
-    }
-
-    public function getIssues(string $projectKey, Carbon $from, Carbon $to): array
-    {
-        $fromDate = $from->format('Y-m-d');
-        $toDate = $to->format('Y-m-d');
-        $jql = "project={$projectKey} and created>=\"$fromDate\" and created<=\"$toDate\" order by created desc";
-
-        $queryParams = [
-            'jql' => $jql,
-            'maxResults' => 1_000,
-            'fields' => 'summary,status,assignee,created,updated,description',
-        ];
-
-        $endpoint = '/rest/api/3/search/jql?' . http_build_query($queryParams);
-        $response = $this->makeRequest($endpoint);
-
-        if (!$response->successful()) {
-            throw new Exception('Failed to fetch Jira issues: ' . $response->body());
-        }
-
-        return $response->json('issues');
-    }
-
-    public function getIssueComments(Issue $issue): array
-    {
-        $response = $this->makeRequest("/rest/api/3/issue/{$issue->id}/comment");
-
-        if (!$response->successful()) {
-            throw new Exception('Failed to fetch issue comments: ' . $response->body());
-        }
-
-        return $response->json('comments');
+            $data = $response->json();
+            foreach ($data['comments'] as $comment) {
+                yield IssueComment::fromJira($comment, $this->extractTextFromDocument($comment['body']));
+            }
+        });
     }
 
     public function getWorklogs(Issue $issue): array
@@ -149,5 +185,51 @@ class Jira
         $endpoint = ltrim($endpoint, '/');
 
         return 'https://api.atlassian.com/ex/jira/' . $integration->cloud_id . '/' . $endpoint;
+    }
+
+    public function makeRequest(string $endpoint, array $data = []): Response
+    {
+        $integration = $this->getValidIntegration();
+
+        $url = $this->buildApiUrl($integration, $endpoint);
+
+        $response = Http::withToken($integration->access_token)
+            ->acceptJson()
+            ->throw()
+            ->get($url);
+
+        // If token is invalid, try to refresh and retry once
+        if ($response->status() === 401) {
+            Log::info('Jira API returned 401, attempting token refresh', [
+                'integration_id' => $integration->id,
+            ]);
+
+            if ($this->tokenManager->refreshToken($integration)) {
+                // Retry with refreshed token
+                $integration->refresh();
+                $response = Http::withToken($integration->access_token)
+                    ->acceptJson()
+                    ->get($url);
+            }
+        }
+
+        return $response;
+    }
+
+    private function extractTextFromDocument(array $array): string
+    {
+        $textParts = [];
+        foreach ($array as $key => $value) {
+            if ($key === 'text' && is_string($value)) {
+                $textParts[] = $value;
+            } elseif (is_array($value)) {
+                $nestedText = $this->extractTextFromDocument($value);
+                if (! empty($nestedText)) {
+                    $textParts[] = $nestedText;
+                }
+            }
+        }
+
+        return implode(' ', $textParts);
     }
 }

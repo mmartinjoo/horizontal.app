@@ -10,12 +10,9 @@ return new class extends Migration
     {
         Schema::create('indexing_workflows', function (Blueprint $table) {
             $table->id();
-            $table->string('integration');
-            $table->integer('overall_items')->default(0);
+            $table->dateTime('started_at');
+            $table->dateTime('finished_at')->nullable();
             $table->string('status');
-            $table->string('job_id')->nullable();
-            $table->integer('deleted_items')->default(0);
-            $table->integer('skipped_items')->default(0);
             $table->timestamps();
         });
     }

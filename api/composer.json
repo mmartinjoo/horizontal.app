@@ -46,7 +46,8 @@
     },
     "scripts": {
         "pre-autoload-dump": [
-            "Aws\\Script\\Composer\\Composer::removeUnusedServices"
+            "Aws\\Script\\Composer\\Composer::removeUnusedServices",
+            "Google\\Task\\Composer::cleanup"
         ],
         "post-autoload-dump": [
             "@php artisan config:clear",
@@ -79,6 +80,11 @@
         },
         "aws/aws-sdk-php": [
             "Sqs"
+        ],
+        "google/apiclient-services": [
+            "Drive",
+            "HangoutsChat",
+            "Oauth2"
         ]
     },
     "config": {

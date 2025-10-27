@@ -3,10 +3,8 @@
 namespace App\Services\Integration\Storage\DataTransferObjects;
 
 use Carbon\Carbon;
-use Generator;
 use Illuminate\Support\Str;
 use JsonSerializable;
-use League\Flysystem\DirectoryListing;
 use League\Flysystem\FileAttributes;
 
 class File implements JsonSerializable

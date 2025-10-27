@@ -3,10 +3,11 @@
 namespace App\Jobs\Indexing\CodeRepository;
 
 use App\Exceptions\NoContentToIndexException;
+use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentComment;
-use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStepItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\CodeRepository\CodeRepository;
@@ -16,21 +17,24 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;
 use Exception;
 
-class IndexPullRequest implements ShouldQueue
+class IndexPullRequest extends IndexingStepItemJob implements ShouldQueue
 {
     use Queueable;
 
     public function __construct(
         private PullRequest $pullRequest,
         private CodeRepository $codeRepository,
-        private int $indexingWorkflowId,
-    ) {}
+        private string $vendor,
+    ) {
+        $this->onQueue('indexing');
+    }
 
     public function handle(TextChunker $textChunker): void
     {
         try {
             $doc = Document::create([
-                'source_type' => 'github_pr',
+                'source' => $this->vendor,
+                'source_type' => 'pull_request',
                 'source_id' => $this->pullRequest->id,
                 'source_url' => $this->pullRequest->url,
                 'title' => $this->pullRequest->title,
@@ -38,25 +42,25 @@ class IndexPullRequest implements ShouldQueue
                 'metadata' => $this->pullRequest,
             ]);
             
-            $indexingItem = IndexingWorkflowItem::create([
-                'indexing_workflow_id' => $this->indexingWorkflowId,
+            $indexingWorkflowStepItem = IndexingWorkflowStepItem::create([
+                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
                 'data' => $this->pullRequest,
                 'status' => 'processing',
                 'document_id' => $doc->id,
-                'job_ids' => [$this->job->payload()['uuid']],
+                'job_id' => $this->job->payload()['uuid'],
             ]);
 
             $preview = $this->pullRequest->title;
             if ($this->pullRequest->description) {
                 $chunks = $textChunker->chunk($this->pullRequest->description);
                 if (count($chunks) === 0) {
-                    $indexingItem->update([
+                    $indexingWorkflowStepItem->update([
                         'status' => 'warning',
                     ]);
                     throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->pullRequest));
                 }
                 if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
-                    $indexingItem->update([
+                    $indexingWorkflowStepItem->update([
                         'status' => 'warning',
                     ]);
                     throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->pullRequest));
@@ -96,14 +100,12 @@ class IndexPullRequest implements ShouldQueue
 
             $doc->update([
                 'preview' => $preview,
-                'indexed_at' => now(),
             ]);
-            $indexingItem->update([
+            $indexingWorkflowStepItem->update([
                 'status' => 'completed',
             ]);
-            $this->updateWorkflowStatus($indexingItem);
         } catch (Exception $e) {
-            $indexingItem->update([
+            $indexingWorkflowStepItem->update([
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
             ]);
@@ -127,23 +129,5 @@ class IndexPullRequest implements ShouldQueue
         }
 
         return $participant;
-    }
-
-    private function updateWorkflowStatus(IndexingWorkflowItem $indexingItem): void
-    {
-        $workflow = $indexingItem->indexing_workflow;
-        if (!$workflow) {
-            return;
-        }
-
-        $hasQueuedItems = $workflow->items()
-            ->whereIn('status', ['queued', 'processing'])
-            ->exists();
-
-        if (!$hasQueuedItems) {
-            $workflow->update([
-                'status' => 'completed',
-            ]);
-        }
     }
 }

@@ -2,67 +2,68 @@
 
 namespace App\Jobs\Indexing\Storage;
 
+use App\Enums\Indexing\WorkflowStatus;
 use App\Exceptions\NoContentToIndexException;
+use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
 use App\Models\DocumentChunk;
-use App\Models\IndexingWorkflow;
-use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStepItem;
 use App\Models\Participant;
 use App\Services\File\PdfParser;
 use App\Services\Indexing\TextChunker;
+use App\Services\Integration\Factory;
 use App\Services\Integration\Storage\DataTransferObjects\File;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
-use Exception;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
-class IndexFile implements ShouldQueue
+class IndexFile extends IndexingStepItemJob implements ShouldQueue
 {
-    use Queueable;
     use Batchable;
+    use Queueable;
 
-    public function __construct(        
+    private ?int $createdIndexingWorkflowItemId = null;
+
+    public function __construct(
         private File $file,
-        private int $indexingWorkflowId,        
         private string $vendor,
     ) {
+        $this->onQueue('indexing');
     }
 
     public function handle(
         GoogleDrive $drive,
         TextChunker $textChunker,
         PdfParser $pdfParser,
-        Factory $storageFactory,
+        Factory $integrationFactory,
     ): void {
         try {
             $document = Document::create([
-                'source_type' => 'google_drive',
+                'source' => $this->vendor,
+                'source_type' => 'file',
                 'source_id' => $this->file->extraMetadata()['id'],
                 'title' => $this->file->path(),
                 'metadata' => $this->file,
                 'priority' => 'high',
             ]);
-            $indexingWorkflowItem = IndexingWorkflowItem::create([
-                'indexing_workflow_id' => $this->indexingWorkflowId,
+            $indexingWorkflowItem = IndexingWorkflowStepItem::create([
+                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
                 'data' => $this->file,
-                'status' => 'downloading',
+                'status' => WorkflowStatus::Processing->value,
                 'document_id' => $document->id,
-                'job_ids' => [$this->job->payload()['uuid']],
+                'job_id' => $this->job->payload()['uuid'],
             ]);
+            $this->createdIndexingWorkflowItemId = $indexingWorkflowItem->id;
 
             $drive->downloadFile($this->file);
-            $indexingWorkflowItem->update([
-                'status' => 'downloaded',
-            ]);
-
             if ($this->file->mimeType() === 'application/pdf') {
                 $this->indexPDF($pdfParser, $textChunker, $indexingWorkflowItem);
                 $indexingWorkflowItem->update([
-                    'status' => 'completed',
+                    'status' => WorkflowStatus::Completed->value,
                 ]);
-                $this->updateWorkflowStatus($indexingWorkflowItem);
                 return;
             } else {
                 $content = Storage::read($this->file->path());
@@ -70,58 +71,73 @@ class IndexFile implements ShouldQueue
 
             if (strlen($content) === 0) {
                 $indexingWorkflowItem->update([
-                    'status' => 'warning',
+                    'status' => WorkflowStatus::Completed->value,
                 ]);
-                throw new NoContentToIndexException('File is empty: ' . json_encode($this->file));
+                throw new NoContentToIndexException('File is empty: '.json_encode($this->file));
             }
 
             $chunks = $textChunker->chunk($content);
             if (count($chunks) === 0) {
                 $indexingWorkflowItem->update([
-                    'status' => 'warning',
+                    'status' => WorkflowStatus::Completed->value,
                 ]);
-                throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->file) . '; content: ' . $content);
+                throw new NoContentToIndexException('Chunk is empty: '.json_encode($this->file).'; content: '.$content);
             }
             if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
                 $indexingWorkflowItem->update([
-                    'status' => 'warning',
+                    'status' => WorkflowStatus::Completed->value,
                 ]);
-                throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->file) . '; content: ' . $content);
+                throw new NoContentToIndexException('Chunk contains one empty item: '.json_encode($this->file).'; content: '.$content);
             }
 
             foreach ($chunks as $i => $chunk) {
                 DocumentChunk::create([
                     'document_id' => $document->id,
                     'body' => $chunk,
-                    'position' => $i+1,
+                    'position' => $i + 1,
                 ]);
             }
 
-            $this->addParticipants($document, $storageFactory);
+            $this->addParticipants($document, $integrationFactory);
 
             $document->update([
                 'preview' => $chunks->first(),
-                'indexed_at' => now(),
             ]);
             $indexingWorkflowItem->update([
-                'status' => 'completed',
+                'status' => WorkflowStatus::Completed->value,
             ]);
-            $this->updateWorkflowStatus($indexingWorkflowItem);
-        } catch (Exception $e) {
-            $indexingWorkflowItem->update([
-                'status' => 'failed',
-                'error_message' => $e->getMessage(),
-            ]);
-        }
-        finally {
+        } catch (Throwable $e) {       
+            if (!$this->createdIndexingWorkflowItemId) {
+                throw $e;
+            }
+
+            $item = IndexingWorkflowStepItem::findOrFail($this->createdIndexingWorkflowItemId);
+
+            // if the file is a weird, unknown format Postgres can throw a "Character not in repertoire invalid byte sequence for encoding 'UTF8'" exception
+            // which cannot be saved in the `error_message` column. so instead of saving the message
+            // `update` would throw another exception
+            try {
+                $item->update(attributes: [
+                    'status' => WorkflowStatus::Failed->value,
+                    'error_message' => $e->getMessage(),
+                ]); 
+            } catch (Throwable $e) {
+                $item->update([
+                    'status' => WorkflowStatus::Failed->value,
+                    'error_message' => 'probably "Character not in repertoire". check the related job ID',
+                ]);
+                throw $e;
+            }
+            throw $e;
+        } finally {
             Storage::delete($this->file->path());
         }
     }
 
-    private function addParticipants(Document $document, Factory $storageFactory)
+    private function addParticipants(Document $document, Factory $integrationFactory)
     {
-        $storage = $storageFactory->create($this->vendor);
-        foreach ($storage->getRevisionAuthors($this->file) as $author) {
+        $storage = $integrationFactory->createStorage($this->vendor);
+        foreach ($storage->revisionAuthors($this->file) as $author) {
             $p = Participant::getOrCreate($author);
             $document->participants()->attach($p->id, [
                 'context' => 'revision author',
@@ -135,7 +151,7 @@ class IndexFile implements ShouldQueue
             ]);
         }
 
-        foreach ($storage->getComments($this->file) as $comment) {
+        foreach ($storage->comments($this->file) as $comment) {
             $p = Participant::getOrCreate($comment['author']);
             $document->comments()->create([
                 'author_id' => $p->id,
@@ -154,7 +170,7 @@ class IndexFile implements ShouldQueue
         }
     }
 
-    private function indexPDF(PdfParser $pdfParser, TextChunker $textChunker, IndexingWorkflowItem $indexingWorkflowItem)
+    private function indexPDF(PdfParser $pdfParser, TextChunker $textChunker, IndexingWorkflowStepItem $indexingWorkflowItem)
     {
         $indexingWorkflowItem->update([
             'status' => 'parsing',
@@ -177,33 +193,16 @@ class IndexFile implements ShouldQueue
                 DocumentChunk::create([
                     'document_id' => $indexingWorkflowItem->document->id,
                     'body' => $chunk,
-                    'position' => $i+1,
+                    'position' => $i + 1,
                 ]);
             }
         }
 
         $indexingWorkflowItem->document()->update([
             'preview' => $firstChunk,
-            'indexed_at' => now(),
         ]);
         $indexingWorkflowItem->update([
             'status' => 'prepared',
         ]);
-    }
-
-
-    private function updateWorkflowStatus(IndexingWorkflowItem $indexingWorkflowItem)
-    {
-        /** @var IndexingWorkflow $workflow */
-        $workflow = $indexingWorkflowItem->indexing_workflow;
-        $hasQueuedItems = $workflow->items()
-            ->whereIn('status', ['queued', 'processing'])
-            ->exists();
-
-        if (!$hasQueuedItems) {
-            $workflow->update([
-                'status' => 'completed',
-            ]);
-        }
     }
 }

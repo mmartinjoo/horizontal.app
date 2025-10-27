@@ -3,80 +3,94 @@
 namespace App\Jobs\Indexing\CodeRepository;
 
 use App\Exceptions\NoContentToIndexException;
+use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
 use App\Models\DocumentChunk;
-use App\Models\IndexingWorkflowItem;
+use App\Models\IndexingWorkflowStepItem;
 use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Issue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Str;
+use Throwable;
 
-class IndexIssue implements ShouldQueue
+class IndexIssue extends IndexingStepItemJob implements ShouldQueue
 {
     use Queueable;
 
+    private ?int $createdIndexingWorkflowItemId = null;
+
     public function __construct(
         private Issue $issue,
-        private int $indexingWorkflowId,
+        private string $vendor,
     ) {
+        $this->onQueue('indexing');
     }
 
     public function handle(TextChunker $textChunker)
     {
-        $doc = Document::create([
-            'source_type' => 'github_issue',
-            'source_id' => $this->issue->externalId,
-            'source_url' => $this->issue->url,
-            'title' => $this->issue->title,
-            'priority' => 'high',
-            'metadata' => $this->issue,
-        ]);
-        
-        $indexingItem = IndexingWorkflowItem::create([
-            'indexing_workflow_id' => $this->indexingWorkflowId,
-            'data' => $this->issue,
-            'status' => 'processing',
-            'document_id' => $doc->id,
-            'job_ids' => [$this->job->payload()['uuid']],
-        ]);
+        try {
+            $doc = Document::create([
+                'source' => $this->vendor,
+                'source_type' => 'issue',
+                'source_id' => $this->issue->externalId,
+                'source_url' => $this->issue->url,
+                'title' => $this->issue->title,
+                'priority' => 'high',
+                'metadata' => $this->issue,
+            ]);
+            
+            $indexingWorkflowItem = IndexingWorkflowStepItem::create([
+                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
+                'data' => $this->issue,
+                'status' => 'processing',
+                'document_id' => $doc->id,
+                'job_id' => $this->job->payload()['uuid'],
+            ]);
+            $this->createdIndexingWorkflowItemId = $indexingWorkflowItem->id;
 
-        $preview = $this->issue->title;
-        if ($this->issue->body) {
-            $chunks = $textChunker->chunk($this->issue->body);
-            if (count($chunks) === 0) {
-                $indexingItem->update([
-                    'status' => 'warning',
-                ]);
-                throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->issue));
+            $preview = $this->issue->title;
+            if ($this->issue->body) {
+                $chunks = $textChunker->chunk($this->issue->body);
+                if (count($chunks) === 0) {
+                    $indexingWorkflowItem->update([
+                        'status' => 'warning',
+                    ]);
+                    throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->issue));
+                }
+                if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
+                    $indexingWorkflowItem->update([
+                        'status' => 'warning',
+                    ]);
+                    throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->issue));
+                }
+                foreach ($chunks as $i => $chunk) {
+                    DocumentChunk::create([
+                        'document_id' => $doc->id,
+                        'body' => $chunk,
+                        'position' => $i+1,
+                    ]);
+                }
+                $preview = $chunks->first();
             }
-            if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
-                $indexingItem->update([
-                    'status' => 'warning',
-                ]);
-                throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->issue));
-            }
-            foreach ($chunks as $i => $chunk) {
-                DocumentChunk::create([
-                    'document_id' => $doc->id,
-                    'body' => $chunk,
-                    'position' => $i+1,
-                ]);
-            }
-            $preview = $chunks->first();
+
+            $this->addParticipant($doc, $this->issue->author, 'author');
+
+            $doc->update([
+                'preview' => $preview,
+            ]);
+            $indexingWorkflowItem->update([
+                'status' => 'completed',
+            ]);
+        } catch (Throwable $e) {
+            $indexingWorkflowItem->update([
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+            ]);
+            throw $e;
         }
-
-        $this->addParticipant($doc, $this->issue->author, 'author');
-
-        $doc->update([
-            'preview' => $preview,
-            'indexed_at' => now(),
-        ]);
-        $indexingItem->update([
-            'status' => 'completed',
-        ]);
-        $this->updateWorkflowStatus($indexingItem);
+        
     }
 
     private function addParticipant(Document $doc, string $username, string $context): Participant
@@ -94,23 +108,5 @@ class IndexIssue implements ShouldQueue
         }
 
         return $participant;
-    }
-
-    private function updateWorkflowStatus(IndexingWorkflowItem $indexingItem): void
-    {
-        $workflow = $indexingItem->indexing_workflow;
-        if (!$workflow) {
-            return;
-        }
-
-        $hasQueuedItems = $workflow->items()
-            ->whereIn('status', ['queued', 'processing'])
-            ->exists();
-
-        if (!$hasQueuedItems) {
-            $workflow->update([
-                'status' => 'completed',
-            ]);
-        }
     }
 }

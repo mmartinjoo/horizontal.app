@@ -15,13 +15,15 @@ class UpdateSlackMessageLinks implements ShouldQueue
 
     public function __construct()
     {
+        $this->onQueue('indexing');
     }
 
     public function handle(Slack $slack): void
     {
         $messages = Document::query()
             ->select('id', 'metadata', 'source_id')
-            ->where('source_type', 'slack')
+            ->where('source', 'slack')
+            ->where('source_type', 'message')
             ->whereNull('source_url')
             ->limit(100)
             ->get();
