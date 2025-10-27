@@ -20,9 +20,11 @@ use App\Services\Integration\TaskManagement\Linear\Linear;
 
 class TestController extends Controller
 {
-    public function index(Orchestrator $orchestrator)
+    public function index(Jira $jira)
     {
-        $orchestrator->schedule();
+        foreach ($jira->projects() as $project) {
+            dump($project);
+        }
     }
 
     public function token()

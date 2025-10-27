@@ -27,7 +27,7 @@ class Project
         return new static(
             id: $data['id'],
             title: $data['name'],
-            url: '',
+            url: $data['self'],
         );
     }
 }

@@ -21,50 +21,34 @@ class Jira implements TaskManagement
         private JiraTokenManager $tokenManager
     ) {}
 
-    public function makeRequest(string $endpoint): Response
-    {
-        $integration = $this->getValidIntegration();
-
-        $url = $this->buildApiUrl($integration, $endpoint);
-
-        $response = Http::withToken($integration->access_token)
-            ->acceptJson()
-            ->throw()
-            ->get($url);
-
-        // If token is invalid, try to refresh and retry once
-        if ($response->status() === 401) {
-            Log::info('Jira API returned 401, attempting token refresh', [
-                'integration_id' => $integration->id,
-            ]);
-
-            if ($this->tokenManager->refreshToken($integration)) {
-                // Retry with refreshed token
-                $integration->refresh();
-                $response = Http::withToken($integration->access_token)
-                    ->acceptJson()
-                    ->get($url);
-            }
-        }
-
-        return $response;
-    }
-
     /**
      * @return LazyCollection<Project>
      */
     public function projects(): LazyCollection
     {
         return LazyCollection::make(function () {
-            $response = $this->makeRequest('/rest/api/3/project');
+            $currentPage = 0;
+            $perPage = 100;
+            while (true) {
+                $response = $this->makeRequest('/rest/api/3/project/search', [
+                    'startAt' => $currentPage,
+                    'maxResults' => $perPage,
+                ]);
 
-            if (!$response->successful()) {
-                throw new Exception('Failed to fetch Jira projects: ' . $response->body());
-            }
+                if (!$response->successful()) {
+                    throw new Exception('Failed to fetch Jira projects: ' . $response->body());
+                }
 
-            $projects = $response->json();
-            foreach ($projects as $projectData) {
-                yield Project::fromJira($projectData);
+                $data = $response->json();
+                foreach ($data['values'] as $projectData) {
+                    yield Project::fromJira($projectData);
+                }
+
+                if ($data['isLast']) {
+                    break;
+                }
+                $currentPage++;
+                usleep(50_000);
             }
         });
     }
@@ -179,6 +163,35 @@ class Jira implements TaskManagement
         $endpoint = ltrim($endpoint, '/');
 
         return 'https://api.atlassian.com/ex/jira/' . $integration->cloud_id . '/' . $endpoint;
+    }
+
+    public function makeRequest(string $endpoint, array $data = []): Response
+    {
+        $integration = $this->getValidIntegration();
+
+        $url = $this->buildApiUrl($integration, $endpoint);
+
+        $response = Http::withToken($integration->access_token)
+            ->acceptJson()
+            ->throw()
+            ->get($url);
+
+        // If token is invalid, try to refresh and retry once
+        if ($response->status() === 401) {
+            Log::info('Jira API returned 401, attempting token refresh', [
+                'integration_id' => $integration->id,
+            ]);
+
+            if ($this->tokenManager->refreshToken($integration)) {
+                // Retry with refreshed token
+                $integration->refresh();
+                $response = Http::withToken($integration->access_token)
+                    ->acceptJson()
+                    ->get($url);
+            }
+        }
+
+        return $response;
     }
 
     private function extractTextFromDocument(array $array): string
