@@ -42,20 +42,13 @@ class IssueComment
         );
     }
 
-    /**
-     * @return Collection<IssueComment>
-     */
-    public static function collectLinear(array $linearComments): Collection
+    public static function fromJira(array $data, string $parsedBody): self
     {
-        $comments = collect();
-        foreach ($linearComments as $comment) {
-            $comments[] = new static(
-                id: $comment['id'],
-                body: $comment['body'] ?? '',
-                author: $comment['user']['displayName'] ?? '',
-                createdAt: Carbon::parse($comment['createdAt']),
-            );
-        }
-        return $comments;
+        return new static(
+            id: $data['id'],
+            body: $parsedBody,
+            author: $data['author']['displayName'],
+            createdAt: Carbon::parse($data['created']),
+        );
     }
 }

@@ -81,6 +81,8 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
                 ]);
             }
 
+            $this->processIssueComments($document);
+
             $indexingWorkflowItem->update([
                 'status' => WorkflowStepItemStatus::Completed->value,
             ]);
@@ -96,9 +98,9 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
         }
     }
 
-    private function processIssueComments(Document $document, Issue $issue): void
+    private function processIssueComments(Document $document): void
     {
-        $comments = $this->adapter->comments($issue);
+        $comments = $this->adapter->comments($this->issue);
 
         /** @var IssueComment $comment */
         foreach ($comments as $comment) {

@@ -23,7 +23,7 @@ class IndexProject
         $jobs = [];
 
         /** @var Issue $issue */
-        foreach ($issues as $i => $issue) {
+        foreach ($issues as $issue) {
             if (!$this->issueNeedsIndexing($issue)) {                
                 continue;
             }

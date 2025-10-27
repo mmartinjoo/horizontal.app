@@ -2,15 +2,20 @@
 
 namespace App\Services\Integration\TaskManagement\Jira;
 
+use App\Jobs\Indexing\TaskManagement\TaskManagement;
 use App\Models\JiraIntegration;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
+use App\Services\Integration\TaskManagement\DataTransferObjects\IssueComment;
+use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\LazyCollection;
 
-class Jira
+class Jira implements TaskManagement
 {
     public function __construct(
         private JiraTokenManager $tokenManager
@@ -45,48 +50,73 @@ class Jira
         return $response;
     }
 
-    public function getProjects(): array
+    /**
+     * @return LazyCollection<Project>
+     */
+    public function projects(): LazyCollection
     {
-        $response = $this->makeRequest('/rest/api/3/project');
+        return LazyCollection::make(function () {
+            $response = $this->makeRequest('/rest/api/3/project');
 
-        if (!$response->successful()) {
-            throw new Exception('Failed to fetch Jira projects: ' . $response->body());
-        }
+            if (!$response->successful()) {
+                throw new Exception('Failed to fetch Jira projects: ' . $response->body());
+            }
 
-        return $response->json();
+            $projects = $response->json();
+            foreach ($projects as $projectData) {
+                yield Project::fromJira($projectData);
+            }
+        });
     }
 
-    public function getIssues(string $projectKey, Carbon $from, Carbon $to): array
+    /**
+     * @return LazyCollection<Issue>
+     */
+    public function issues(Project $project): LazyCollection
     {
-        $fromDate = $from->format('Y-m-d');
-        $toDate = $to->format('Y-m-d');
-        $jql = "project={$projectKey} and created>=\"$fromDate\" and created<=\"$toDate\" order by created desc";
+        return LazyCollection::make(function () use ($project) {
+            $fromDate = now()->subMonths(3)->format('Y-m-d');
+            $toDate = now()->format('Y-m-d');
+            $jql = "project={$project->id} and created>=\"$fromDate\" and created<=\"$toDate\" order by created desc";
 
-        $queryParams = [
-            'jql' => $jql,
-            'maxResults' => 1_000,
-            'fields' => 'summary,status,assignee,created,updated,description',
-        ];
+            $queryParams = [
+                'jql' => $jql,
+                'maxResults' => 1_000,
+                'fields' => 'summary,status,assignee,created,updated,description',
+            ];
 
-        $endpoint = '/rest/api/3/search/jql?' . http_build_query($queryParams);
-        $response = $this->makeRequest($endpoint);
+            $endpoint = '/rest/api/3/search/jql?' . http_build_query($queryParams);
+            $response = $this->makeRequest($endpoint);
 
-        if (!$response->successful()) {
-            throw new Exception('Failed to fetch Jira issues: ' . $response->body());
-        }
+            if (!$response->successful()) {
+                throw new Exception('Failed to fetch Jira issues: ' . $response->body());
+            }
 
-        return $response->json('issues');
+            $issues = $response->json('issues');
+            foreach ($issues as $issue) {
+                $description = Arr::get($issue, 'fields.description')
+                    ? $this->extractTextFromDocument($issue['fields']['description'])
+                    : '';
+
+                yield Issue::fromJira($issue, $description);
+            }
+        });
     }
 
-    public function getIssueComments(Issue $issue): array
+    public function comments(Issue $issue): LazyCollection
     {
-        $response = $this->makeRequest("/rest/api/3/issue/{$issue->id}/comment");
+        return LazyCollection::make(function () use ($issue) {
+            $response = $this->makeRequest("/rest/api/3/issue/{$issue->id}/comment");
 
-        if (!$response->successful()) {
-            throw new Exception('Failed to fetch issue comments: ' . $response->body());
-        }
+            if (!$response->successful()) {
+                throw new Exception('Failed to fetch issue comments: ' . $response->body());
+            }
 
-        return $response->json('comments');
+            $comments = $response->json('comments');
+            foreach ($comments as $comment) {
+                yield IssueComment::fromJira($comment, $this->extractTextFromDocument($comment['body']));
+            }
+        });
     }
 
     public function getWorklogs(Issue $issue): array
@@ -149,5 +179,22 @@ class Jira
         $endpoint = ltrim($endpoint, '/');
 
         return 'https://api.atlassian.com/ex/jira/' . $integration->cloud_id . '/' . $endpoint;
+    }
+
+    private function extractTextFromDocument(array $array): string
+    {
+        $textParts = [];
+        foreach ($array as $key => $value) {
+            if ($key === 'text' && is_string($value)) {
+                $textParts[] = $value;
+            } elseif (is_array($value)) {
+                $nestedText = $this->extractTextFromDocument($value);
+                if (! empty($nestedText)) {
+                    $textParts[] = $nestedText;
+                }
+            }
+        }
+
+        return implode(' ', $textParts);
     }
 }

@@ -4,10 +4,8 @@ namespace App\Jobs\Indexing\Storage\GoogleDrive;
 
 use App\Jobs\Indexing\IndexingStepJob;
 use App\Jobs\Indexing\Storage\IndexFolder;
-use App\Models\Document;
 use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepBucket;
-use App\Services\Integration\Storage\DataTransferObjects\File;
 use App\Services\Integration\Storage\DataTransferObjects\Folder;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use Illuminate\Contracts\Queue\ShouldQueue;

@@ -10,6 +10,7 @@ use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\IndexingStepJob;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Jobs\Indexing\Supervisor\SuperviseWorkflowStep;
+use App\Jobs\Indexing\TaskManagement\Jira\IndexJira;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
@@ -26,7 +27,7 @@ class Orchestrator
         ]);
 
         // This will be merged into one `integrations` table
-        $integrations = ['google_drive', 'slack', 'linear', 'github'];
+        $integrations = ['jira'];
         $jobs = [];
 
         foreach ($integrations as $integration) {
@@ -68,6 +69,7 @@ class Orchestrator
             'slack' => new IndexSlack(),
             'linear' => new IndexLinear(),
             'google_chat' => new IndexGoogleChat(),
+            'jira' => new IndexJira(),
             default => throw new Exception('unknown integration'),
         };
     }

@@ -4,10 +4,8 @@ namespace App\Jobs\Indexing\TaskManagement\Linear;
 
 use App\Jobs\Indexing\IndexingStepJob;
 use App\Jobs\Indexing\TaskManagement\IndexProject;
-use App\Models\Document;
 use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepBucket;
-use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
 use App\Services\Integration\TaskManagement\Linear\Linear;
 use Illuminate\Contracts\Queue\ShouldQueue;

@@ -21,4 +21,13 @@ class Project
             url: $data['url'],
         );
     }
+
+    public static function fromJira(array $data): self
+    {
+        return new static(
+            id: $data['id'],
+            title: $data['name'],
+            url: '',
+        );
+    }
 }

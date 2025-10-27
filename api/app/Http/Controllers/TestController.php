@@ -15,6 +15,7 @@ use App\Models\IndexingWorkflowStep;
 use App\Services\Indexing\Orchestrator\Orchestrator;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
+use App\Services\Integration\TaskManagement\Jira\Jira;
 use App\Services\Integration\TaskManagement\Linear\Linear;
 
 class TestController extends Controller
