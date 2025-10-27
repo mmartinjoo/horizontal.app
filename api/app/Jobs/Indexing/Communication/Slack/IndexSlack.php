@@ -4,10 +4,8 @@ namespace App\Jobs\Indexing\Communication\Slack;
 
 use App\Jobs\Indexing\Communication\IndexChannel;
 use App\Jobs\Indexing\IndexingStepJob;
-use App\Models\Document;
 use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepBucket;
-use App\Services\Integration\Communication\DataTransferObjects\Message;
 use App\Services\Integration\Communication\DataTransferObjects\Channel;
 use App\Services\Integration\Communication\Slack\Slack;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -43,18 +41,10 @@ class IndexSlack extends IndexingStepJob implements ShouldQueue
             
             $job = new IndexChannel(
                 channel: $channel,
-                slack: $slack,
+                vendor: 'slack',
                 indexingWorkflowStepBucketId: $bucket->id,
             );
             dispatch($job);
         }
-    }
-
-    private function messageNeedsIndexing(Message $message): bool
-    {
-        return !Document::query()
-            ->where('source_type', 'slack')
-            ->where('source_id', $message->externalId)
-            ->exists();
     }
 }

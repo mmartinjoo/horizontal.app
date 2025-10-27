@@ -3,6 +3,7 @@
 namespace App\Services\Integration\Communication\GoogleChat;
 
 use App\Models\GoogleIntegration;
+use App\Services\Integration\Communication\Communication;
 use App\Services\Integration\Communication\DataTransferObjects\Channel;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
 use Exception;
@@ -21,7 +22,7 @@ use Illuminate\Support\Str;
  * Google Chat is not that popular and the API is not that great.
  * These features aren't worth it.
  */
-class GoogleChat
+class GoogleChat implements Communication
 {
     private HangoutsChat $chat;
 
@@ -94,6 +95,14 @@ class GoogleChat
                 usleep(50_000);
             }
         });
+    }
+
+    /**
+     * @return LazyCollection<Message>
+     */
+    public function threads(Channel $channel): LazyCollection
+    {
+        return LazyCollection::empty();
     }
 
     private function getValidIntegration(): GoogleIntegration

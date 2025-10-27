@@ -2,6 +2,7 @@
 
 namespace App\Services\Integration\Communication\Slack;
 
+use App\Services\Integration\Communication\Communication;
 use App\Services\Integration\Communication\DataTransferObjects\Channel;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
 use App\Services\Integration\Communication\DataTransferObjects\User;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
 use Throwable;
 
-class Slack
+class Slack implements Communication
 {
     /** @var array<User> */
     private static array $userCache;

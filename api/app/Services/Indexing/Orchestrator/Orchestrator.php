@@ -5,6 +5,7 @@ namespace App\Services\Indexing\Orchestrator;
 use App\Enums\Indexing\WorkflowStatus;
 use App\Enums\Indexing\WorkflowStepStatus;
 use App\Jobs\Indexing\CodeRepository\GitHub\IndexGitHub;
+use App\Jobs\Indexing\Communication\GoogleChat\IndexGoogleChat;
 use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\IndexingStepJob;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
@@ -25,7 +26,7 @@ class Orchestrator
         ]);
 
         // This will be merged into one `integrations` table
-        $integrations = ['github'];
+        $integrations = ['slack', 'google_chat'];
         $jobs = [];
 
         foreach ($integrations as $integration) {
@@ -62,10 +63,11 @@ class Orchestrator
     private function createIndexingJob(string $integration): IndexingStepJob
     {
         return match ($integration) {
-            'google_drive' => new IndexGoogleDrive,
-            'github' => new IndexGitHub,
-            'slack' => new IndexSlack,
-            'linear' => new IndexLinear,
+            'google_drive' => new IndexGoogleDrive(),
+            'github' => new IndexGitHub(),
+            'slack' => new IndexSlack(),
+            'linear' => new IndexLinear(),
+            'google_chat' => new IndexGoogleChat(),
             default => throw new Exception('unknown integration'),
         };
     }

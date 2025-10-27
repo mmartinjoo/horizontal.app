@@ -7,7 +7,7 @@ use App\Models\Document;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\Communication\DataTransferObjects\Channel;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
-use App\Services\Integration\Communication\Slack\Slack;
+use App\Services\Integration\Factory;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
@@ -17,16 +17,17 @@ class IndexChannel implements ShouldQueue
 
     public function __construct(
         private Channel $channel,
-        private Slack $slack,
+        private string $vendor,
         private int $indexingWorkflowStepBucketId,
     ) {}
 
-    public function handle()
+    public function handle(Factory $factory)
     {
         $bucket = IndexingWorkflowStepBucket::findOrFail($this->indexingWorkflowStepBucketId);
 
-        $messages = $this->slack->messages($this->channel);
-        $threads = $this->slack->threads($this->channel);
+        $integration = $factory->createCommunication($this->vendor);
+        $messages = $integration->messages($this->channel);
+        $threads = $integration->threads($this->channel);
         $jobs = [];
 
         foreach ($messages as $message) {
@@ -36,7 +37,7 @@ class IndexChannel implements ShouldQueue
 
             $bucket->increment('overall_items');
 
-            $job = new IndexMessage($message, 'slack');
+            $job = new IndexMessage($message, $this->vendor);
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);            
             $jobs[] = $job;
         }
@@ -68,7 +69,7 @@ class IndexChannel implements ShouldQueue
     private function messageNeedsIndexing(Message $message): bool
     {
         return !Document::query()
-            ->where('source_type', 'slack')
+            ->where('source_type', $this->vendor)
             ->where('source_id', $message->externalId)
             ->exists();
     }
