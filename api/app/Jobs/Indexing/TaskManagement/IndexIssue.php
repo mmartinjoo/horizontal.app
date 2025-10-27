@@ -13,6 +13,7 @@ use App\Models\Participant;
 use App\Services\Indexing\TextChunker;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use App\Services\Integration\TaskManagement\DataTransferObjects\IssueComment;
+use App\Services\Integration\TaskManagement\TaskManagement;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;

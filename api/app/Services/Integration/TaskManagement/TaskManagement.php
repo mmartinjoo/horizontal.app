@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\Indexing\TaskManagement;
+namespace App\Services\Integration\TaskManagement;
 
 use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;

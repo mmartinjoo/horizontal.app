@@ -2,7 +2,6 @@
 
 namespace App\Services\Integration;
 
-use App\Jobs\Indexing\TaskManagement\TaskManagement;
 use App\Services\Indexing\FilePrioritizer;
 use App\Services\Integration\CodeRepository\CodeRepository;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
@@ -16,6 +15,7 @@ use App\Services\Integration\TaskManagement\Jira\Jira;
 use App\Services\Integration\TaskManagement\Jira\JiraTokenManager;
 use App\Services\Integration\TaskManagement\Linear\Linear;
 use App\Services\Integration\TaskManagement\Linear\LinearTokenManager;
+use App\Services\Integration\TaskManagement\TaskManagement;
 use Exception;
 
 class Factory

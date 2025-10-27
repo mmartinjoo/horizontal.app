@@ -2,12 +2,11 @@
 
 namespace App\Services\Integration\TaskManagement\Linear;
 
-use App\Jobs\Indexing\TaskManagement\TaskManagement;
 use App\Models\LinearIntegration;
-use App\Services\Integration\CodeRepository\DataTransferObjects\Comment;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use App\Services\Integration\TaskManagement\DataTransferObjects\IssueComment;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
+use App\Services\Integration\TaskManagement\TaskManagement;
 use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
