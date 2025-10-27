@@ -42,7 +42,8 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
     ): void {
         try {
             $document = Document::create([
-                'source_type' => $this->vendor,
+                'source' => $this->vendor,
+                'source_type' => 'file',
                 'source_id' => $this->file->extraMetadata()['id'],
                 'title' => $this->file->path(),
                 'metadata' => $this->file,

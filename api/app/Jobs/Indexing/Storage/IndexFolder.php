@@ -41,7 +41,8 @@ class IndexFolder implements ShouldQueue
             $bucket->increment('overall_items');
 
             Document::query()
-                ->where('source_type', $this->vendor)
+                ->where('source', $this->vendor)
+                ->where('source_type', 'file')
                 ->where('source_id', $file->extraMetadata()['id'])
                 ->delete();            
 
@@ -65,8 +66,9 @@ class IndexFolder implements ShouldQueue
     private function fileNeedsIndexing(File $file): bool
     {
         $existingDocument = Document::query()
-            ->where('source_id', $file->extraMetadata()['id'])
-            ->where('source_type', $this->vendor)
+            ->where('source', $this->vendor)
+            ->where('source_type', 'file')
+            ->where('source_id', $file->extraMetadata()['id'])            
             ->first();
 
         if ($existingDocument === null) {

@@ -39,12 +39,18 @@ class IndexProject implements ShouldQueue
             }
 
             Document::query()
+                ->where('source', $this->vendor)
+                ->where('source_type', 'issue')
                 ->where('source_id', $issue->id)
                 ->delete();
 
             $bucket->increment('overall_items');
 
-            $job = new IndexIssue($issue, $taskManagement);
+            $job = new IndexIssue(
+                issue: $issue, 
+                adapter: $taskManagement,
+                vendor: $this->vendor,
+            );
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
             $jobs[] = $job;
         }
@@ -65,8 +71,9 @@ class IndexProject implements ShouldQueue
     private function issueNeedsIndexing(Issue $issue): bool
     {
         $existingDocument = Document::query()
+            ->where('source', $this->vendor)
+            ->where('source_type', 'issue')
             ->where('source_id', $issue->id)
-            ->where('source_type', 'linear')
             ->first();
 
         if ($existingDocument === null) {
