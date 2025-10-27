@@ -11,6 +11,7 @@ use App\Models\IndexingWorkflowStepItem;
 use App\Models\Participant;
 use App\Services\File\PdfParser;
 use App\Services\Indexing\TextChunker;
+use App\Services\Integration\Factory;
 use App\Services\Integration\Storage\DataTransferObjects\File;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use Illuminate\Bus\Batchable;
@@ -35,7 +36,7 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
         GoogleDrive $drive,
         TextChunker $textChunker,
         PdfParser $pdfParser,
-        Factory $storageFactory,
+        Factory $integrationFactory,
     ): void {
         try {
             $document = Document::create([
@@ -94,7 +95,7 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
                 ]);
             }
 
-            $this->addParticipants($document, $storageFactory);
+            $this->addParticipants($document, $integrationFactory);
 
             $document->update([
                 'preview' => $chunks->first(),
@@ -130,9 +131,9 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
         }
     }
 
-    private function addParticipants(Document $document, Factory $storageFactory)
+    private function addParticipants(Document $document, Factory $integrationFactory)
     {
-        $storage = $storageFactory->create($this->vendor);
+        $storage = $integrationFactory->createStorage($this->vendor);
         foreach ($storage->getRevisionAuthors($this->file) as $author) {
             $p = Participant::getOrCreate($author);
             $document->participants()->attach($p->id, [

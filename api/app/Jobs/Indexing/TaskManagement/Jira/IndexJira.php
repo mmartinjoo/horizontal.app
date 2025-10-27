@@ -38,7 +38,7 @@ class IndexJira extends IndexingStepJob implements ShouldQueue
 
             $job = new IndexProject(
                 project: $project,
-                adapter: $jira,
+                vendor: 'jira',
                 indexingWorkflowStepBucketId: $bucket->id,
             );
             dispatch($job);

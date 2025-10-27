@@ -39,7 +39,7 @@ class IndexGitHub extends IndexingStepJob implements ShouldQueue
             ]);
             $job = new IndexRepository(
                 repository: $repo,
-                adapter: $github,
+                vendor: 'github',
                 indexingWorkflowStepBucketId: $bucket->id,
             );
             dispatch($job);

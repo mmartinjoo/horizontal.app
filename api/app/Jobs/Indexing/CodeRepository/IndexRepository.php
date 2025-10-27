@@ -5,10 +5,10 @@ namespace App\Jobs\Indexing\CodeRepository;
 use App\Enums\Indexing\WorkflowStepStatus;
 use App\Models\Document;
 use App\Models\IndexingWorkflowStepBucket;
-use App\Services\Integration\CodeRepository\CodeRepository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Issue;
 use App\Services\Integration\CodeRepository\DataTransferObjects\PullRequest;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
+use App\Services\Integration\Factory;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -19,16 +19,18 @@ class IndexRepository implements ShouldQueue
 
     public function __construct(
         private Repository $repository,
-        private CodeRepository $adapter,
+        private string $vendor,
         private int $indexingWorkflowStepBucketId,
     ) {}
 
-    public function handle()
+    public function handle(Factory $integrationFactory)
     {
+        $codeRepository = $integrationFactory->createCodeRepository($this->vendor);
+
         $bucket = IndexingWorkflowStepBucket::findOrFail($this->indexingWorkflowStepBucketId);
 
-        $pullRequests = $this->adapter->pullRequests($this->repository);
-        $issues = $this->adapter->issues($this->repository);
+        $pullRequests = $codeRepository->pullRequests($this->repository);
+        $issues = $codeRepository->issues($this->repository);
         $jobs = [];
 
         /** @var PullRequest $pullRequest */
@@ -43,7 +45,7 @@ class IndexRepository implements ShouldQueue
 
             $bucket->increment('overall_items');
 
-            $job = new IndexPullRequest($pullRequest, $this->adapter);
+            $job = new IndexPullRequest($pullRequest, $codeRepository);
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
             $jobs[] = $job;
         }

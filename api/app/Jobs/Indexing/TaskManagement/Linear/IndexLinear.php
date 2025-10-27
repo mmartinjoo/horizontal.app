@@ -36,7 +36,7 @@ class IndexLinear extends IndexingStepJob implements ShouldQueue
             ]);
             $job = new IndexProject(
                 project: $project,
-                adapter: $linear,
+                vendor: 'linear',
                 indexingWorkflowStepBucketId: $bucket->id,
             );
             dispatch($job);

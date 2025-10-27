@@ -5,6 +5,7 @@ namespace App\Jobs\Indexing\TaskManagement;
 use App\Enums\Indexing\WorkflowStepStatus;
 use App\Models\Document;
 use App\Models\IndexingWorkflowStepBucket;
+use App\Services\Integration\Factory;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Issue;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
 use Carbon\Carbon;
@@ -13,14 +14,16 @@ class IndexProject
 {
     public function __construct(
         private Project $project,
-        private TaskManagement $adapter,
+        private string $vendor,
         private int $indexingWorkflowStepBucketId,
     ) {}
 
-    public function handle()
+    public function handle(Factory $integrationFactory)
     {
+        $taskManagement = $integrationFactory->createTaskManagement($this->vendor);
         $bucket = IndexingWorkflowStepBucket::findOrFail($this->indexingWorkflowStepBucketId);
-        $issues = $this->adapter->issues($this->project);
+
+        $issues = $taskManagement->issues($this->project);
         $jobs = [];
 
         /** @var Issue $issue */
@@ -35,7 +38,7 @@ class IndexProject
 
             $bucket->increment('overall_items');
 
-            $job = new IndexIssue($issue, $this->adapter);
+            $job = new IndexIssue($issue, $taskManagement);
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
             $jobs[] = $job;
         }
