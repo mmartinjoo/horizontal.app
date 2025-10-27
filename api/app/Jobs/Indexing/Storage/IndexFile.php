@@ -4,10 +4,10 @@ namespace App\Jobs\Indexing\Storage;
 
 use App\Enums\Indexing\WorkflowStepItemStatus;
 use App\Exceptions\NoContentToIndexException;
+use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\IndexingWorkflowStepItem;
-use App\Models\IndexingWorkflowStep;
 use App\Models\Participant;
 use App\Services\File\PdfParser;
 use App\Services\Indexing\TextChunker;
@@ -19,14 +19,15 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
-class IndexFile implements ShouldQueue
+class IndexFile extends IndexingStepItemJob implements ShouldQueue
 {
     use Batchable;
     use Queueable;
 
+    private ?int $createdIndexingWorkflowItemId = null;
+
     public function __construct(
         private File $file,
-        private int $indexingWorkflowStepId,
         private string $vendor,
     ) {}
 
@@ -38,19 +39,20 @@ class IndexFile implements ShouldQueue
     ): void {
         try {
             $document = Document::create([
-                'source_type' => 'google_drive',
+                'source_type' => $this->vendor,
                 'source_id' => $this->file->extraMetadata()['id'],
                 'title' => $this->file->path(),
                 'metadata' => $this->file,
                 'priority' => 'high',
             ]);
             $indexingWorkflowItem = IndexingWorkflowStepItem::create([
-                'indexing_workflow_step_id' => $this->indexingWorkflowStepId,
+                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
                 'data' => $this->file,
                 'status' => WorkflowStepItemStatus::Processing->value,
                 'document_id' => $document->id,
                 'job_id' => $this->job->payload()['uuid'],
             ]);
+            $this->createdIndexingWorkflowItemId = $indexingWorkflowItem->id;
 
             $drive->downloadFile($this->file);
             if ($this->file->mimeType() === 'application/pdf') {
@@ -101,17 +103,23 @@ class IndexFile implements ShouldQueue
             $indexingWorkflowItem->update([
                 'status' => WorkflowStepItemStatus::Completed->value,
             ]);
-        } catch (Throwable $e) {
+        } catch (Throwable $e) {       
+            if (!$this->createdIndexingWorkflowItemId) {
+                throw $e;
+            }
+
+            $item = IndexingWorkflowStepItem::findOrFail($this->createdIndexingWorkflowItemId);
+
             // if the file is a weird, unknown format Postgres can throw a "Character not in repertoire invalid byte sequence for encoding 'UTF8'" exception
             // which cannot be saved in the `error_message` column. so instead of saving the message
             // `update` would throw another exception
             try {
-                $indexingWorkflowItem->update([
+                $item->update(attributes: [
                     'status' => WorkflowStepItemStatus::Failed->value,
                     'error_message' => $e->getMessage(),
-                ]);
+                ]); 
             } catch (Throwable $e) {
-                $indexingWorkflowItem->update([
+                $item->update([
                     'status' => WorkflowStepItemStatus::Failed->value,
                     'error_message' => 'probably "Character not in repertoire". check the related job ID',
                 ]);
@@ -120,13 +128,6 @@ class IndexFile implements ShouldQueue
             throw $e;
         } finally {
             Storage::delete($this->file->path());
-
-            $indexingWorkflowStep = IndexingWorkflowStep::query()                    
-                ->where('id', $this->indexingWorkflowStepId)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $indexingWorkflowStep->increment('processed_items');
         }
     }
 

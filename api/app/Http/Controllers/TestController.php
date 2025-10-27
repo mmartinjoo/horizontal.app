@@ -19,11 +19,9 @@ use App\Services\Integration\TaskManagement\Linear\Linear;
 
 class TestController extends Controller
 {
-    public function index(GoogleDrive $drive)
+    public function index(Orchestrator $orchestrator)
     {
-        foreach ($drive->folders() as $folder) {
-            dump($folder);
-        }
+        $orchestrator->schedule();
     }
 
     public function token()

@@ -2,9 +2,11 @@
 
 namespace App\Services\Integration;
 
+use App\Services\Indexing\FilePrioritizer;
 use App\Services\Integration\Communication\Communication;
 use App\Services\Integration\Communication\GoogleChat\GoogleChat;
 use App\Services\Integration\Communication\Slack\Slack;
+use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use Exception;
 
 class Factory
@@ -14,7 +16,15 @@ class Factory
         return match ($vendor) {
             'slack' => new Slack(config('services.slack.base_url'), config('services.slack.bot_user_oauth_token')),
             'google_chat' => new GoogleChat(),
-            default => throw new Exception('Unknown communincation tool'),
+            default => throw new Exception('Unknown communincation integration'),
+        };
+    }
+
+    public function createStorage(string $vendor)
+    {
+        return match ($vendor) {
+            'google_drive' => new GoogleDrive(new FilePrioritizer()),
+            default => throw new Exception('Unknown file storage integration'),
         };
     }
 }

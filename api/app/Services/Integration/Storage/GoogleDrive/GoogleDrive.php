@@ -86,10 +86,10 @@ class GoogleDrive implements StorageIntegration
     /**
      * @return LazyCollection<Folder>
      */
-    public function folders(string $directory = ''): LazyCollection
+    public function folders(string $root = ''): LazyCollection
     {
-        return LazyCollection::make(function () use ($directory) {
-            $listing = $this->fs->listContents($directory);
+        return LazyCollection::make(function () use ($root) {
+            $listing = $this->fs->listContents($root);
             foreach ($listing as $listingItem) {                
                 if (!$listingItem instanceof DirectoryAttributes) {
                     continue;
