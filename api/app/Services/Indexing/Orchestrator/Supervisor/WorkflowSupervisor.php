@@ -2,7 +2,6 @@
 
 namespace App\Services\Indexing\Orchestrator\Supervisor;
 
-use App\Enums\Indexing\WorkflowStepItemStatus;
 use App\Enums\Indexing\WorkflowStepStatus;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
@@ -193,7 +192,7 @@ class WorkflowSupervisor
 
             $failedCount = IndexingWorkflowStepItem::query()
                 ->where('indexing_workflow_step_bucket_id', $bucket->id)
-                ->where('status', WorkflowStepItemStatus::Failed->value)
+                ->where('status', WorkflowStepStatus::Failed->value)
                 ->count();
 
             // completely failed

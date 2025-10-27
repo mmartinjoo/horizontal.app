@@ -2,7 +2,6 @@
 
 namespace App\Services\Indexing\Orchestrator;
 
-use App\Enums\Indexing\WorkflowStatus;
 use App\Enums\Indexing\WorkflowStepStatus;
 use App\Jobs\Indexing\CodeRepository\GitHub\IndexGitHub;
 use App\Jobs\Indexing\Communication\GoogleChat\IndexGoogleChat;
@@ -23,7 +22,7 @@ class Orchestrator
     {
         $workflow = IndexingWorkflow::create([
             'started_at' => now(),
-            'status' => WorkflowStatus::Starting->value,
+            'status' => WorkflowStepStatus::Starting->value,
         ]);
 
         // This will be merged into one `integrations` table

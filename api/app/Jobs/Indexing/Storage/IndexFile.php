@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Indexing\Storage;
 
-use App\Enums\Indexing\WorkflowStepItemStatus;
+use App\Enums\Indexing\WorkflowStepStatus;
 use App\Exceptions\NoContentToIndexException;
 use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
@@ -51,7 +51,7 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
             $indexingWorkflowItem = IndexingWorkflowStepItem::create([
                 'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
                 'data' => $this->file,
-                'status' => WorkflowStepItemStatus::Processing->value,
+                'status' => WorkflowStepStatus::Processing->value,
                 'document_id' => $document->id,
                 'job_id' => $this->job->payload()['uuid'],
             ]);
@@ -61,7 +61,7 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
             if ($this->file->mimeType() === 'application/pdf') {
                 $this->indexPDF($pdfParser, $textChunker, $indexingWorkflowItem);
                 $indexingWorkflowItem->update([
-                    'status' => WorkflowStepItemStatus::Completed->value,
+                    'status' => WorkflowStepStatus::Completed->value,
                 ]);
                 return;
             } else {
@@ -70,7 +70,7 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
 
             if (strlen($content) === 0) {
                 $indexingWorkflowItem->update([
-                    'status' => WorkflowStepItemStatus::Completed->value,
+                    'status' => WorkflowStepStatus::Completed->value,
                 ]);
                 throw new NoContentToIndexException('File is empty: '.json_encode($this->file));
             }
@@ -78,13 +78,13 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
             $chunks = $textChunker->chunk($content);
             if (count($chunks) === 0) {
                 $indexingWorkflowItem->update([
-                    'status' => WorkflowStepItemStatus::Completed->value,
+                    'status' => WorkflowStepStatus::Completed->value,
                 ]);
                 throw new NoContentToIndexException('Chunk is empty: '.json_encode($this->file).'; content: '.$content);
             }
             if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
                 $indexingWorkflowItem->update([
-                    'status' => WorkflowStepItemStatus::Completed->value,
+                    'status' => WorkflowStepStatus::Completed->value,
                 ]);
                 throw new NoContentToIndexException('Chunk contains one empty item: '.json_encode($this->file).'; content: '.$content);
             }
@@ -103,7 +103,7 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
                 'preview' => $chunks->first(),
             ]);
             $indexingWorkflowItem->update([
-                'status' => WorkflowStepItemStatus::Completed->value,
+                'status' => WorkflowStepStatus::Completed->value,
             ]);
         } catch (Throwable $e) {       
             if (!$this->createdIndexingWorkflowItemId) {
@@ -117,12 +117,12 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
             // `update` would throw another exception
             try {
                 $item->update(attributes: [
-                    'status' => WorkflowStepItemStatus::Failed->value,
+                    'status' => WorkflowStepStatus::Failed->value,
                     'error_message' => $e->getMessage(),
                 ]); 
             } catch (Throwable $e) {
                 $item->update([
-                    'status' => WorkflowStepItemStatus::Failed->value,
+                    'status' => WorkflowStepStatus::Failed->value,
                     'error_message' => 'probably "Character not in repertoire". check the related job ID',
                 ]);
                 throw $e;

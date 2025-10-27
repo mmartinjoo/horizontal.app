@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Indexing\Communication;
 
-use App\Enums\Indexing\WorkflowStepItemStatus;
+use App\Enums\Indexing\WorkflowStepStatus;
 use App\Jobs\Indexing\IndexingStepItemJob;
 use App\Models\Document;
 use App\Models\IndexingWorkflowStepItem;
@@ -70,13 +70,13 @@ class IndexThread extends IndexingStepItemJob implements ShouldQueue
                 }
             }
             $indexingWorkflowItem->update([
-                'status' => WorkflowStepItemStatus::Completed->value,
+                'status' => WorkflowStepStatus::Completed->value,
             ]);
         } catch (Throwable $e) {
             if ($this->createdIndexingWorkStepItemId) {
                 $item = IndexingWorkflowStepItem::findOrFail($this->createdIndexingWorkStepItemId);
                 $item->update(attributes: [
-                    'status' => WorkflowStepItemStatus::Failed->value,
+                    'status' => WorkflowStepStatus::Failed->value,
                     'error_message' => $e->getMessage(),
                 ]); 
             }
