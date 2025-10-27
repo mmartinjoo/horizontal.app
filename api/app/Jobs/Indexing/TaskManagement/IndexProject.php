@@ -27,6 +27,10 @@ class IndexProject
                 continue;
             }
 
+            Document::query()
+                ->where('source_id', $issue->externalId)
+                ->delete();
+
             $bucket->increment('overall_items');
 
             $job = new IndexIssue($issue, $this->adapter);

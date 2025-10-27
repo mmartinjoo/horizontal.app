@@ -29,51 +29,50 @@ class IndexRepository implements ShouldQueue
 
         $pullRequests = $this->adapter->pullRequests($this->repository);
         $issues = $this->adapter->issues($this->repository);
-
-        $bucket->increment(
-            'overall_items', 
-            count($pullRequests)+count($issues),
-        );
-
-        if (count($pullRequests)+count($issues) === 0) {
-            $bucket->update([
-                'status' => WorkflowStepStatus::Completed->value,
-                'finished_at' => now(),
-            ]);
-            return;
-        }
+        $jobs = [];
 
         /** @var PullRequest $pullRequest */
         foreach ($pullRequests as $pullRequest) {
             if (!$this->pullRequestNeedsIndexing($pullRequest)) {
-                $bucket->increment('processed_items', 1);
-                $bucket->increment('skipped_items', 1);
                 continue;
             }
 
+            Document::query()
+                ->where('source_id', $pullRequest->id)
+                ->delete();
+
+            $bucket->increment('overall_items');
+
             $job = new IndexPullRequest($pullRequest, $this->adapter);
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
-            dispatch($job);
+            $jobs[] = $job;
         }
 
         /** @var Issue $issue */
         foreach ($issues as $issue) {
             if (!$this->issueNeedsIndexing($issue)) {
-                $bucket->increment('skipped_items', 1);
-                $bucket->increment('processed_items', 1);
                 continue;
             }
 
-            // Delete existing document if it exists
-            $count = Document::query()
-                ->where('source_type', 'github_issue')
+            Document::query()
                 ->where('source_id', $issue->externalId)
                 ->delete();
 
-            $bucket->increment('deleted_items', $count);
+            $bucket->increment('overall_items');
 
             $job = new IndexIssue($issue);
             $job->setIndexingWorkflowStepBucketId($this->indexingWorkflowStepBucketId);
+            $jobs[] = $job;
+        }
+
+        if (empty($jobs)) {
+            $bucket->update([
+                'status' => WorkflowStepStatus::Completed->value,
+                'finished_at' => now(),
+            ]);
+        }
+
+        foreach ($jobs as $job) {
             dispatch($job);
         }
     }
