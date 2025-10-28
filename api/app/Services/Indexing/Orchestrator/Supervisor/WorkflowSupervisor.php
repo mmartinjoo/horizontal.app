@@ -8,6 +8,7 @@ use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Models\IndexingWorkflowStepItem;
 use App\Services\Indexing\Orchestrator\DataTransferObject\SupervisorResult;
+use Google\Service\Workflows\Workflow;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -65,16 +66,14 @@ class WorkflowSupervisor
 
         $allFinite = $childResults->every('finiteState', true);
         if ($allFinite) {
-            $nextAction = 'terminate';
-            $entity->update([
-                'finished_at' => now(),
-            ]);
+            $nextAction = 'terminate';            
 
             $allFailed = $childResults->every('status', WorkflowStatus::Failed->value);
-            if ($allFailed) {
+            if ($allFailed) {                
                 $entity->update([
-                    'status' => WorkflowStatus::Failed->value],
-                );
+                    'status' => WorkflowStatus::Failed->value,
+                    'finished_at' => now(),
+                ]);
 
                 return new SupervisorResult(
                     status: WorkflowStatus::Failed->value,
@@ -86,9 +85,23 @@ class WorkflowSupervisor
 
             $allCompleted = $childResults->every('status', WorkflowStatus::Completed->value);
             if ($allCompleted) {
+                if ($entity instanceof IndexingWorkflow) {
+                    $entity->update([
+                        'status' => WorkflowStatus::ReadForNextStep->value],
+                    );
+
+                    return new SupervisorResult(
+                        status: WorkflowStatus::ReadForNextStep->value,
+                        isExpectedStatus: true,
+                        finiteState: false,
+                        nextAction: 'terminate',
+                    );    
+                }
+
                 $entity->update([
-                    'status' => WorkflowStatus::Completed->value],
-                );
+                    'status' => WorkflowStatus::Completed->value,
+                    'finished_at' => now(),
+                ]);
 
                 return new SupervisorResult(
                     status: WorkflowStatus::Completed->value,
@@ -98,8 +111,22 @@ class WorkflowSupervisor
                 );
             }
 
+            if ($entity instanceof IndexingWorkflow) {
+                $entity->update([
+                    'status' => WorkflowStatus::ReadForNextStep->value,
+                ]);
+
+                return new SupervisorResult(
+                    status: WorkflowStatus::ReadForNextStep->value,
+                    isExpectedStatus: true,
+                    finiteState: false,
+                    nextAction: 'wait',
+                );    
+            }
+
             $entity->update([
                 'status' => WorkflowStatus::CompletedWithErrors->value,
+                'finished_at' => now(),
             ]);
 
             return new SupervisorResult(

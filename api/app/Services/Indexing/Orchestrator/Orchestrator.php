@@ -7,6 +7,7 @@ use App\Jobs\Indexing\CodeRepository\GitHub\IndexGitHub;
 use App\Jobs\Indexing\Communication\GoogleChat\IndexGoogleChat;
 use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\IndexingStepJob;
+use App\Jobs\Indexing\Orchestrator\ScheduleGraphBuilding;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Jobs\Indexing\Supervisor\SuperviseWorkflow;
 use App\Jobs\Indexing\TaskManagement\Jira\IndexJira;
@@ -26,7 +27,7 @@ class Orchestrator
         ]);
 
         // This will be merged into one `integrations` table
-        $integrations = ['linear', 'jira'];
+        $integrations = ['jira'];
         $jobs = [];
 
         foreach ($integrations as $integration) {
@@ -51,6 +52,8 @@ class Orchestrator
 
         $supervisor = $this->createSupervisorJob($workflow);
         dispatch($supervisor);
+
+        dispatch(new ScheduleGraphBuilding($workflow->id));
     }
 
     private function createIndexingJob(string $integration): IndexingStepJob

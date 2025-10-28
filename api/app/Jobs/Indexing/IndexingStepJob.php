@@ -2,8 +2,6 @@
 
 namespace App\Jobs\Indexing;
 
-use App\Enums\Indexing\WorkflowStatus;
-use App\Models\IndexingWorkflowStep;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 

@@ -11,4 +11,5 @@ enum WorkflowStatus: string
     case Completed = 'completed';
     case Unknown = 'unknown';
     case Timeout = 'timeout';
+    case ReadForNextStep = 'ready_for_next_step';
 }
