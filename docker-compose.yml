@@ -3,19 +3,11 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-    ports:
-      - "9999:8000"
     volumes:
       - ./api:/var/www
       - ./api/storage:/var/www/storage
       - /var/www/vendor  # Anonymous volume for vendor to avoid host conflicts
       - /var/www/node_modules  # Anonymous volume for node_modules
-#    healthcheck:
-#      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-#      interval: 30s
-#      timeout: 5s
-#      retries: 3
-#      start_period: 40s
     depends_on:
       db:
         condition: service_healthy
@@ -30,8 +22,19 @@ services:
         php artisan migrate --force &&
         php artisan config:cache &&
         php artisan route:cache &&
-        php artisan serve --host=0.0.0.0 --port=8000
+        php-fpm
       "
+
+  nginx:
+    image: nginx:1.27.3-alpine
+    restart: unless-stopped    
+    ports:
+      - "9999:8000"
+    volumes:
+      - ./api/docker/nginx.conf:/etc/nginx/nginx.conf
+      - ./api:/var/www
+    depends_on:
+      - api
 
   worker-indexing:
     build:

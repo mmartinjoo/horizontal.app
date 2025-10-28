@@ -44,11 +44,18 @@ def get_tenant_domain(tenant_id: str) -> str:
 def create_workflow_bucket(tenant_id: str, data: Dict) -> int:
     # TODO: Use base API URL but set Host header for tenant identification
     tenant_domain = get_tenant_domain(tenant_id)
+    base_url = _get_base_api_url()
+    
+    headers = {
+        "Host": tenant_domain,
+    }
 
     print("++++ DOMAIN ++++")
     print(tenant_domain)
+    print("++++ BASE URL ++++")
+    print(base_url)
 
-    resp = requests.post(f"{tenant_domain}/api/workflows/buckets", json=data,)
+    resp = requests.post(f"{base_url}/api/workflows/buckets", json=data, headers=headers)
     if resp.status_code != 201:
         raise RuntimeError("Failed to create bucket")
 

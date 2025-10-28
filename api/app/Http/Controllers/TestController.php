@@ -22,7 +22,7 @@ class TestController extends Controller
 {
     public function index(Orchestrator $orchestrator)
     {
-        $orchestrator->schedule();
+        return tenancy()->tenant->company;
     }
 
     public function token()
