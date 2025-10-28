@@ -1,13 +1,20 @@
 import os
 import requests
+from typing import Dict
+from urllib.parse import urlparse
 
 cache = {}
 
 def get_graph_db_connection_info(tenant_id: str):
     if tenant_id in cache:
         return cache[tenant_id]
-    
-    resp = requests.get(f"{os.getenv('HORIZONTAL_API_URL')}/api/tenants/{tenant_id}")
+
+    # Use base API URL but set Host header for tenant identification
+    base_url = _get_base_api_url()
+    tenant_domain = get_tenant_domain(tenant_id)
+
+    headers = {"Host": tenant_domain}
+    resp = requests.get(f"{base_url}/api/tenants/{tenant_id}", headers=headers)
     if resp.status_code != 200:
         raise RuntimeError("Failed to get tenant connection info")
 
@@ -18,3 +25,45 @@ def get_graph_db_connection_info(tenant_id: str):
         "password": data["graph_db_connection"]["password"],
     }
     return cache[tenant_id]
+
+def get_tenant_domain(tenant_id: str) -> str:
+    # Use base API URL for this initial request (no tenant context needed)
+    base_url = _get_base_api_url()
+    resp = requests.get(f"{base_url}/api/tenants/{tenant_id}")
+    if resp.status_code != 200:
+        raise RuntimeError("Failed to get tenant connection info")
+
+    data = resp.json()
+    hostname = _extract_hostname(os.getenv('HORIZONTAL_API_URL'))
+    for domain in data["domains"]:
+        if f"{domain}".find(hostname) != -1:
+            return domain
+
+    raise RuntimeError("domain cannot be determined")
+
+def create_workflow_bucket(tenant_id: str, data: Dict) -> int:
+    # TODO: Use base API URL but set Host header for tenant identification
+    tenant_domain = get_tenant_domain(tenant_id)
+
+    print("++++ DOMAIN ++++")
+    print(tenant_domain)
+
+    resp = requests.post(f"{tenant_domain}/api/workflows/buckets", json=data,)
+    if resp.status_code != 201:
+        raise RuntimeError("Failed to create bucket")
+
+    response_data = resp.json()
+    return response_data['bucket']
+
+def _get_base_api_url() -> str:
+    return os.getenv('HORIZONTAL_API_URL')
+
+def _extract_hostname(url):
+    # Remove the protocol (http:// or https://)
+    if "://" in url:
+        url = url.split("://")[1]
+
+    # Split the URL by ':' to separate the hostname from the port
+    hostname = url.split(':')[0]
+
+    return hostname

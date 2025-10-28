@@ -7,6 +7,7 @@ use App\Http\Controllers\JiraIntegrationController;
 use App\Http\Controllers\LinearIntegrationController;
 use App\Http\Controllers\GoogleIntegrationController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -38,6 +39,8 @@ Route::middleware([
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/questions/ask', [QuestionController::class, 'ask']);
     });
+
+    Route::post('/workflows/buckets', [WorkflowController::class, 'addBucket']);
 
     Route::get('/integrations/jira/oauth/callback', [JiraIntegrationController::class, 'callback']);
     Route::middleware('auth:sanctum')->prefix('/integrations/jira/oauth')->group(function () {

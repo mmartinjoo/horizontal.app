@@ -24,6 +24,6 @@ class BuildKnowledgeGraph extends IndexingStepJob implements ShouldQueue
         $workflowStep->update([
             'status' => WorkflowStatus::Processing,
         ]);
-        $graphBuilder->buildKG();
+        $graphBuilder->buildKG($workflowStep);
     }
 }

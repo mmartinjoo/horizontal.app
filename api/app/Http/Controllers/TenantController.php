@@ -18,6 +18,7 @@ class TenantController
                 'password' => decrypt($tenant->graph_db_password),
                 'scheme' => $tenant->graph_db_scheme,
             ],
+            'domains' => $tenant->domains->pluck('domain'),
         ];
     }
 }

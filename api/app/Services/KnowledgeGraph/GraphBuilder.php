@@ -5,6 +5,7 @@ namespace App\Services\KnowledgeGraph;
 use App\Jobs\Indexing\IndexGraphCommunity;
 use App\Models\Document;
 use App\Models\DocumentComment;
+use App\Models\IndexingWorkflowStep;
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
 use Bolt\protocol\v5\structures\Node;
@@ -19,10 +20,11 @@ class GraphBuilder
         private Embedder $embedder,
     ) {}
 
-    public function buildKG(): bool
+    public function buildKG(IndexingWorkflowStep $workflowStep): bool
     {
         $response = Http::post($this->baseUrl . '/api/build', [
             'tenant_id' => tenancy()->tenant->id,
+            'workflow_step_id' => $workflowStep->id,
         ])
             ->throw();
 
