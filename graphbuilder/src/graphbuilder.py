@@ -61,18 +61,18 @@ class GraphBuilder:
                 continue
             
             workflow_bucket = {
-                "title": f"batch {i+1}/{num_of_batches}",
+                "title": f"{type} batch {i+1}/{num_of_batches}",
                 "overall_items": limit,
                 "workflow_step_id": self.workflow_step_id,
             }
             create_workflow_bucket(self.tenant_id, workflow_bucket)
             
-            job = self.queue.enqueue(index_batch,
-                               type,
-                               ids,
-                               self.tenant_id,
-                               job_timeout="30m")
+            # job = self.queue.enqueue(index_batch,
+            #                    type,
+            #                    ids,
+            #                    self.tenant_id,
+            #                    job_timeout="30m")
 
-            job_ids.append(job.id)
+            # job_ids.append(job.id)
             
         return job_ids

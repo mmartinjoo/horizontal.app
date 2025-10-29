@@ -22,7 +22,7 @@ class TestController extends Controller
 {
     public function index(Orchestrator $orchestrator)
     {
-        return 'ok';
+        $orchestrator->schedule();
     }
 
     public function token()

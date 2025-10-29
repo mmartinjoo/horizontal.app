@@ -16,7 +16,9 @@ return new class extends Migration
             $table->foreignIdFor(IndexingWorkflowStepBucket::class)->constrained()->cascadeOnDelete();
             $table->jsonb('data');
             $table->string('status');
-            $table->foreignIdFor(Document::class)->nullable()->constrained()->cascadeOnDelete();
+            $table->string('entity_type');
+            $table->bigInteger('entity_id');
+            // $table->foreignIdFor(Document::class)->nullable()->constrained()->cascadeOnDelete();
             $table->text('error_message')->nullable();
             $table->string('job_id')->nullable();
             $table->timestamps();

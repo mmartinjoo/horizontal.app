@@ -39,7 +39,6 @@ def get_tenant_domain(tenant_id: str) -> str:
     raise RuntimeError("domain cannot be determined")
 
 def create_workflow_bucket(tenant_id: str, data: Dict) -> int:
-    # TODO: Use base API URL but set Host header for tenant identification
     tenant_domain = get_tenant_domain(tenant_id)
     base_url = _get_base_api_url()
     

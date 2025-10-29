@@ -42,13 +42,12 @@ class IndexMessage extends IndexingStepItemJob implements ShouldQueue
                 'metadata' => $this->message,
             ]);
 
-            $indexingWorkflowItem = IndexingWorkflowStepItem::create([
-                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
-                'data' => $this->message,
-                'status' => WorkflowStatus::Processing->value,
-                'document_id' => $document->id,
-                'job_id' => $this->job->payload()['uuid'],
-            ]);
+            $indexingWorkflowItem = IndexingWorkflowStepItem::createForDocument(
+                document: $document,
+                bucketId: $this->indexingWorkflowStepBucketId,
+                data: (array)$this->message,
+                jobId: $this->job->payload()['uuid'],
+            );
             $this->createdIndexingWorkflowItemId = $indexingWorkflowItem->id;
 
             $chunks = $textChunker->chunk($this->message->message);
