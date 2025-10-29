@@ -49,7 +49,8 @@ class Document extends Model
     public function indexingItem(): ?IndexingWorkflowStepItem
     {
         return IndexingWorkflowStepItem::query()
-            ->where('document_id', $this->id)
+            ->where('entity_id', $this->id)
+            ->where('entity_type', Document::class)
             ->first();
     }
 }

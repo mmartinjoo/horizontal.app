@@ -1,6 +1,6 @@
 import os
 import requests
-from typing import Dict
+from typing import Dict, List
 
 cache = {}
 
@@ -38,20 +38,41 @@ def get_tenant_domain(tenant_id: str) -> str:
 
     raise RuntimeError("domain cannot be determined")
 
-def create_workflow_bucket(tenant_id: str, data: Dict) -> int:
-    tenant_domain = get_tenant_domain(tenant_id)
-    base_url = _get_base_api_url()
-    
-    headers = {
-        "Host": tenant_domain,
-    }
-
-    resp = requests.post(f"{base_url}/api/workflows/buckets", json=data, headers=headers)
+def create_workflow_bucket(tenant_id: str, data: Dict) -> Dict:
+    url_data = _create_tenant_request_data(tenant_id=tenant_id, path="api/orchestrator/workflows/buckets")
+    resp = requests.post(url_data["url"], json=data, headers=url_data["headers"])
     if resp.status_code != 201:
         raise RuntimeError(f"Failed to create bucket: {resp.status_code}")
 
     response_data = resp.json()
     return response_data['bucket']
+
+def add_bucket_items(tenant_id: str, bucket_id: str, type: str, ids: List[int]) -> None:
+    data = {
+        "ids": ids,
+        "type": type,
+        "bucket_id": bucket_id,
+    }
+    
+    url_data = _create_tenant_request_data(tenant_id=tenant_id, path="api/orchestrator/workflows/buckets/items")
+    resp = requests.post(url_data["url"], json=data, headers=url_data["headers"])
+    if resp.status_code != 201:
+        raise RuntimeError(f"Failed to add items: {resp.status_code}")
+
+def _create_tenant_request_data(tenant_id: str, path: str) -> Dict[str, any]:
+    tenant_domain = get_tenant_domain(tenant_id)
+    base_url = _get_base_api_url()
+    headers = {
+        "Host": tenant_domain,
+        "Accepts": "application/json",
+    }
+    data = {
+        "url": f"{base_url}/{path}",
+        "headers": headers,
+    }
+    print("---- TENANT DATA ----")
+    print(data)
+    return data
 
 def _get_base_api_url() -> str:
     return os.getenv('HORIZONTAL_API_URL')

@@ -40,7 +40,10 @@ Route::middleware([
         Route::post('/questions/ask', [QuestionController::class, 'ask']);
     });
 
-    Route::post('/workflows/buckets', [WorkflowController::class, 'addBucket']);
+    Route::group(['prefix' => 'orchestrator'], function () {
+        Route::post('/workflows/buckets', [WorkflowController::class, 'createBucket']);
+        Route::post('/workflows/buckets/items', [WorkflowController::class, 'addItems']);
+    });    
 
     Route::get('/integrations/jira/oauth/callback', [JiraIntegrationController::class, 'callback']);
     Route::middleware('auth:sanctum')->prefix('/integrations/jira/oauth')->group(function () {

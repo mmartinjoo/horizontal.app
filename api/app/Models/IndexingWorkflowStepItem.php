@@ -35,8 +35,7 @@ class IndexingWorkflowStepItem extends Model
         int $bucketId,
         array $data,
         string $jobId,
-    ): self
-    {
+    ): self {
         return self::create([
             'indexing_workflow_step_bucket_id' => $bucketId,
             'data' => $data,
