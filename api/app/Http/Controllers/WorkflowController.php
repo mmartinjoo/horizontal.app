@@ -40,7 +40,7 @@ class WorkflowController
             'ids' => ['required', 'array'],
             'ids.*' => ['numeric'],
             'type' => ['required', 'in:document_chunks,document_comments'],
-            'bucket_id' => ['required', 'exists:indexing_workflow_step_buckets,id']
+            'bucket_id' => ['required', 'exists:indexing_workflow_step_buckets,id'],
         ]);
 
         $bucket = IndexingWorkflowStepBucket::findOrFail($request->get('bucket_id'));
@@ -52,6 +52,7 @@ class WorkflowController
                     'status' => WorkflowStatus::Starting->value,
                     'entity_type' => DocumentChunk::class,
                     'entity_id' => $id,
+                    'job_id' => $request->get('job_id'),
                 ]);
                 $itemIds[] = $item->id;
             }
@@ -61,6 +62,7 @@ class WorkflowController
                     'status' => WorkflowStatus::Starting->value,
                     'entity_type' => DocumentComment::class,
                     'entity_id' => $id,
+                    'job_id' => $request->get('job_id'),
                 ]);
                 $itemIds[] = $item->id;
             }
@@ -76,12 +78,14 @@ class WorkflowController
         $request->validate([
             'bucket_item_ids' => ['required'],
             'bucket_item_ids.*' => ['exists:indexing_workflow_step_items,id'],
+            'job_id' => ['required', 'string'],
         ]);
 
         DB::table('indexing_workflow_step_items')
             ->whereIn('id', $request->get('bucket_item_ids'))
             ->update([
                 'status' => WorkflowStatus::Processing->value,
+                'job_id' => $request->get('job_id'),
             ]);
 
         return response('', Response::HTTP_NO_CONTENT);

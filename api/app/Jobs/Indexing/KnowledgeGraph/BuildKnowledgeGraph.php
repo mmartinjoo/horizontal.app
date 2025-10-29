@@ -23,6 +23,8 @@ class BuildKnowledgeGraph extends IndexingStepJob implements ShouldQueue
         $workflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
         $workflowStep->update([
             'status' => WorkflowStatus::Processing,
+            'started_at' => now(),
+            'job_id' => $this->job->payload()['uuid'],
         ]);
         $graphBuilder->buildKG($workflowStep);
     }

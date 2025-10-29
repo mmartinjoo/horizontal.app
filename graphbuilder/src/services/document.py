@@ -171,11 +171,10 @@ def count_waiting_comments(cursor: Cursor) -> int:
     cursor.execute("select count(*) from document_comments where processing_status = 'waiting'")
     return cursor.fetchone()[0]
 
-def get_waiting_ids(cursor: Cursor, table: str, limit: int, offset: int) -> List[int]:
+def get_next_batch(cursor: Cursor, table: str, limit: int, offset: int) -> List[int]:
     cursor.execute(f"""
                    select id 
                    from {table} 
-                   where processing_status = 'waiting'
                    order by id
                    limit {limit}
                    offset {offset}

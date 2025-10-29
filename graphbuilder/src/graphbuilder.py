@@ -1,10 +1,11 @@
 import logging
 from typing import List
 from psycopg2.extensions import cursor as Cursor
+from rq.job import Job
 from .jobs.index_batch import index_batch
 from .jobs.indexing_finished import indexing_finished
 from src.factories import create_queue, create_db_cursor, create_graph_client
-from src.services import count_waiting_comments, count_waiting_document_chunks, get_waiting_ids, create_workflow_bucket, add_bucket_items
+from src.services import count_waiting_comments, count_waiting_document_chunks, get_next_batch, create_workflow_bucket, add_bucket_items
 
 class GraphBuilder:
     def __init__(self, tenant_id: str, workflow_step_id: int):
@@ -56,7 +57,7 @@ class GraphBuilder:
         for i in range(num_of_batches):
             limit = 5
             offset = limit*i
-            ids = get_waiting_ids(cursor=cursor, table=type, limit=limit, offset=offset)
+            ids = get_next_batch(cursor=cursor, table=type, limit=limit, offset=offset)
             if len(ids) == 0:
                 continue
             
@@ -70,13 +71,14 @@ class GraphBuilder:
                              bucket_id=bucket["id"],
                              ids=ids,
                              type=type)
+            
             job = self.queue.enqueue(index_batch,
-                               type,
-                               ids,
-                               self.tenant_id,
-                               bucket_item_ids,
-                               job_timeout="30m")              
-
+                                     type,
+                                     ids,
+                                     self.tenant_id,
+                                     bucket_item_ids,
+                                     job_timeout="30m")            
+                
             job_ids.append(job.id)
             
         return job_ids

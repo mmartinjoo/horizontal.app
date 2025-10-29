@@ -62,9 +62,10 @@ def add_bucket_items(tenant_id: str, bucket_id: str, type: str, ids: List[int]) 
     response_data = resp.json()
     return response_data['item_ids']
 
-def mark_bucket_items_as_processing(tenant_id: str, bucket_item_ids: int) -> None:
+def mark_bucket_items_as_processing(tenant_id: str, bucket_item_ids: int, job_id: str) -> None:
     data = {
         "bucket_item_ids": bucket_item_ids,
+        "job_id": job_id,
     }
     
     url_data = _create_tenant_request_data(tenant_id=tenant_id, path="api/orchestrator/workflows/buckets/items/processing")
@@ -88,6 +89,7 @@ def _create_tenant_request_data(tenant_id: str, path: str) -> Dict[str, any]:
     headers = {
         "Host": tenant_domain,
         "Accepts": "application/json",
+        "Content-Type": "application/json"
     }
     data = {
         "url": f"{base_url}/{path}",

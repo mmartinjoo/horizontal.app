@@ -45,6 +45,7 @@ Route::middleware([
         Route::post('/workflows/buckets/items', [WorkflowController::class, 'addItems']);
         Route::post('/workflows/buckets/items/processing', [WorkflowController::class, 'markItemsAsProcessing']);
         Route::post('/workflows/buckets/items/completed', [WorkflowController::class, 'markItemsAsCompleted']);
+        Route::post('/documents/next-batch', [WorkflowController::class, 'nextBatch']);
     });    
 
     Route::get('/integrations/jira/oauth/callback', [JiraIntegrationController::class, 'callback']);

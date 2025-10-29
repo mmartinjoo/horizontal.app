@@ -37,7 +37,8 @@ def index_batch(type: str,
     
     job = get_current_job()
     mark_bucket_items_as_processing(tenant_id=tenant_id,
-                                   bucket_item_ids=bucket_item_ids)
+                                   bucket_item_ids=bucket_item_ids,
+                                   job_id=job.id)
     # mark_as_processing_fn(items=documents, cursor=cursor, job_id=job.id)
 
     logging.warning(f"Loaded {len(documents)}")

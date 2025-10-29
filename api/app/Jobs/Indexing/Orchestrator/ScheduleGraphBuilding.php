@@ -44,7 +44,6 @@ class ScheduleGraphBuilding implements ShouldQueue
         $workflow->update([
             'status' => WorkflowStatus::Processing,
         ]);
-        // TODO: lehet, hogy erre kell egy külön supervisor
         $supervisor = new SuperviseWorkflow(
             $workflow->id,
             new WorkflowSupervisor(),
