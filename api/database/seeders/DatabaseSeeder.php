@@ -41,7 +41,7 @@ class DatabaseSeeder extends Seeder
         // Needed for OAuth applications (see Makefile)
         $tenant2->createDomain('tenant2-horizontal.loca.lt');
         // Needed for graphbuilder communication
-        $tenant2->createDomain('http://tenant2.api');
+        $tenant2->createDomain('http://tenant2.nginx');
         tenancy()->initialize($tenant2);
         User::create([
             'name' => 'Tenant2 User',

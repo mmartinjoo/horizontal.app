@@ -21,6 +21,7 @@ return [
         'api',
         'horizontal.app',
         'loca.lt',
+        'nginx',
     ],
 
     /**

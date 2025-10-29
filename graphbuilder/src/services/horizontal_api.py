@@ -1,7 +1,6 @@
 import os
 import requests
 from typing import Dict
-from urllib.parse import urlparse
 
 cache = {}
 
@@ -11,10 +10,8 @@ def get_graph_db_connection_info(tenant_id: str):
 
     # Use base API URL but set Host header for tenant identification
     base_url = _get_base_api_url()
-    tenant_domain = get_tenant_domain(tenant_id)
 
-    headers = {"Host": tenant_domain}
-    resp = requests.get(f"{base_url}/api/tenants/{tenant_id}", headers=headers)
+    resp = requests.get(f"{base_url}/api/tenants/{tenant_id}")
     if resp.status_code != 200:
         raise RuntimeError("Failed to get tenant connection info")
 
@@ -31,7 +28,7 @@ def get_tenant_domain(tenant_id: str) -> str:
     base_url = _get_base_api_url()
     resp = requests.get(f"{base_url}/api/tenants/{tenant_id}")
     if resp.status_code != 200:
-        raise RuntimeError("Failed to get tenant connection info")
+        raise RuntimeError("Failed to get tenant from API")
 
     data = resp.json()
     hostname = _extract_hostname(os.getenv('HORIZONTAL_API_URL'))
@@ -50,14 +47,9 @@ def create_workflow_bucket(tenant_id: str, data: Dict) -> int:
         "Host": tenant_domain,
     }
 
-    print("++++ DOMAIN ++++")
-    print(tenant_domain)
-    print("++++ BASE URL ++++")
-    print(base_url)
-
     resp = requests.post(f"{base_url}/api/workflows/buckets", json=data, headers=headers)
     if resp.status_code != 201:
-        raise RuntimeError("Failed to create bucket")
+        raise RuntimeError(f"Failed to create bucket: {resp.status_code}")
 
     response_data = resp.json()
     return response_data['bucket']
@@ -65,7 +57,7 @@ def create_workflow_bucket(tenant_id: str, data: Dict) -> int:
 def _get_base_api_url() -> str:
     return os.getenv('HORIZONTAL_API_URL')
 
-def _extract_hostname(url):
+def _extract_hostname(url: str) -> str:
     # Remove the protocol (http:// or https://)
     if "://" in url:
         url = url.split("://")[1]
