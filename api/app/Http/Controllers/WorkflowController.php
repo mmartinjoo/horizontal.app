@@ -8,6 +8,7 @@ use App\Models\DocumentComment;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Models\IndexingWorkflowStepItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class WorkflowController
@@ -43,25 +44,62 @@ class WorkflowController
         ]);
 
         $bucket = IndexingWorkflowStepBucket::findOrFail($request->get('bucket_id'));
+        $itemIds = [];
         foreach ($request->get('ids') as $id) {
             if ($request->get('type') === 'document_chunks') {
-                IndexingWorkflowStepItem::create([
+                $item = IndexingWorkflowStepItem::create([
                     'indexing_workflow_step_bucket_id' => $bucket->id,
-                    'status' => WorkflowStatus::Processing->value,
+                    'status' => WorkflowStatus::Starting->value,
                     'entity_type' => DocumentChunk::class,
                     'entity_id' => $id,
                 ]);
+                $itemIds[] = $item->id;
             }
             if ($request->get('type') === 'document_comments') {
-                IndexingWorkflowStepItem::create([
+                $item = IndexingWorkflowStepItem::create([
                     'indexing_workflow_step_bucket_id' => $bucket->id,
-                    'status' => WorkflowStatus::Processing->value,
+                    'status' => WorkflowStatus::Starting->value,
                     'entity_type' => DocumentComment::class,
                     'entity_id' => $id,
                 ]);
+                $itemIds[] = $item->id;
             }
         }
 
-        return response('', Response::HTTP_CREATED);
+        return response([
+            'item_ids' => $itemIds,
+        ], Response::HTTP_CREATED);
+    }
+
+    public function markItemsAsProcessing(Request $request)
+    {
+        $request->validate([
+            'bucket_item_ids' => ['required'],
+            'bucket_item_ids.*' => ['exists:indexing_workflow_step_items,id'],
+        ]);
+
+        DB::table('indexing_workflow_step_items')
+            ->whereIn('id', $request->get('bucket_item_ids'))
+            ->update([
+                'status' => WorkflowStatus::Processing->value,
+            ]);
+
+        return response('', Response::HTTP_NO_CONTENT);
+    }
+
+    public function markItemsAsCompleted(Request $request)
+    {
+        $request->validate([
+            'bucket_item_ids' => ['required'],
+            'bucket_item_ids.*' => ['exists:indexing_workflow_step_items,id'],
+        ]);
+
+        DB::table('indexing_workflow_step_items')
+            ->whereIn('id', $request->get('bucket_item_ids'))
+            ->update([
+                'status' => WorkflowStatus::Completed->value,
+            ]);
+
+        return response('', Response::HTTP_NO_CONTENT);
     }
 }

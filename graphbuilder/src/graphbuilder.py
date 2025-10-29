@@ -66,16 +66,17 @@ class GraphBuilder:
                 "workflow_step_id": self.workflow_step_id,
             }
             bucket = create_workflow_bucket(self.tenant_id, workflow_bucket)
-            add_bucket_items(tenant_id=self.tenant_id,
+            bucket_item_ids = add_bucket_items(tenant_id=self.tenant_id,
                              bucket_id=bucket["id"],
                              ids=ids,
                              type=type)
-            # job = self.queue.enqueue(index_batch,
-            #                    type,
-            #                    ids,
-            #                    self.tenant_id,
-            #                    job_timeout="30m")              
+            job = self.queue.enqueue(index_batch,
+                               type,
+                               ids,
+                               self.tenant_id,
+                               bucket_item_ids,
+                               job_timeout="30m")              
 
-            # job_ids.append(job.id)
+            job_ids.append(job.id)
             
         return job_ids

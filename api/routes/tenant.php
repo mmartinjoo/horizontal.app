@@ -43,6 +43,8 @@ Route::middleware([
     Route::group(['prefix' => 'orchestrator'], function () {
         Route::post('/workflows/buckets', [WorkflowController::class, 'createBucket']);
         Route::post('/workflows/buckets/items', [WorkflowController::class, 'addItems']);
+        Route::post('/workflows/buckets/items/processing', [WorkflowController::class, 'markItemsAsProcessing']);
+        Route::post('/workflows/buckets/items/completed', [WorkflowController::class, 'markItemsAsCompleted']);
     });    
 
     Route::get('/integrations/jira/oauth/callback', [JiraIntegrationController::class, 'callback']);

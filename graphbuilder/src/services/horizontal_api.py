@@ -47,7 +47,7 @@ def create_workflow_bucket(tenant_id: str, data: Dict) -> Dict:
     response_data = resp.json()
     return response_data['bucket']
 
-def add_bucket_items(tenant_id: str, bucket_id: str, type: str, ids: List[int]) -> None:
+def add_bucket_items(tenant_id: str, bucket_id: str, type: str, ids: List[int]) -> List[int]:
     data = {
         "ids": ids,
         "type": type,
@@ -58,6 +58,29 @@ def add_bucket_items(tenant_id: str, bucket_id: str, type: str, ids: List[int]) 
     resp = requests.post(url_data["url"], json=data, headers=url_data["headers"])
     if resp.status_code != 201:
         raise RuntimeError(f"Failed to add items: {resp.status_code}")
+    
+    response_data = resp.json()
+    return response_data['item_ids']
+
+def mark_bucket_items_as_processing(tenant_id: str, bucket_item_ids: int) -> None:
+    data = {
+        "bucket_item_ids": bucket_item_ids,
+    }
+    
+    url_data = _create_tenant_request_data(tenant_id=tenant_id, path="api/orchestrator/workflows/buckets/items/processing")
+    resp = requests.post(url_data["url"], json=data, headers=url_data["headers"])
+    if resp.status_code != 204:
+        raise RuntimeError(f"Failed to mark item as processing: {resp.status_code}")
+    
+def mark_bucket_items_as_completed(tenant_id: str, bucket_item_ids: int) -> None:
+    data = {
+        "bucket_item_ids": bucket_item_ids,
+    }
+    
+    url_data = _create_tenant_request_data(tenant_id=tenant_id, path="api/orchestrator/workflows/buckets/items/completed")
+    resp = requests.post(url_data["url"], json=data, headers=url_data["headers"])
+    if resp.status_code != 204:
+        raise RuntimeError(f"Failed to mark item as completed: {resp.status_code}")
 
 def _create_tenant_request_data(tenant_id: str, path: str) -> Dict[str, any]:
     tenant_domain = get_tenant_domain(tenant_id)

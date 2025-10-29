@@ -6,23 +6,24 @@ from llama_index.core.indices.property_graph import SimpleLLMPathExtractor
 from llama_index.core import PropertyGraphIndex
 from llama_index.core import Document
 from src.factories import create_db_reader, create_graph_store, create_llm, create_embed_model, create_db_cursor
-from src.services import get_comment_batch, get_document_chunk_batch, mark_document_chunks_as_processing, mark_document_chunks_as_processed, mark_comments_as_processed, mark_comments_as_processing
+from src.services import get_comment_batch, get_document_chunk_batch, mark_bucket_items_as_processing, mark_bucket_items_as_completed
 
 def index_batch(type: str,
                 ids: List[int],
-                tenant_id: str):
+                tenant_id: str,
+                bucket_item_ids: List[int]):
     
     logging.warning(f"Processing {type} batch (ids={ids}) for tenant {tenant_id}")
     
     if type == "document_chunks":
         get_batch_fn = get_document_chunk_batch
-        mark_as_processing_fn = mark_document_chunks_as_processing
-        mark_as_processed_fn = mark_document_chunks_as_processed
+        # mark_as_processing_fn = mark_document_chunks_as_processing
+        # mark_as_processed_fn = mark_document_chunks_as_processed
         
     if type == "document_comments":
         get_batch_fn = get_comment_batch
-        mark_as_processing_fn = mark_comments_as_processing
-        mark_as_processed_fn = mark_comments_as_processed
+        # mark_as_processing_fn = mark_comments_as_processing
+        # mark_as_processed_fn = mark_comments_as_processed
     
     reader = create_db_reader(tenant_id=tenant_id)
     cursor = create_db_cursor(tenant_id=tenant_id)
@@ -35,7 +36,9 @@ def index_batch(type: str,
         return
     
     job = get_current_job()
-    mark_as_processing_fn(items=documents, cursor=cursor, job_id=job.id)
+    mark_bucket_items_as_processing(tenant_id=tenant_id,
+                                   bucket_item_ids=bucket_item_ids)
+    # mark_as_processing_fn(items=documents, cursor=cursor, job_id=job.id)
 
     logging.warning(f"Loaded {len(documents)}")
 
@@ -67,7 +70,10 @@ def index_batch(type: str,
         logging.warning(f"Inserting to index: {n+1}/{len(documents)}")
     
     logging.warning(f"Updating {type}...")
-    mark_as_processed_fn(items=documents, cursor=cursor)
+    mark_bucket_items_as_completed(tenant_id=tenant_id,
+                                   bucket_item_ids=bucket_item_ids)
+
+    # mark_as_processed_fn(items=documents, cursor=cursor)
     logging.warning(f"{type} updated")
     
     logging.warning(f"batch (ids={ids}) processed")
