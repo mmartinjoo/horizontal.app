@@ -62,7 +62,7 @@ class GraphBuilder:
             
             workflow_bucket = {
                 "title": f"{type} batch {i+1}/{num_of_batches}",
-                "overall_items": limit,
+                "overall_items": len(ids),
                 "workflow_step_id": self.workflow_step_id,
             }
             bucket = create_workflow_bucket(self.tenant_id, workflow_bucket)
