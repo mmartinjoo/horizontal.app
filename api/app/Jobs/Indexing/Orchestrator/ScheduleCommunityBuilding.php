@@ -22,6 +22,9 @@ class ScheduleCommunityBuilding implements ShouldQueue
     public function handle()
     {
         $workflow = IndexingWorkflow::findOrFail($this->workflowId);
+        if ($workflow->status === WorkflowStatus::Failed->value || $workflow->status === WorkflowStatus::Timeout) {
+            return;
+        }
         if (!$this->hasBuildingRelatedNodesFinished($workflow)) {
             dispatch(new ScheduleCommunityBuilding($this->workflowId))
                 ->delay(30);

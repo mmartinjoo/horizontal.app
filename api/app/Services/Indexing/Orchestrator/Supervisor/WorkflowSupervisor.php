@@ -8,7 +8,6 @@ use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Models\IndexingWorkflowStepItem;
 use App\Services\Indexing\Orchestrator\DataTransferObject\SupervisorResult;
-use Google\Service\Workflows\Workflow;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -86,15 +85,16 @@ class WorkflowSupervisor
             $allCompleted = $childResults->every('status', WorkflowStatus::Completed->value);
             if ($allCompleted) {
                 if ($entity instanceof IndexingWorkflow) {
+                    $status = $this->nextFiniteStatusForWorkflow($entity);
                     $entity->update([
-                        'status' => WorkflowStatus::ReadForNextStep->value],
+                        'status' => $status->value],
                     );
 
                     return new SupervisorResult(
-                        status: WorkflowStatus::ReadForNextStep->value,
+                        status: $status->value,
                         isExpectedStatus: true,
                         finiteState: false,
-                        nextAction: 'terminate',
+                        nextAction: 'terminate',    // terminate because each step starts a new supervisor job
                     );    
                 }
 
@@ -109,19 +109,6 @@ class WorkflowSupervisor
                     finiteState: true,
                     nextAction: $nextAction,
                 );
-            }
-
-            if ($entity instanceof IndexingWorkflow) {
-                $entity->update([
-                    'status' => WorkflowStatus::ReadForNextStep->value,
-                ]);
-
-                return new SupervisorResult(
-                    status: WorkflowStatus::ReadForNextStep->value,
-                    isExpectedStatus: true,
-                    finiteState: false,
-                    nextAction: 'wait',
-                );    
             }
 
             $entity->update([
@@ -154,7 +141,19 @@ class WorkflowSupervisor
                 );
             }
 
-            if (! $hasProcessing) {
+            if (!$hasProcessing) {
+                // Only valid for a workflow
+                // Every step finished, but the next one is not scheduled yet
+                if ($entity->status === WorkflowStatus::ReadForNextStep->value) {
+                    return new SupervisorResult(
+                        status: WorkflowStatus::ReadForNextStep->value,
+                        isExpectedStatus: true,
+                        finiteState: false,
+                        nextAction: $nextAction,
+                    );
+                }
+
+
                 $entity->update([
                     'status' => WorkflowStatus::Starting->value,
                 ]);
@@ -281,6 +280,14 @@ class WorkflowSupervisor
         ]);
     }
 
+    public function finished(int $workflowId)
+    {
+        $workflow = IndexingWorkflow::findOrFail($workflowId);
+        $workflow->update([
+            'finished_at' => now(),
+        ]);
+    }
+
     private function updateStats(IndexingWorkflowStepBucket $bucket)
     {
         $processedCount = IndexingWorkflowStepItem::query()
@@ -291,5 +298,22 @@ class WorkflowSupervisor
         $bucket->update([
             'processed_items' => $processedCount,
         ]);
+    }
+
+    /**
+     * Whan all steps are in a finite status this function returns if the proper status for the workflow is:
+     *  - completed
+     *  - ready_for_next_step
+     * 
+     * Returns `completed` if the last step is `build_communities` and it's completed
+     * Returns `ready_for_next_step` otherwise
+     */
+    private function nextFiniteStatusForWorkflow(IndexingWorkflow $workflow): WorkflowStatus
+    {
+        $lastStep = $workflow->steps()->orderBy('id', 'desc')->first();
+        if ($lastStep->name === 'build_communities') {
+            return WorkflowStatus::Completed;
+        }
+        return WorkflowStatus::ReadForNextStep;
     }
 }

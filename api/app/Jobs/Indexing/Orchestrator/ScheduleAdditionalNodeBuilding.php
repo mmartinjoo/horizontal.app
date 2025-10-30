@@ -22,6 +22,9 @@ class ScheduleAdditionalNodeBuilding implements ShouldQueue
     public function handle()
     {
         $workflow = IndexingWorkflow::findOrFail($this->workflowId);
+        if ($workflow->status === WorkflowStatus::Failed->value || $workflow->status === WorkflowStatus::Timeout) {
+            return;
+        }
         if (!$this->hasGraphBuildingFinished($workflow)) {
             dispatch(new ScheduleAdditionalNodeBuilding($this->workflowId))
                 ->delay(30);
