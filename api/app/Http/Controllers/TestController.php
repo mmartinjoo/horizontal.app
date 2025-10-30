@@ -12,6 +12,7 @@ use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
+use App\Services\GraphDB\GraphDB;
 use App\Services\Indexing\Orchestrator\Orchestrator;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
@@ -20,8 +21,9 @@ use App\Services\Integration\TaskManagement\Linear\Linear;
 
 class TestController extends Controller
 {
-    public function index(Orchestrator $orchestrator)
+    public function index(Orchestrator $orchestrator, GraphDB $graphDB)
     {
+        $graphDB->run('MATCH (n) DETACH DELETE n');
         $orchestrator->schedule();
     }
 

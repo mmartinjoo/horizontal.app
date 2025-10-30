@@ -7,6 +7,7 @@ use App\Jobs\Indexing\CodeRepository\GitHub\IndexGitHub;
 use App\Jobs\Indexing\Communication\GoogleChat\IndexGoogleChat;
 use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\IndexingStepJob;
+use App\Jobs\Indexing\Orchestrator\ScheduleAdditionalNodeBuilding;
 use App\Jobs\Indexing\Orchestrator\ScheduleGraphBuilding;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Jobs\Indexing\Supervisor\SuperviseWorkflow;
@@ -54,6 +55,7 @@ class Orchestrator
         dispatch($supervisor);
 
         dispatch(new ScheduleGraphBuilding($workflow->id));
+        dispatch(new ScheduleAdditionalNodeBuilding($workflow->id));
     }
 
     private function createIndexingJob(string $integration): IndexingStepJob
