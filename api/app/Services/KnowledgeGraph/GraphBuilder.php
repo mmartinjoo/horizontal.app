@@ -50,8 +50,15 @@ class GraphBuilder
         $this->buildWorklogs($bucket);
     }
 
-    public function buildCommunities()
+    public function buildCommunities(IndexingWorkflowStep $workflowStep)
     {
+        $bucket = IndexingWorkflowStepBucket::create([
+            'indexing_workflow_step_id' => $workflowStep->id,
+            'title' => 'build_communities 1/1',   // this one has only one bucket every time
+            'status' => WorkflowStatus::Processing->value,
+            'started_at' => now(),
+        ]);
+
         $this->graphDB->run("
             match p=(n)-[r]-(m)
             where (not n:Chunk) and (not m:Chunk)
@@ -66,6 +73,10 @@ class GraphBuilder
             match (c:Community)
             return c
         ", ['c']);
+
+        $bucket->update([
+            'overall_items' => count($communities),
+        ]);
 
         foreach ($communities as $community) {
             $summary = "";
@@ -109,11 +120,13 @@ class GraphBuilder
                 $context .= " ";
             }
 
-            IndexGraphCommunity::dispatch(
-                $community->properties['id'],
-                $summary,
-                $context,
+            $job = new IndexGraphCommunity(
+                communityID: $community->properties['id'],
+                summary: $summary,
+                context: $context,
             );
+            $job->setIndexingWorkflowStepBucketId($bucket->id);
+            dispatch($job);
         }
     }
 

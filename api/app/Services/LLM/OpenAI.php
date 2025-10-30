@@ -30,7 +30,11 @@ class OpenAI extends LLM implements Embedder
             'max_tokens' => $maxTokens,
         ]);
 
-        return $result->choices[0]->message->content;
+        if (!$result->choices[0]->message->content) {
+            throw new Exception('OpenAI: No completion found: ' . json_encode($result));
+        }
+
+        return $this->sanitizeJSON($result->choices[0]->message->content);
     }
 
     protected function createEmbeddingWithoutCache(string $text): array
