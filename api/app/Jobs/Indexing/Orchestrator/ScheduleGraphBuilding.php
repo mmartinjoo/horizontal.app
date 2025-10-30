@@ -22,7 +22,7 @@ class ScheduleGraphBuilding implements ShouldQueue
     public function handle()
     {
         $workflow = IndexingWorkflow::findOrFail($this->workflowId);
-        if ($workflow->status === WorkflowStatus::Failed->value || $workflow->status === WorkflowStatus::Timeout) {
+        if ($workflow->status === WorkflowStatus::Failed->value || $workflow->status === WorkflowStatus::Timeout->value) {
             return;
         }
         if ($workflow->status !== WorkflowStatus::ReadForNextStep->value) {
