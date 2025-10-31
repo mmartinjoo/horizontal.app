@@ -9,6 +9,7 @@ use App\Jobs\Indexing\KnowledgeGraph\BuildCommunities;
 use App\Jobs\Indexing\KnowledgeGraph\BuildKnowledgeGraph;
 use App\Jobs\Indexing\KnowledgeGraph\BuildRelatedNodes;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
+use App\Jobs\Indexing\Supervisor\SuperviseStuckBuckets;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
@@ -29,7 +30,9 @@ class TestController extends Controller
 
         $workflow = IndexingWorkflow::first();
         $supervisor = new StuckBucketSupervisor();
-        $supervisor->superviseBuckets($workflow);
+        // $supervisor->superviseBuckets($workflow);
+        $job = new SuperviseStuckBuckets($workflow->id, $supervisor);
+        dispatch($job);
     }
 
     public function token()

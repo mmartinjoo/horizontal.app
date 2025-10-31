@@ -26,7 +26,7 @@ class SuperviseStuckBuckets implements ShouldQueue
         logger()->info("supervising stuck buckets for workflow #{$this->workflowId}");
         $workflow = IndexingWorkflow::find($this->workflowId);
 
-        if (in_array($workflow->status, [WorkflowStatus::Completed->value, WorkflowStatus::CompletedWithErrors, WorkflowStatus::Failed->value, WorkflowStatus::Timeout->value])) {
+        if (in_array($workflow->status, [WorkflowStatus::Completed->value, WorkflowStatus::CompletedWithErrors->value, WorkflowStatus::Failed->value, WorkflowStatus::Timeout->value])) {
             logger()->info("workflow already finished: " . $workflow->status);
             return;
         }
