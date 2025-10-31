@@ -57,7 +57,6 @@ class SuperviseWorkflow implements ShouldQueue
 
         if ($result->nextAction === 'terminate') {
             logger()->info('supervisor: terminating with result: ' . json_encode($result));
-            $this->supervisor->finished($this->workflowId);
             return;
         }
 

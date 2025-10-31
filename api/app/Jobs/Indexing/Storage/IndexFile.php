@@ -52,7 +52,7 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
             $indexingWorkflowItem = IndexingWorkflowStepItem::createForDocument(
                 document: $document,
                 bucketId: $this->indexingWorkflowStepBucketId,
-                data: (array)$this->file,
+                data: json_decode(json_encode($this->file), true),
                 jobId: $this->job->payload()['uuid'],
             );
             $this->createdIndexingWorkflowItemId = $indexingWorkflowItem->id;

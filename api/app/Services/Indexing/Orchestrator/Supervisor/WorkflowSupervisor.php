@@ -85,13 +85,18 @@ class WorkflowSupervisor
             $allCompleted = $childResults->every('status', WorkflowStatus::Completed->value);
             if ($allCompleted) {
                 if ($entity instanceof IndexingWorkflow) {
-                    $status = $this->nextFiniteStatusForWorkflow($entity);
+                    if ($this->isWorkflowCompleted($entity)) {
+                        $nextStatus = WorkflowStatus::Completed;
+                    } else {
+                        $nextStatus = WorkflowStatus::ReadForNextStep;
+                    }
+
                     $entity->update([
-                        'status' => $status->value],
+                        'status' => $nextStatus->value],
                     );
 
                     return new SupervisorResult(
-                        status: $status->value,
+                        status: $nextStatus->value,
                         isExpectedStatus: true,
                         finiteState: false,
                         nextAction: 'terminate',    // terminate because each step starts a new supervisor job
@@ -111,13 +116,23 @@ class WorkflowSupervisor
                 );
             }
 
+            $nextStatus = WorkflowStatus::CompletedWithErrors;
+
+            if ($entity instanceof IndexingWorkflow) {
+                if ($this->isWorkflowCompleted($entity)) {
+                    $nextStatus = WorkflowStatus::CompletedWithErrors;
+                } else {
+                    $nextStatus = WorkflowStatus::ReadForNextStep;
+                }
+            }
+
             $entity->update([
-                'status' => WorkflowStatus::CompletedWithErrors->value,
+                'status' => $nextStatus->value,
                 'finished_at' => now(),
             ]);
 
             return new SupervisorResult(
-                status: WorkflowStatus::CompletedWithErrors->value,
+                status: $nextStatus->value,
                 isExpectedStatus: true,
                 finiteState: true,
                 nextAction: $nextAction,
@@ -301,19 +316,14 @@ class WorkflowSupervisor
     }
 
     /**
-     * Whan all steps are in a finite status this function returns if the proper status for the workflow is:
-     *  - completed
-     *  - ready_for_next_step
-     * 
-     * Returns `completed` if the last step is `build_communities` and it's completed
-     * Returns `ready_for_next_step` otherwise
+     * If `build_communities` is the last step the workflow is in a final state
      */
-    private function nextFiniteStatusForWorkflow(IndexingWorkflow $workflow): WorkflowStatus
+    private function isWorkflowCompleted(IndexingWorkflow $workflow): bool
     {
         $lastStep = $workflow->steps()->orderBy('id', 'desc')->first();
         if ($lastStep->name === 'build_communities') {
-            return WorkflowStatus::Completed;
+            return true;
         }
-        return WorkflowStatus::ReadForNextStep;
+        return false;
     }
 }

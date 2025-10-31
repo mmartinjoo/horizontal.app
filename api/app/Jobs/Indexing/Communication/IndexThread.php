@@ -40,7 +40,8 @@ class IndexThread extends IndexingStepItemJob implements ShouldQueue
                 ->firstOrFail();
 
             $indexingWorkflowItem = IndexingWorkflowStepItem::query()
-                ->where('document_id', $document->id)
+                ->where('entity_type', Document::class)
+                ->where('entity_id', $document->id)
                 ->firstOrFail();
 
             $this->createdIndexingWorkStepItemId = $indexingWorkflowItem->id;

@@ -62,7 +62,7 @@ class ScheduleAdditionalNodeBuilding implements ShouldQueue
     private function hasGraphBuildingFinished(IndexingWorkflow $workflow): bool
     {
         foreach ($workflow->steps as $step) {
-            if ($step->name === 'build_graph' && $step->status === WorkflowStatus::Completed->value) {
+            if ($step->name === 'build_graph' && ($step->status === WorkflowStatus::Completed->value || $step->status === WorkflowStatus::CompletedWithErrors->value)) {
                 return true;
             }
         }
