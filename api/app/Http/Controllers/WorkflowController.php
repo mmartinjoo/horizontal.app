@@ -25,7 +25,7 @@ class WorkflowController
             'indexing_workflow_step_id' => $request->get('workflow_step_id'),
             'title' => $request->get('title'),
             'overall_items' => $request->get('overall_items'),
-            'status' => WorkflowStatus::Processing->value,
+            'status' => WorkflowStatus::Starting->value,
             'started_at' => now(),
         ]);
 

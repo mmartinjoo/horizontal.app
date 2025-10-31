@@ -19,7 +19,7 @@ class StuckBucketSupervisor
         $stuckBuckets = IndexingWorkflowStepBucket::query()
             ->whereIn('indexing_workflow_step_id', $workflow->steps()->pluck('id'))
             ->where('status', WorkflowStatus::Processing->value)
-            ->where('created_at', '<=', now()->subSeconds($timeoutSecond))
+            ->where('started_at', '<=', now()->subSeconds($timeoutSecond))
             ->get();
 
         foreach ($stuckBuckets as $bucket) {

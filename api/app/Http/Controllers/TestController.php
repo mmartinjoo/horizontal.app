@@ -25,14 +25,8 @@ class TestController extends Controller
 {
     public function index(Orchestrator $orchestrator, GraphDB $graphDB)
     {
-        // $graphDB->run('MATCH (n) DETACH DELETE n');
-        // $orchestrator->schedule();
-
-        $workflow = IndexingWorkflow::first();
-        $supervisor = new StuckBucketSupervisor();
-        // $supervisor->superviseBuckets($workflow);
-        $job = new SuperviseStuckBuckets($workflow->id, $supervisor);
-        dispatch($job);
+        $graphDB->run('MATCH (n) DETACH DELETE n');
+        $orchestrator->schedule();
     }
 
     public function token()

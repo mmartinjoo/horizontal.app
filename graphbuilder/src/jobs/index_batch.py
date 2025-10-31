@@ -15,7 +15,7 @@ def index_batch(type: str,
 
     try:
         logging.warning(f"Processing {type} batch (ids={ids}) for tenant {tenant_id}")
-    
+        
         if type == "document_chunks":
             get_batch_fn = get_document_chunk_batch
             

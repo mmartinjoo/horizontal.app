@@ -85,15 +85,19 @@ class WorkflowSupervisor
             $allCompleted = $childResults->every('status', WorkflowStatus::Completed->value);
             if ($allCompleted) {
                 if ($entity instanceof IndexingWorkflow) {
+                    $finishedAt = null;
                     if ($this->isWorkflowCompleted($entity)) {
                         $nextStatus = WorkflowStatus::Completed;
+                        $finishedAt = now();
                     } else {
                         $nextStatus = WorkflowStatus::ReadForNextStep;
+                        $finishedAt = null;
                     }
 
                     $entity->update([
-                        'status' => $nextStatus->value],
-                    );
+                        'status' => $nextStatus->value,
+                        'finished_at' => $finishedAt,
+                    ],);
 
                     return new SupervisorResult(
                         status: $nextStatus->value,
@@ -117,18 +121,21 @@ class WorkflowSupervisor
             }
 
             $nextStatus = WorkflowStatus::CompletedWithErrors;
+            $finishedAt = null;            
 
             if ($entity instanceof IndexingWorkflow) {
                 if ($this->isWorkflowCompleted($entity)) {
                     $nextStatus = WorkflowStatus::CompletedWithErrors;
+                    $finishedAt = now();
                 } else {
                     $nextStatus = WorkflowStatus::ReadForNextStep;
+                    $finishedAt = null;
                 }
             }
 
             $entity->update([
                 'status' => $nextStatus->value,
-                'finished_at' => now(),
+                'finished_at' => $finishedAt,
             ]);
 
             return new SupervisorResult(
@@ -212,6 +219,23 @@ class WorkflowSupervisor
 
         // started
         if ($bucket->overall_items !== 0 && ($bucket->overall_items !== $bucket->processed_items)) {
+            // for the graph building buckets, items are created in advance.
+            // so by only looking at `overall_items` and `processed_items`
+            // it looks like the bucket is processing but in fact it's
+            // not being processed yet. we also need to check items
+            $itemsStarting = $bucket->items->every(fn (IndexingWorkflowStepItem $item) => $item->status === WorkflowStatus::Starting->value);
+            if ($itemsStarting) {
+                $bucket->update([
+                    'status' => WorkflowStatus::Starting->value,
+                ]);
+                return new SupervisorResult(
+                    status: WorkflowStatus::Starting->value,
+                    isExpectedStatus: true,
+                    finiteState: false,
+                    nextAction: 'wait',
+                );
+            }
+
             $bucket->update([
                 'status' => WorkflowStatus::Processing->value,
                 'started_at' => now(),
