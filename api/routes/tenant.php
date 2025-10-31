@@ -45,6 +45,7 @@ Route::middleware([
         Route::post('/workflows/buckets/items', [WorkflowController::class, 'addItems']);
         Route::post('/workflows/buckets/items/processing', [WorkflowController::class, 'markItemsAsProcessing']);
         Route::post('/workflows/buckets/items/completed', [WorkflowController::class, 'markItemsAsCompleted']);
+        Route::post('/workflows/buckets/items/failed', [WorkflowController::class, 'markItemsAsFailed']);
         Route::post('/documents/next-batch', [WorkflowController::class, 'nextBatch']);
     });    
 

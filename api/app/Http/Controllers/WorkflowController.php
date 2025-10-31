@@ -106,4 +106,22 @@ class WorkflowController
 
         return response('', Response::HTTP_NO_CONTENT);
     }
+
+    public function markItemsAsFailed(Request $request)
+    {
+        $request->validate([
+            'bucket_item_ids' => ['required'],
+            'bucket_item_ids.*' => ['exists:indexing_workflow_step_items,id'],
+            'error_message' => ['required', 'string'],
+        ]);
+
+        DB::table('indexing_workflow_step_items')
+            ->whereIn('id', $request->get('bucket_item_ids'))
+            ->update([
+                'status' => WorkflowStatus::Failed->value,
+                'error_message' => $request->get('error_message'),
+            ]);
+
+        return response('', Response::HTTP_NO_CONTENT);
+    }
 }

@@ -81,7 +81,18 @@ def mark_bucket_items_as_completed(tenant_id: str, bucket_item_ids: int) -> None
     url_data = _create_tenant_request_data(tenant_id=tenant_id, path="api/orchestrator/workflows/buckets/items/completed")
     resp = requests.post(url_data["url"], json=data, headers=url_data["headers"])
     if resp.status_code != 204:
-        raise RuntimeError(f"Failed to mark item as completed: {resp.status_code}")
+        raise RuntimeError(f"Failed to mark items as completed: {resp.status_code}")
+    
+def mark_bucket_items_as_failed(tenant_id: str, bucket_item_ids: int, exception: Exception) -> None:
+    data = {
+        "bucket_item_ids": bucket_item_ids,
+        "error_message": str(exception),
+    }
+    
+    url_data = _create_tenant_request_data(tenant_id=tenant_id, path="api/orchestrator/workflows/buckets/items/failed")
+    resp = requests.post(url_data["url"], json=data, headers=url_data["headers"])
+    if resp.status_code != 204:
+        raise RuntimeError(f"Failed to mark items as failed: {resp.status_code}")
 
 def _create_tenant_request_data(tenant_id: str, path: str) -> Dict[str, any]:
     tenant_domain = get_tenant_domain(tenant_id)
