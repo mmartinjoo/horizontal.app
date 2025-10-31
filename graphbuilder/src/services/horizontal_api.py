@@ -106,8 +106,6 @@ def _create_tenant_request_data(tenant_id: str, path: str) -> Dict[str, any]:
         "url": f"{base_url}/{path}",
         "headers": headers,
     }
-    print("---- TENANT DATA ----")
-    print(data)
     return data
 
 def _get_base_api_url() -> str:

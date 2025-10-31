@@ -28,19 +28,5 @@ def api_build_graph():
         logging.exception(e)    
         return jsonify({"success": False, "error": "something went wrong", "details": str(e.args[0])}), 500
 
-@app.route("/api/test", methods=["GET"])
-def api_test():
-    body = request.get_json()
-    if not body or "tenant_id" not in body:
-        return jsonify({"error": "tenant_id is required"}), 400
-    
-    graph_client = create_graph_client(tenant_id=body["tenant_id"])
-    with graph_client.session() as session:
-        result = session.run("match (n) return n;")
-        nodes = result.fetch(3)
-        print(nodes)
-        
-    return jsonify({"status": "accepted"}), 202
-
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port="9998")
