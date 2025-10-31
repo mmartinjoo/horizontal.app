@@ -14,6 +14,7 @@ use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
 use App\Services\GraphDB\GraphDB;
 use App\Services\Indexing\Orchestrator\Orchestrator;
+use App\Services\Indexing\Orchestrator\Supervisor\StuckBucketSupervisor;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use App\Services\Integration\TaskManagement\Jira\Jira;
@@ -23,8 +24,12 @@ class TestController extends Controller
 {
     public function index(Orchestrator $orchestrator, GraphDB $graphDB)
     {
-        $graphDB->run('MATCH (n) DETACH DELETE n');
-        $orchestrator->schedule();
+        // $graphDB->run('MATCH (n) DETACH DELETE n');
+        // $orchestrator->schedule();
+
+        $workflow = IndexingWorkflow::first();
+        $supervisor = new StuckBucketSupervisor();
+        $supervisor->superviseBuckets($workflow);
     }
 
     public function token()
