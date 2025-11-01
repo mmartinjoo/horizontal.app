@@ -3,6 +3,7 @@
 namespace App\Services\SearchEngine;
 
 use App\Models\DocumentChunk;
+use App\Models\DocumentComment;
 use App\Models\Question;
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
@@ -61,16 +62,26 @@ class SearchEngine
                 $pathStrings[] = $path->pathString;
             }
         }
+
         $pathJSON = json_encode($pathStrings);
+
         $chunkContext = collect($chunkContext)
             ->unique('id')
-            ->map(fn (Node $node) => [
-                'id' => $node->properties['document_chunk_id'],
-                'title' => $node->properties['title'],
-                'text' => $node->properties['text'],
-            ])
+            ->map(callback: function (Node $node) {
+                $idCol = $node->properties['document_type'] === 'document'
+                    ? 'document_chunk_id'
+                    : 'comment_id';
+
+                return [
+                    'id' => $node->properties[$idCol],
+                    'title' => $node->properties['title'],
+                    'text' => $node->properties['text'],
+                    'type' => $node->properties['document_type'],
+                ];
+            })
             ->values()
             ->toArray();
+
         $chunkJSON = json_encode($chunkContext);
 
         $answer = $this->llm->completion("
@@ -94,19 +105,30 @@ class SearchEngine
             In the document context you are given a title and a text for each document.
             When you use a text chunk from a document, keep track of the document title, and use in the response.
 
+            ALWAYS INCLUDE a listacle in your anwser when it fits the content.
+            Organize your response into paragprahs and subtitle when it makes sense.
+
             You MUST respond with a JSON object with the following keys:
-            - answer: the answer to the question
+            - answer: the answer to the question as string
             - relevant_documents: an array of document titles that are relevant to the question with the following keys:
-                - document_chunk_id: the document id
+                - id: the document id
                 - title: the document title
+                - type: the document type
         ");
 
         $answerData = json_decode($answer, true);
         $documents = collect();
         foreach ($answerData['relevant_documents'] as $relevantDocument) {
-            $document = DocumentChunk::with('document')
-                ->find($relevantDocument['document_chunk_id'])
-                ->document;
+            if ($relevantDocument['type'] === 'document') {
+                $document = DocumentChunk::with('document')
+                    ->find($relevantDocument['id'])
+                    ->document;
+            } else {
+                $document = DocumentComment::with('document')
+                    ->find($relevantDocument['id'])
+                    ->document;
+            }
+            
 
             if ($documents->contains('id', $document->id)) {
                 continue;
@@ -117,7 +139,7 @@ class SearchEngine
 
         return [
             'answer' => $answerData['answer'],
-            'relevant_documents' => $documents->pluck('title')->toArray(),
+            'relevant_documents' => $documents,
         ];
     }
 
