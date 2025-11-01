@@ -46,10 +46,6 @@ class GraphBuilder:
         
         limit = 5
         num_of_batches = math.ceil(count/limit)
-        # if (count == limit):
-        #     num_of_batches = 1
-        # else:
-        #     num_of_batches = int(count/limit)+1            
         
         if count == 0:
             logging.warning(f"No {type} to process")
