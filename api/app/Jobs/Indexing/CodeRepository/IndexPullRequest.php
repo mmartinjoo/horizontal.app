@@ -41,14 +41,12 @@ class IndexPullRequest extends IndexingStepItemJob implements ShouldQueue
                 'priority' => 'high',
                 'metadata' => $this->pullRequest,
             ]);
-            
-            $indexingWorkflowStepItem = IndexingWorkflowStepItem::create([
-                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
-                'data' => $this->pullRequest,
-                'status' => 'processing',
-                'document_id' => $doc->id,
-                'job_id' => $this->job->payload()['uuid'],
-            ]);
+            $indexingWorkflowStepItem = IndexingWorkflowStepItem::createForDocument(
+                document: $doc,
+                bucketId: $this->indexingWorkflowStepBucketId,
+                data: (array)$this->pullRequest,
+                jobId: $this->job->payload()['uuid'],
+            );
 
             $preview = $this->pullRequest->title;
             if ($this->pullRequest->description) {

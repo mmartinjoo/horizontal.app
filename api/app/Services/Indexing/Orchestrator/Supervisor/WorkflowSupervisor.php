@@ -65,16 +65,14 @@ class WorkflowSupervisor
 
         $allFinite = $childResults->every('finiteState', true);
         if ($allFinite) {
-            $nextAction = 'terminate';
-            $entity->update([
-                'finished_at' => now(),
-            ]);
+            $nextAction = 'terminate';            
 
             $allFailed = $childResults->every('status', WorkflowStatus::Failed->value);
-            if ($allFailed) {
+            if ($allFailed) {                
                 $entity->update([
-                    'status' => WorkflowStatus::Failed->value],
-                );
+                    'status' => WorkflowStatus::Failed->value,
+                    'finished_at' => now(),
+                ]);
 
                 return new SupervisorResult(
                     status: WorkflowStatus::Failed->value,
@@ -86,9 +84,33 @@ class WorkflowSupervisor
 
             $allCompleted = $childResults->every('status', WorkflowStatus::Completed->value);
             if ($allCompleted) {
+                if ($entity instanceof IndexingWorkflow) {
+                    $finishedAt = null;
+                    if ($this->isWorkflowCompleted($entity)) {
+                        $nextStatus = WorkflowStatus::Completed;
+                        $finishedAt = now();
+                    } else {
+                        $nextStatus = WorkflowStatus::ReadForNextStep;
+                        $finishedAt = null;
+                    }
+
+                    $entity->update([
+                        'status' => $nextStatus->value,
+                        'finished_at' => $finishedAt,
+                    ],);
+
+                    return new SupervisorResult(
+                        status: $nextStatus->value,
+                        isExpectedStatus: true,
+                        finiteState: false,
+                        nextAction: 'terminate',    // terminate because each step starts a new supervisor job
+                    );    
+                }
+
                 $entity->update([
-                    'status' => WorkflowStatus::Completed->value],
-                );
+                    'status' => WorkflowStatus::Completed->value,
+                    'finished_at' => now(),
+                ]);
 
                 return new SupervisorResult(
                     status: WorkflowStatus::Completed->value,
@@ -98,12 +120,26 @@ class WorkflowSupervisor
                 );
             }
 
+            $nextStatus = WorkflowStatus::CompletedWithErrors;
+            $finishedAt = now();            
+
+            if ($entity instanceof IndexingWorkflow) {
+                if ($this->isWorkflowCompleted($entity)) {
+                    $nextStatus = WorkflowStatus::CompletedWithErrors;
+                    $finishedAt = now();
+                } else {
+                    $nextStatus = WorkflowStatus::ReadForNextStep;
+                    $finishedAt = null;
+                }
+            }
+
             $entity->update([
-                'status' => WorkflowStatus::CompletedWithErrors->value,
+                'status' => $nextStatus->value,
+                'finished_at' => $finishedAt,
             ]);
 
             return new SupervisorResult(
-                status: WorkflowStatus::CompletedWithErrors->value,
+                status: $nextStatus->value,
                 isExpectedStatus: true,
                 finiteState: true,
                 nextAction: $nextAction,
@@ -127,7 +163,19 @@ class WorkflowSupervisor
                 );
             }
 
-            if (! $hasProcessing) {
+            if (!$hasProcessing) {
+                // Only valid for a workflow
+                // Every step finished, but the next one is not scheduled yet
+                if ($entity->status === WorkflowStatus::ReadForNextStep->value) {
+                    return new SupervisorResult(
+                        status: WorkflowStatus::ReadForNextStep->value,
+                        isExpectedStatus: true,
+                        finiteState: false,
+                        nextAction: $nextAction,
+                    );
+                }
+
+
                 $entity->update([
                     'status' => WorkflowStatus::Starting->value,
                 ]);
@@ -171,6 +219,23 @@ class WorkflowSupervisor
 
         // started
         if ($bucket->overall_items !== 0 && ($bucket->overall_items !== $bucket->processed_items)) {
+            // for the graph building buckets, items are created in advance.
+            // so by only looking at `overall_items` and `processed_items`
+            // it looks like the bucket is processing but in fact it's
+            // not being processed yet. we also need to check items
+            $itemsStarting = $bucket->items->every(fn (IndexingWorkflowStepItem $item) => $item->status === WorkflowStatus::Starting->value);
+            if ($itemsStarting) {
+                $bucket->update([
+                    'status' => WorkflowStatus::Starting->value,
+                ]);
+                return new SupervisorResult(
+                    status: WorkflowStatus::Starting->value,
+                    isExpectedStatus: true,
+                    finiteState: false,
+                    nextAction: 'wait',
+                );
+            }
+
             $bucket->update([
                 'status' => WorkflowStatus::Processing->value,
                 'started_at' => now(),
@@ -254,6 +319,14 @@ class WorkflowSupervisor
         ]);
     }
 
+    public function finished(int $workflowId)
+    {
+        $workflow = IndexingWorkflow::findOrFail($workflowId);
+        $workflow->update([
+            'finished_at' => now(),
+        ]);
+    }
+
     private function updateStats(IndexingWorkflowStepBucket $bucket)
     {
         $processedCount = IndexingWorkflowStepItem::query()
@@ -264,5 +337,17 @@ class WorkflowSupervisor
         $bucket->update([
             'processed_items' => $processedCount,
         ]);
+    }
+
+    /**
+     * If `build_communities` is the last step the workflow is in a final state
+     */
+    private function isWorkflowCompleted(IndexingWorkflow $workflow): bool
+    {
+        $lastStep = $workflow->steps()->orderBy('id', 'desc')->first();
+        if ($lastStep->name === 'build_communities') {
+            return true;
+        }
+        return false;
     }
 }

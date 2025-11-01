@@ -29,7 +29,6 @@ class SearchEngine
         $results = $this->graphDB->vectorSearch('vector_index_communities', $embedding, 10);
         $chunkContext = [];
         $pivotCommunities = [];
-        /** @var Node $node */
         foreach ($results as $node) {
             if ($node['similarity'] >= $this->cosineSimilarityThreshold) {
                 $pivotCommunities[] = $node;

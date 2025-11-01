@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('indexing_workflow_step_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(IndexingWorkflowStepBucket::class)->constrained()->cascadeOnDelete();
-            $table->jsonb('data');
+            $table->foreignIdFor(IndexingWorkflowStepBucket::class)->constrained()->cascadeOnDelete();            
             $table->string('status');
-            $table->foreignIdFor(Document::class)->nullable()->constrained()->cascadeOnDelete();
+            $table->string('entity_type')->nullable();
+            $table->bigInteger('entity_id')->nullable();
+            $table->jsonb('data')->nullable();
             $table->text('error_message')->nullable();
             $table->string('job_id')->nullable();
             $table->timestamps();

@@ -40,14 +40,12 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
                 'priority' => 'high',
                 'metadata' => $this->issue,
             ]);
-            
-            $indexingWorkflowItem = IndexingWorkflowStepItem::create([
-                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
-                'data' => $this->issue,
-                'status' => 'processing',
-                'document_id' => $doc->id,
-                'job_id' => $this->job->payload()['uuid'],
-            ]);
+            $indexingWorkflowItem = IndexingWorkflowStepItem::createForDocument(
+                document: $doc,
+                bucketId: $this->indexingWorkflowStepBucketId,
+                data: (array)$this->issue,
+                jobId: $this->job->payload()['uuid'],
+            );
             $this->createdIndexingWorkflowItemId = $indexingWorkflowItem->id;
 
             $preview = $this->issue->title;

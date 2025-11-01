@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Indexing\WorkflowStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -27,5 +28,21 @@ class IndexingWorkflowStepItem extends Model
     public function user(): HasManyThrough
     {
         return $this->hasManyThrough(User::class, IndexingWorkflowStep::class);
+    }
+
+    public static function createForDocument(
+        Document $document,
+        int $bucketId,
+        array $data,
+        string $jobId,
+    ): self {
+        return self::create([
+            'indexing_workflow_step_bucket_id' => $bucketId,
+            'data' => $data,
+            'status' => WorkflowStatus::Processing->value,
+            'entity_type' => get_class($document),
+            'entity_id' => $document->id,
+            'job_id' => $jobId,
+        ]);
     }
 }

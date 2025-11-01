@@ -44,13 +44,12 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
                 'title' => $this->issue->title,
                 'metadata' => $this->issue,
             ]);
-            $indexingWorkflowItem = IndexingWorkflowStepItem::create([
-                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
-                'data' => $this->issue,
-                'status' => WorkflowStatus::Processing->value,
-                'document_id' => $document->id,
-                'job_id' => $this->job->payload()['uuid'],
-            ]);
+            $indexingWorkflowItem = IndexingWorkflowStepItem::createForDocument(
+                document: $document,
+                bucketId: $this->indexingWorkflowStepBucketId,
+                data: (array)$this->issue,
+                jobId: $this->job->payload()['uuid'],
+            );
             $this->createdIndexingWorkflowItemId = $indexingWorkflowItem->id;
 
             $chunks = $textChunker->chunk($this->issue->title.' '.$this->issue->description);
@@ -69,7 +68,7 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
 
             foreach ($chunks as $i => $chunk) {
                 DocumentChunk::create([
-                    'document_id' => $indexingWorkflowItem->document->id,
+                    'document_id' => $document->id,
                     'body' => $chunk,
                     'position' => $i + 1,
                 ]);

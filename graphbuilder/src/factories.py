@@ -54,10 +54,12 @@ def create_queue() -> Queue:
     return Queue(connection=redis, name="default", default_timeout="30m")
 
 def create_llm() -> Fireworks:
-    return OpenAI(temperature=0.0, model="gpt-3.5-turbo")
-    #return Fireworks(api_key=os.getenv("FIREWORKS_API_KEY"),
-    #                 temperature=0,
-    #                 model=os.getenv("LLM_MODEL"))
+    if os.getenv("LLM_PROVIDER") == "openai":
+        return OpenAI(temperature=0.0, model=os.getenv("LLM_MODEL"))
+    else:
+        return Fireworks(api_key=os.getenv("FIREWORKS_API_KEY"),
+                         temperature=0,
+                         model=os.getenv("LLM_MODEL"))
     
 def create_embed_model() -> BaseEmbedding:
     return FireworksEmbedding()

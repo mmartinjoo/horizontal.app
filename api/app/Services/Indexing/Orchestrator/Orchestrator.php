@@ -7,12 +7,17 @@ use App\Jobs\Indexing\CodeRepository\GitHub\IndexGitHub;
 use App\Jobs\Indexing\Communication\GoogleChat\IndexGoogleChat;
 use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\IndexingStepJob;
+use App\Jobs\Indexing\Orchestrator\ScheduleAdditionalNodeBuilding;
+use App\Jobs\Indexing\Orchestrator\ScheduleCommunityBuilding;
+use App\Jobs\Indexing\Orchestrator\ScheduleGraphBuilding;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
+use App\Jobs\Indexing\Supervisor\SuperviseStuckBuckets;
 use App\Jobs\Indexing\Supervisor\SuperviseWorkflow;
 use App\Jobs\Indexing\TaskManagement\Jira\IndexJira;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
+use App\Services\Indexing\Orchestrator\Supervisor\StuckBucketSupervisor;
 use App\Services\Indexing\Orchestrator\Supervisor\WorkflowSupervisor;
 use Exception;
 
@@ -26,7 +31,7 @@ class Orchestrator
         ]);
 
         // This will be merged into one `integrations` table
-        $integrations = ['linear', 'jira'];
+        $integrations = ['github'];
         $jobs = [];
 
         foreach ($integrations as $integration) {
@@ -49,8 +54,15 @@ class Orchestrator
             dispatch($job);
         }
 
-        $supervisor = $this->createSupervisorJob($workflow);
-        dispatch($supervisor);
+        $workflowSupervisor = $this->createWorkflowSupervisor($workflow);
+        dispatch($workflowSupervisor);
+
+        $stuckBucketSupervisor = $this->createStuckBucketSupervisor($workflow);
+        dispatch($stuckBucketSupervisor);
+
+        dispatch(new ScheduleGraphBuilding($workflow->id));
+        dispatch(new ScheduleAdditionalNodeBuilding($workflow->id));
+        dispatch(new ScheduleCommunityBuilding($workflow->id));
     }
 
     private function createIndexingJob(string $integration): IndexingStepJob
@@ -66,11 +78,19 @@ class Orchestrator
         };
     }
 
-    private function createSupervisorJob(IndexingWorkflow $workflow): SuperviseWorkflow
+    private function createWorkflowSupervisor(IndexingWorkflow $workflow): SuperviseWorkflow
     {
         return new SuperviseWorkflow(
             $workflow->id,
             new WorkflowSupervisor(),
+        );
+    }
+
+    private function createStuckBucketSupervisor(IndexingWorkflow $workflow): SuperviseStuckBuckets
+    {
+        return new SuperviseStuckBuckets(
+            $workflow->id,
+            new StuckBucketSupervisor(),
         );
     }
 }

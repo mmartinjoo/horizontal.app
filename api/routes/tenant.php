@@ -7,6 +7,7 @@ use App\Http\Controllers\JiraIntegrationController;
 use App\Http\Controllers\LinearIntegrationController;
 use App\Http\Controllers\GoogleIntegrationController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -38,6 +39,15 @@ Route::middleware([
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/questions/ask', [QuestionController::class, 'ask']);
     });
+
+    Route::group(['prefix' => 'orchestrator'], function () {
+        Route::post('/workflows/buckets', [WorkflowController::class, 'createBucket']);
+        Route::post('/workflows/buckets/items', [WorkflowController::class, 'addItems']);
+        Route::post('/workflows/buckets/items/processing', [WorkflowController::class, 'markItemsAsProcessing']);
+        Route::post('/workflows/buckets/items/completed', [WorkflowController::class, 'markItemsAsCompleted']);
+        Route::post('/workflows/buckets/items/failed', [WorkflowController::class, 'markItemsAsFailed']);
+        Route::post('/documents/next-batch', [WorkflowController::class, 'nextBatch']);
+    });    
 
     Route::get('/integrations/jira/oauth/callback', [JiraIntegrationController::class, 'callback']);
     Route::middleware('auth:sanctum')->prefix('/integrations/jira/oauth')->group(function () {

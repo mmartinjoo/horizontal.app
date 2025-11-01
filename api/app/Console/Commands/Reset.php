@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Document;
+use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStepItem;
 use App\Models\IndexingWorkflowStep;
 use App\Models\JiraProject;
@@ -38,8 +39,7 @@ class Reset extends Command
         Document::all()->each->delete();
         Participant::all()->each->delete();
         JiraProject::all()->each->delete();
-        IndexingWorkflowStep::all()->each->delete();
-        IndexingWorkflowStepItem::all()->each->delete();
+        IndexingWorkflow::all()->each->delete();
         $graphDB->query('MATCH (n) DETACH DELETE n');
 
         tenancy()->end();

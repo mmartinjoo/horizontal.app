@@ -49,18 +49,17 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
                 'metadata' => $this->file,
                 'priority' => 'high',
             ]);
-            $indexingWorkflowItem = IndexingWorkflowStepItem::create([
-                'indexing_workflow_step_bucket_id' => $this->indexingWorkflowStepBucketId,
-                'data' => $this->file,
-                'status' => WorkflowStatus::Processing->value,
-                'document_id' => $document->id,
-                'job_id' => $this->job->payload()['uuid'],
-            ]);
+            $indexingWorkflowItem = IndexingWorkflowStepItem::createForDocument(
+                document: $document,
+                bucketId: $this->indexingWorkflowStepBucketId,
+                data: json_decode(json_encode($this->file), true),
+                jobId: $this->job->payload()['uuid'],
+            );
             $this->createdIndexingWorkflowItemId = $indexingWorkflowItem->id;
 
             $drive->downloadFile($this->file);
             if ($this->file->mimeType() === 'application/pdf') {
-                $this->indexPDF($pdfParser, $textChunker, $indexingWorkflowItem);
+                $this->indexPDF($pdfParser, $textChunker, $document);
                 $indexingWorkflowItem->update([
                     'status' => WorkflowStatus::Completed->value,
                 ]);
@@ -170,19 +169,10 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
         }
     }
 
-    private function indexPDF(PdfParser $pdfParser, TextChunker $textChunker, IndexingWorkflowStepItem $indexingWorkflowItem)
+    private function indexPDF(PdfParser $pdfParser, TextChunker $textChunker, Document $document)
     {
-        $indexingWorkflowItem->update([
-            'status' => 'parsing',
-        ]);
-
         $blocks = $pdfParser->stream($this->file->path());
         $firstChunk = '';
-
-        $indexingWorkflowItem->update([
-            'status' => 'parsed',
-        ]);
-
         /** @var string $block */
         foreach ($blocks as $block) {
             $chunks = $textChunker->chunk($block);
@@ -191,18 +181,15 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
                     $firstChunk = $chunk;
                 }
                 DocumentChunk::create([
-                    'document_id' => $indexingWorkflowItem->document->id,
+                    'document_id' => $document->id,
                     'body' => $chunk,
                     'position' => $i + 1,
                 ]);
             }
         }
 
-        $indexingWorkflowItem->document()->update([
+        $document->update([
             'preview' => $firstChunk,
-        ]);
-        $indexingWorkflowItem->update([
-            'status' => 'prepared',
         ]);
     }
 }
