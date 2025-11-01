@@ -121,7 +121,7 @@ class WorkflowSupervisor
             }
 
             $nextStatus = WorkflowStatus::CompletedWithErrors;
-            $finishedAt = null;            
+            $finishedAt = now();            
 
             if ($entity instanceof IndexingWorkflow) {
                 if ($this->isWorkflowCompleted($entity)) {

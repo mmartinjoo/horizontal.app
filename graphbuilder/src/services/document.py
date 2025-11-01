@@ -18,8 +18,7 @@ def get_document_chunk_batch(reader: DatabaseReader, ids: List[int]) -> List[Doc
                 'document' as document_type
             from document_chunks
             inner join documents on documents.id = document_chunks.document_id
-            where document_chunks.processing_status = 'waiting'
-            and document_chunks.id in ({ids_str})
+            where document_chunks.id in ({ids_str})
             order by document_chunks.id        
         """,
         metadata_cols=[
@@ -58,8 +57,7 @@ def get_comment_batch(reader: DatabaseReader, ids: List[int]) -> List[Document]:
                 'comment' as document_type
             from document_comments
             inner join documents on documents.id = document_comments.document_id
-            where document_comments.processing_status = 'waiting'
-            and document_comments.id in ({ids_str})
+            where document_comments.id in ({ids_str})
             order by document_comments.id            
         """,
         metadata_cols=[
@@ -85,90 +83,12 @@ def get_comment_batch(reader: DatabaseReader, ids: List[int]) -> List[Document]:
 
     return transformed_comments
 
-def mark_document_chunks_as_processing(items: List[Document], job_id: str, cursor: Cursor):
-    if len(items) == 0:
-        return
-    
-    doc_ids = [doc.metadata["document_chunk_id"] for doc in items]
-    doc_ids_str = ",".join([str(id) for id in doc_ids])
-    
-    cursor.execute(f"""
-                update document_chunks
-                set processing_status = 'processing',
-                    processing_started_at = NOW(),
-                    processing_job_id = '{job_id}'
-                where id in ({doc_ids_str})                    
-                """)
-    
-    logging.info(f"{cursor.rowcount} rows marked as 'processing'")
-    
-    if cursor.rowcount != len(items):
-        logging.warning(f"Graph building: not all document_chunk rows were processed succesfuly. Expected: {len(items)}. Actual: {cursor.rowcount}")
-        
-def mark_document_chunks_as_processed(items: List[Document], cursor: Cursor):
-    if len(items) == 0:
-        return
-    
-    doc_ids = [doc.metadata["document_chunk_id"] for doc in items]
-    doc_ids_str = ",".join([str(id) for id in doc_ids])
-    
-    cursor.execute(f"""
-                update document_chunks
-                set processing_status = 'processed',
-                    processing_finished_at = NOW()
-                where id in ({doc_ids_str})                    
-                """)
-    
-    logging.info(f"{cursor.rowcount} rows marked as 'processed'")
-    
-    if cursor.rowcount != len(items):
-        logging.warning(f"Graph building: not all document_chunk rows were processed succesfuly. Expected: {len(items)}. Actual: {cursor.rowcount}")
-
-def mark_comments_as_processing(items: List[Document], job_id: str, cursor: Cursor):
-    if len(items) == 0:
-        return
-    
-    comm_id = [doc.metadata["comment_id"] for doc in items]
-    comm_id_str = ",".join([str(id) for id in comm_id])
-    
-    cursor.execute(f"""
-                    update document_comments
-                    set processing_status = 'processing',
-                        processing_started_at = NOW(),
-                        processing_job_id = '{job_id}'
-                    where id in ({comm_id_str})                    
-                    """)
-    
-    logging.info(f"{cursor.rowcount} rows marked as 'processing'")
-    
-    if cursor.rowcount != len(items):
-        logging.warning(f"Graph building: not all comments rows were processed succesfuly. Expected: {len(items)}. Actual: {cursor.rowcount}")
-
-def mark_comments_as_processed(items: List[Document], cursor: Cursor):
-    if len(items) == 0:
-        return
-    
-    comm_id = [doc.metadata["comment_id"] for doc in items]
-    comm_id_str = ",".join([str(id) for id in comm_id])
-    
-    cursor.execute(f"""
-                    update document_comments
-                    set processing_status = 'processed',
-                        processing_finished_at = NOW()
-                    where id in ({comm_id_str})                    
-                    """)
-    
-    logging.info(f"{cursor.rowcount} rows marked as 'processed'")
-    
-    if cursor.rowcount != len(items):
-        logging.warning(f"Graph building: not all comments rows were processed succesfuly. Expected: {len(items)}. Actual: {cursor.rowcount}")
-
-def count_waiting_document_chunks(cursor: Cursor) -> int:
-    cursor.execute("select count(*) from document_chunks where processing_status = 'waiting'")
+def count_document_chunks(cursor: Cursor) -> int:
+    cursor.execute("select count(*) from document_chunks")
     return cursor.fetchone()[0]
 
-def count_waiting_comments(cursor: Cursor) -> int:
-    cursor.execute("select count(*) from document_comments where processing_status = 'waiting'")
+def count_comments(cursor: Cursor) -> int:
+    cursor.execute("select count(*) from document_comments")
     return cursor.fetchone()[0]
 
 def get_next_batch(cursor: Cursor, table: str, limit: int, offset: int) -> List[int]:
