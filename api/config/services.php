@@ -55,6 +55,7 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_OAUTH_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
         'project_id' => env('GOOGLE_PROJECT_ID'),
         'auth_uri' => env('GOOGLE_AUTH_URI'),
         'token_uri' => env('GOOGLE_TOKEN_URI'),
@@ -87,6 +88,7 @@ return [
         'app_name' => env('GITHUB_APP_NAME'),
         'client_id' => env('GITHUB_CLIENT_ID'),
         'client_secret' => env('GITHUB_CLIENT_SECRET'),
+        'redirect' => env('GITHUB_OAUTH_REDIRECT_URI', env('APP_URL').'/auth/github/callback'),
         'private_key' => env('GITHUB_PRIVATE_KEY'),
     ],
 ];

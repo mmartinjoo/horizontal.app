@@ -12,6 +12,11 @@ const router = createRouter({
       path: '/ask',
       name: 'ask',
       component: () => import('../views/Ask.vue')
+    },
+    {
+      path: '/auth',
+      name: 'auth',
+      component: () => import('../views/Auth.vue')
     }
   ],
 })
