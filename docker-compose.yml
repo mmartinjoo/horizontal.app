@@ -103,20 +103,20 @@ services:
       timeout: 5s
       retries: 5
 
-#  frontend:
-#    build:
-#      context: ./frontend
-#      dockerfile: Dockerfile
-#    ports:
-#      - "51730:5173"
-#    volumes:
-#      - ./frontend:/app
-#      - /app/node_modules
-#    environment:
-#      - VITE_API_URL=http://localhost:8000
-#    depends_on:
-#      - api
-#
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "9996:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://tenant2.localhost:9999/api
+    depends_on:
+      - api
+
   graphbuilder-api:
     build:
       context: ./graphbuilder
