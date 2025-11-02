@@ -114,6 +114,21 @@ class SearchEngine
                 - id: the document id
                 - title: the document title
                 - type: the document type
+
+            This MUST be your answer:
+            ```
+            {
+                \"answer\": \"your textual answer to the questions including paragprahs, listicles\",
+                \"relevant_documents\": {
+                    \"id\": 123,
+                    \"title\": \"document title\",
+                    \"type\": \"document_chunk\"
+                }
+            }
+            ```
+
+            ALWAYS respond with this structure.
+            ...ALWAYS
         ");
 
         $answerData = json_decode($answer, true);
