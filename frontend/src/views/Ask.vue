@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue'
+import { useAuth } from '../composables/useAuth'
 
 const question = ref('')
 const answer = ref(null)
@@ -8,6 +9,7 @@ const isLoading = ref(false)
 const error = ref(null)
 
 const API_BASE_URL = '/api'
+const { getAuthHeaders, logout } = useAuth()
 
 const askQuestion = async () => {
   if (!question.value.trim()) return
@@ -20,12 +22,7 @@ const askQuestion = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/questions/ask`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        // Add authentication header if needed
-        'Authorization': `Bearer 6|bAORRJTgLH5ruAnK6Yf8r7a21VijximHYA4Uv0BP61828d28`
-      },
+      headers: getAuthHeaders(),
       credentials: 'include',
       body: JSON.stringify({
         question: question.value
@@ -33,6 +30,14 @@ const askQuestion = async () => {
     })
 
     if (!response.ok) {
+      // Handle authentication errors
+      if (response.status === 401) {
+        error.value = 'Your session has expired. Please log in again.'
+        setTimeout(() => {
+          logout()
+        }, 2000)
+        return
+      }
       throw new Error(`Error: ${response.status} ${response.statusText}`)
     }
 
@@ -80,7 +85,15 @@ const formatAnswer = (text) => {
           <div class="flex-shrink-0">
             <a href="/" class="text-2xl font-bold text-black">Horizontal</a>
           </div>
-          <div class="text-sm text-gray-500">Ask anything about your team's knowledge</div>
+          <div class="flex items-center space-x-4">
+            <div class="text-sm text-gray-500">Ask anything about your team's knowledge</div>
+            <button
+              @click="logout"
+              class="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     </nav>

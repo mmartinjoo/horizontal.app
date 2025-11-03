@@ -77,12 +77,12 @@ class OAuthController extends Controller
             ]);
         }
 
-        $user->createToken('oauth-token')->plainTextToken;
+        $token = $user->createToken('oauth-token')->plainTextToken;
 
         if (App::isLocal()) {
             $tenant = tenant();
             $domain = $tenant->domains->first();
-            $url = 'http://' .  $domain->domain . ':9996/ask'; 
+            $url = 'http://' .  $domain->domain . ':9996/after-login?token=' . $token; 
 
             // this is needed because the GitHub app cannot have 'localhost' in the callback URL
             // so we use a local tunnel (see Makefile)
@@ -91,7 +91,7 @@ class OAuthController extends Controller
             return redirect()->away($url);
         } else {
             // in prod everything happens at `tenant.horizontal.app`
-            return redirect('/ask');
+            return redirect('/after-login?token=' . $token);
         }
     }
 

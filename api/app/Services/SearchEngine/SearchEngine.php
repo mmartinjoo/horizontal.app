@@ -12,6 +12,7 @@ use App\Services\SearchEngine\DataTransferObjects\Path;
 use App\Services\SearchEngine\DataTransferObjects\SearchResult;
 use Bolt\protocol\v1\structures\Path as BoltPath;
 use Bolt\protocol\v5\structures\Node;
+use Exception;
 use Illuminate\Support\Collection;
 
 class SearchEngine
@@ -132,6 +133,10 @@ class SearchEngine
         ");
 
         $answerData = json_decode($answer, true);
+        if (!$answerData) {
+            throw new Exception('Unable to answer your question');
+        }
+
         $documents = collect();
         foreach ($answerData['relevant_documents'] as $relevantDocument) {
             if ($relevantDocument['type'] === 'document') {
