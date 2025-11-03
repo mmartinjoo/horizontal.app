@@ -42,7 +42,7 @@ class OAuthController extends Controller
                 'message' => 'Failed to authenticate with '.$provider,
                 'error' => $exception->getMessage(),
             ], 401);
-        }
+        }        
 
         $user = User::query()
             ->where('provider', $provider)
@@ -50,29 +50,26 @@ class OAuthController extends Controller
             ->first();
 
         if (!$user) {
-            $user = User::query()
+            $existingUser = User::query()
                 ->where('email', $socialiteUser->getEmail())
                 ->first();
 
-            if ($user) {
-                $user->update([
-                    'provider' => $provider,
-                    'provider_id' => $socialiteUser->getId(),
-                    'provider_token' => $socialiteUser->token,
-                    'avatar' => $socialiteUser->getAvatar(),
-                ]);
-            } else {
-                $user = User::query()->create([
-                    'name' => $socialiteUser->getName() ?? $socialiteUser->getNickname(),
-                    'email' => $socialiteUser->getEmail(),
-                    'provider' => $provider,
-                    'provider_id' => $socialiteUser->getId(),
-                    'provider_token' => $socialiteUser->token,
-                    'avatar' => $socialiteUser->getAvatar(),
-                    'email_verified_at' => now(),
-                    'password' => Hash::make(Str::random(32)),
-                ]);
-            }
+            if ($existingUser) {
+                return response()->json([
+                    'message' => 'You are already logged in with ' . $existingUser->provider,
+                ], 401);
+            }            
+
+            $user = User::create([
+                'name' => $socialiteUser->getName() ?? $socialiteUser->getNickname(),
+                'email' => $socialiteUser->getEmail(),
+                'provider' => $provider,
+                'provider_id' => $socialiteUser->getId(),
+                'provider_token' => $socialiteUser->token,
+                'avatar' => $socialiteUser->getAvatar(),
+                'email_verified_at' => now(),
+                'password' => Hash::make(Str::random(32)),
+            ]);
         } else {
             $user->update([
                 'provider_token' => $socialiteUser->token,

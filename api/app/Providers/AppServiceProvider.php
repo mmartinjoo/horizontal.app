@@ -87,7 +87,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app
             ->when(GoogleOAuthService::class)
             ->needs('$config')
-            ->give(config('services.google'));
+            ->give(config('services.google_integration'));
 
         $this->app
             ->when(LinearOAuthService::class)
