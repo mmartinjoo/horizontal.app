@@ -37,6 +37,13 @@ class ElasticMemgraphService
         return $instance;
     }
 
+    public function countAvailableInstances(): int
+    {
+        return MemgraphInstance::query()
+            ->where('status', MemgraphInstanceStatus::Available->value)
+            ->count();
+    }
+
     private function hasOccupation(Tenant $tenant): bool
     {
         return MemgraphInstance::query()
