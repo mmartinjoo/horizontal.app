@@ -67,6 +67,7 @@ return [
     'github_integration' => [
         'base_url' => rtrim(env('GITHUB_BASE_URL'), '/'),
         'app_id' => env('GITHUB_APP_ID'),
+        'app_name' => env('GITHUB_APP_NAME'),
         'client_id' => env('GITHUB_CLIENT_ID'),
         'client_secret' => env('GITHUB_CLIENT_SECRET'),
         'private_key' => env('GITHUB_PRIVATE_KEY'),
