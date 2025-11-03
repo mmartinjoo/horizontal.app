@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ElasticMemgraphService\MemgraphInstanceStatus;
+use App\Models\ElasticMemgraphService\MemgraphInstance;
 use App\Models\Tenant;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -14,11 +16,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        MemgraphInstance::create([
+            'host' => 'memgraph-tenant1',
+            'port' => 7687,
+            'username' => 'horizontal',
+            'password_encrypted' => encrypt('password'),
+            'db_schema' => 'basic',
+            'status' => MemgraphInstanceStatus::Available->value,
+        ]);
+        MemgraphInstance::create([
+            'host' => 'memgraph-tenant2',
+            'port' => 7687,
+            'username' => 'horizontal',
+            'password_encrypted' => encrypt('password'),
+            'db_schema' => 'basic',
+            'status' => MemgraphInstanceStatus::Available->value,
+        ]);
+
         User::create([
             'name' => 'Admin',
             'email' => 'admin@horizontal.app',
             'password' => bcrypt('password'),
         ]);
+
         $tenant1 = Tenant::create([
             'company' => 'Tenant1 Ltd.',
             'country' => 'US',
