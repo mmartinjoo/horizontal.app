@@ -12,6 +12,7 @@ use App\Services\SearchEngine\DataTransferObjects\Path;
 use App\Services\SearchEngine\DataTransferObjects\SearchResult;
 use Bolt\protocol\v1\structures\Path as BoltPath;
 use Bolt\protocol\v5\structures\Node;
+use Exception;
 use Illuminate\Support\Collection;
 
 class SearchEngine
@@ -114,9 +115,28 @@ class SearchEngine
                 - id: the document id
                 - title: the document title
                 - type: the document type
+
+            This MUST be your answer:
+            ```
+            {
+                \"answer\": \"your textual answer to the questions including paragprahs, listicles\",
+                \"relevant_documents\": {
+                    \"id\": 123,
+                    \"title\": \"document title\",
+                    \"type\": \"document_chunk\"
+                }
+            }
+            ```
+
+            ALWAYS respond with this structure.
+            ...ALWAYS
         ");
 
         $answerData = json_decode($answer, true);
+        if (!$answerData) {
+            throw new Exception('Unable to answer your question');
+        }
+
         $documents = collect();
         foreach ($answerData['relevant_documents'] as $relevantDocument) {
             if ($relevantDocument['type'] === 'document') {

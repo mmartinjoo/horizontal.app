@@ -40,7 +40,7 @@ class Factory
     public function createCodeRepository(string $vendor): CodeRepository
     {
         return match($vendor) {
-            'github' => new GitHub(app(GithubOAuth::class), config('services.github.base_url')),
+            'github' => app(GitHub::class),
             default => throw new Exception('Unknown code repository integration'),
         };
     }

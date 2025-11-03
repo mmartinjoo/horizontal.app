@@ -23,6 +23,6 @@ class QuestionController
             'question' => $request->input('question'),
         ]);
 
-        dd($searchEngine->graphRAG($question));
+        return $searchEngine->graphRAG($question);
     }
 }

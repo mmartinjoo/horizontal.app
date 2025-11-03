@@ -44,24 +44,6 @@ return [
         'api_key' => env('PINECONE_API_KEY'),
     ],
 
-    // TODO: merge with Google
-    'google_drive' => [
-        'client_id' => env('GOOGLE_DRIVE_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
-        'refresh_token' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
-        'access_token' => env('GOOGLE_DRIVE_ACCESS_TOKEN'),
-    ],
-
-    'google' => [
-        'client_id' => env('GOOGLE_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'project_id' => env('GOOGLE_PROJECT_ID'),
-        'auth_uri' => env('GOOGLE_AUTH_URI'),
-        'token_uri' => env('GOOGLE_TOKEN_URI'),
-        'auth_provider_x509_cert_url' => env('GOOGLE_AUTH_PROVIDER_X509_CERT_URL'),
-        'redirect_uris' => ['https://tenant2-horizontal.loca.lt' . env('GOOGLE_REDIRECT_URI')],
-    ],
-
     'jira' => [
         'app_id' => env('JIRA_APP_ID'),
         'client_id' => env('JIRA_CLIENT_ID'),
@@ -81,12 +63,48 @@ return [
         'redirect_uri' => env('LINEAR_REDIRECT_URL'),
     ],
 
-    'github' => [
+    // this is for the API integration
+    'github_integration' => [
         'base_url' => rtrim(env('GITHUB_BASE_URL'), '/'),
         'app_id' => env('GITHUB_APP_ID'),
-        'app_name' => env('GITHUB_APP_NAME'),
         'client_id' => env('GITHUB_CLIENT_ID'),
         'client_secret' => env('GITHUB_CLIENT_SECRET'),
         'private_key' => env('GITHUB_PRIVATE_KEY'),
+    ],
+
+    // this is for OAuth login
+    // socialite requires a key called `github`
+    'github' => [        
+        'app_id' => env('GITHUB_AUTH_APP_ID'),
+        'client_id' => env('GITHUB_AUTH_CLIENT_ID'),
+        'client_secret' => env('GITHUB_AUTH_CLIENT_SECRET'),
+        'private_key' => env('GITHUB_AUTH_PRIVATE_KEY'),
+        'redirect' => 'https://tenant2-horizontal.loca.lt/api/auth/github/callback',
+    ],
+
+    // the same logic applies here as for GitHub
+    'google_integration' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_OAUTH_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
+        'project_id' => env('GOOGLE_PROJECT_ID'),
+        'auth_uri' => env('GOOGLE_AUTH_URI'),
+        'token_uri' => env('GOOGLE_TOKEN_URI'),
+        'auth_provider_x509_cert_url' => env('GOOGLE_AUTH_PROVIDER_X509_CERT_URL'),
+        'redirect_uris' => ['https://tenant2-horizontal.loca.lt' . env('GOOGLE_REDIRECT_URI')],
+    ],
+
+    'google' => [
+        'client_id' => env('GOOGLE_AUTH_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_AUTH_CLIENT_SECRET'),
+        'redirect' => 'https://tenant2-horizontal.loca.lt/api/auth/google/callback',
+    ],
+
+    // TODO: merge with Google
+    'google_drive' => [
+        'client_id' => env('GOOGLE_DRIVE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
+        'refresh_token' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
+        'access_token' => env('GOOGLE_DRIVE_ACCESS_TOKEN'),
     ],
 ];

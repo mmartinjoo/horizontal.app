@@ -87,7 +87,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app
             ->when(GoogleOAuthService::class)
             ->needs('$config')
-            ->give(config('services.google'));
+            ->give(config('services.google_integration'));
 
         $this->app
             ->when(LinearOAuthService::class)
@@ -121,16 +121,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app
             ->when(GitHub::class)
             ->needs('$accessToken')
-            ->give(config('services.github.access_token'));
+            ->give(config('services.github_integration.access_token'));
 
         $this->app
             ->when(GitHub::class)
             ->needs('$baseUrl')
-            ->give(config('services.github.base_url'));
+            ->give(config('services.github_integration.base_url'));
 
         $this->app
             ->when(GithubOAuth::class)
             ->needs('$config')
-            ->give(config('services.github'));
+            ->give(config('services.github_integration'));
     }
 }

@@ -1,4 +1,15 @@
 services:
+  proxy:
+    image: nginx:1.27.3-alpine
+    restart: unless-stopped
+    ports:
+      - "9996:80"
+    volumes:
+      - ./proxy.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - nginx
+      - frontend
+
   api:
     build:
       context: ./api
@@ -20,8 +31,6 @@ services:
         sleep 10 &&
         composer install &&
         php artisan migrate --force &&
-        php artisan config:cache &&
-        php artisan route:cache &&
         php-fpm
       "
 
@@ -36,13 +45,25 @@ services:
     depends_on:
       - api
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    # environment:
+      # - VITE_API_URL=http://tenant2.localhost:9999/api
+    depends_on:
+      - api
+
   worker-indexing:
     build:
       context: ./api
       dockerfile: Dockerfile
     restart: unless-stopped
     deploy:
-      replicas: 4
+      replicas: 1
     volumes:
       - ./api:/var/www
       - ./api/storage:/var/www/storage
@@ -103,20 +124,6 @@ services:
       timeout: 5s
       retries: 5
 
-#  frontend:
-#    build:
-#      context: ./frontend
-#      dockerfile: Dockerfile
-#    ports:
-#      - "51730:5173"
-#    volumes:
-#      - ./frontend:/app
-#      - /app/node_modules
-#    environment:
-#      - VITE_API_URL=http://localhost:8000
-#    depends_on:
-#      - api
-#
   graphbuilder-api:
     build:
       context: ./graphbuilder
@@ -142,7 +149,7 @@ services:
       dockerfile: Dockerfile
       target: worker
     deploy:
-      replicas: 4
+      replicas: 1
     restart: unless-stopped
     volumes:
       - ./graphbuilder:/app
@@ -175,7 +182,7 @@ services:
   memgraph-tenant1:
     image: memgraph/memgraph-mage:latest
     volumes:
-      - memgraph_tenant1_data:/var/lib/memgraph
+      - ./memgraph_tenant1_data:/var/lib/memgraph
     ports:
       - "7687:7687"
       - "7444:7444"
@@ -187,7 +194,7 @@ services:
   memgraph-tenant2:
     image: memgraph/memgraph-mage:latest
     volumes:
-      - memgraph_tenant2_data:/var/lib/memgraph
+      - ./memgraph_tenant2_data:/var/lib/memgraph
     ports:
       - "7688:7687"
       - "7445:7444"
@@ -208,7 +215,3 @@ services:
     environment:
       - QUICK_CONNECT_MG_HOST=memgraph-tenant1
       - QUICK_CONNECT_MG_PORT=7687
-
-volumes:
-  memgraph_tenant1_data:
-  memgraph_tenant2_data:

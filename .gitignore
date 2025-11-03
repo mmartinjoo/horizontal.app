@@ -5,3 +5,5 @@ memgraph_data
 redis_data
 .serverless
 redisdata
+memgraph_tenant1_data
+memgraph_tenant2_data

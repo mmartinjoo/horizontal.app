@@ -11,6 +11,7 @@ use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
+use App\Http\Controllers\OAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,5 +76,11 @@ Route::middleware([
         Route::post('authorize', [GithubIntegrationController::class, 'authorize']);
         Route::get('status', [GithubIntegrationController::class, 'status']);
         Route::delete('disconnect', [GithubIntegrationController::class, 'disconnect']);
+    });
+
+    // OAuth routes
+    Route::prefix('auth')->group(function () {
+        Route::get('/{provider}/redirect', [OAuthController::class, 'redirectToProvider']);
+        Route::get('/{provider}/callback', [OAuthController::class, 'handleProviderCallback']);
     });
 });
