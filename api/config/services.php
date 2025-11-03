@@ -82,13 +82,22 @@ return [
         'redirect_uri' => env('LINEAR_REDIRECT_URL'),
     ],
 
-    'github' => [
+    // this is for the API integration
+    'github_integration' => [
         'base_url' => rtrim(env('GITHUB_BASE_URL'), '/'),
         'app_id' => env('GITHUB_APP_ID'),
-        'app_name' => env('GITHUB_APP_NAME'),
         'client_id' => env('GITHUB_CLIENT_ID'),
         'client_secret' => env('GITHUB_CLIENT_SECRET'),
-        'redirect' => env('GITHUB_OAUTH_REDIRECT_URI', env('APP_URL').'/auth/github/callback'),
         'private_key' => env('GITHUB_PRIVATE_KEY'),
+    ],
+
+    // this is for OAuth login
+    // socialite requires a key called `github`
+    'github' => [        
+        'app_id' => env('GITHUB_AUTH_APP_ID'),
+        'client_id' => env('GITHUB_AUTH_CLIENT_ID'),
+        'client_secret' => env('GITHUB_AUTH_CLIENT_SECRET'),
+        'private_key' => env('GITHUB_AUTH_PRIVATE_KEY'),
+        'redirect' => 'https://tenant2-horizontal.loca.lt/api/auth/github/callback',
     ],
 ];

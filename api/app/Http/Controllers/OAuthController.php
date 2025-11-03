@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
@@ -28,7 +29,7 @@ class OAuthController extends Controller
     /**
      * Handle OAuth provider callback
      */
-    public function handleProviderCallback(string $provider): JsonResponse
+    public function handleProviderCallback(string $provider)
     {
         $this->validateProvider($provider);
 
@@ -79,12 +80,22 @@ class OAuthController extends Controller
             ]);
         }
 
-        $token = $user->createToken('oauth-token')->plainTextToken;
+        $user->createToken('oauth-token')->plainTextToken;
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ]);
+        if (App::isLocal()) {
+            $tenant = tenant();
+            $domain = $tenant->domains->first();
+            $url = 'http://' .  $domain->domain . ':9996/ask'; 
+
+            // this is needed because the GitHub app cannot have 'localhost' in the callback URL
+            // so we use a local tunnel (see Makefile)
+            // at this point the app is at a URL like https://tenant2-horizontal.loca.lt/
+            // redirecting to a fronted route needs `away`
+            return redirect()->away($url);
+        } else {
+            // in prod everything happens at `tenant.horizontal.app`
+            return redirect('/ask');
+        }
     }
 
     private function validateProvider(string $provider): void
