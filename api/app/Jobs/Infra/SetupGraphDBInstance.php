@@ -2,9 +2,9 @@
 
 namespace App\Jobs\Infra;
 
+use App\Services\ElasticMemgraphService\ElasticMemgraphService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Str;
 use Stancl\Tenancy\Contracts\TenantWithDatabase;
 
 class SetupGraphDBInstance implements ShouldQueue
@@ -18,33 +18,19 @@ class SetupGraphDBInstance implements ShouldQueue
         $this->tenant = $tenant;
     }
 
-    public function handle(): void
+    public function handle(ElasticMemgraphService $ems): void
     {
-        if (config('app.env') === 'local') {
-            $graphDBHost = 'memgraph-tenant1';
-            if (Str::contains(Str::lower($this->tenant->company), 'tenant2')) {
-                $graphDBHost = 'memgraph-tenant2';
-            }
+        tenancy()->central(function () use ($ems) {
+            $instance = $ems->findAvailableInstance();
+            $ems->occupy($instance, $this->tenant);
+
             $this->tenant->update([
-                'graph_db_host' => $graphDBHost,
-                'graph_db_port' => 7687,
-                'graph_db_user' => 'horizontal',
-                'graph_db_password' => encrypt('password'),
-                'graph_db_scheme' => 'basic',
+                'graph_db_host' => $instance->host,
+                'graph_db_port' => $instance->port,
+                'graph_db_user' => $instance->username,
+                'graph_db_password' => $instance->password_encrypted,
+                'graph_db_scheme' => $instance->db_schema,
             ]);
-        }
-        if (config('graphdb.test_memgraph_cluster_host')) {
-            $port = Str::contains(Str::lower($this->tenant->company), 'tenant1')
-                ? 7687
-                : 7688;
-            $this->tenant->update([
-                'graph_db_host' => config('graphdb.test_memgraph_cluster_host'),
-                'graph_db_port' => $port,
-                'graph_db_user' => 'horizontal',
-                'graph_db_password' => encrypt(config('graphdb.test_memgraph_cluster_password')),
-                'graph_db_scheme' => 'basic',
-            ]);
-        }
-        // TODO: Schedule new ECS task in prod
+        });
     }
 }

@@ -22,6 +22,7 @@ return [
         'horizontal.app',
         'loca.lt',
         'nginx',
+        'localhost:9996',
     ],
 
     /**
