@@ -19,19 +19,23 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@horizontal.app',
             'password' => bcrypt('password'),
         ]);
-        // $tenant1 = Tenant::create([
-        //     'company' => 'Tenant1 Ltd.',
-        //     'country' => 'US',
-        // ]);
-        // $tenant1->createDomain('tenant1.localhost');
+        $tenant1 = Tenant::create([
+            'company' => 'Tenant1 Ltd.',
+            'country' => 'US',
+        ]);
+        $tenant1->createDomain('tenant1.localhost');
         // Needed for OAuth applications (see Makefile)
-        // $tenant1->createDomain('tenant1-horizontal.loca.lt');
-        // tenancy()->initialize($tenant1);
-        // User::create([
-        //     'name' => 'Tenant1 User',
-        //     'email' => 'user@tenant1.com',
-        //     'password' => bcrypt('password'),
-        // ]);
+        $tenant1->createDomain('tenant1-horizontal.loca.lt');
+        // Needed for graphbuilder communication
+        $tenant1->createDomain('http://tenant1.nginx');
+
+        tenancy()->initialize($tenant1);
+
+        User::create([
+            'name' => 'Tenant1 User',
+            'email' => 'user@tenant1.com',
+            'password' => bcrypt('password'),
+        ]);
 
         $tenant2 = Tenant::create([
             'company' => 'Tenant2 Ltd.',
@@ -42,7 +46,9 @@ class DatabaseSeeder extends Seeder
         $tenant2->createDomain('tenant2-horizontal.loca.lt');
         // Needed for graphbuilder communication
         $tenant2->createDomain('http://tenant2.nginx');
+
         tenancy()->initialize($tenant2);
+        
         User::create([
             'name' => 'Tenant2 User',
             'email' => 'user@tenant2.com',
