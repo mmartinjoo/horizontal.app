@@ -75,12 +75,12 @@ return [
 
     // this is for OAuth login
     // socialite requires a key called `github`
-    'github' => [        
+    'github' => [
         'app_id' => env('GITHUB_AUTH_APP_ID'),
         'client_id' => env('GITHUB_AUTH_CLIENT_ID'),
         'client_secret' => env('GITHUB_AUTH_CLIENT_SECRET'),
         'private_key' => env('GITHUB_AUTH_PRIVATE_KEY'),
-        'redirect' => 'https://tenant2-horizontal.loca.lt/api/auth/github/callback',
+        'redirect' => 'https://horizontal.loca.lt/api/auth/github/callback',
     ],
 
     // the same logic applies here as for GitHub

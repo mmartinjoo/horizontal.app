@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CentralOAuthController;
 use App\Http\Controllers\ElasticMemgraphService\OccupationController;
 use App\Http\Controllers\TenantController;
 use Illuminate\Support\Facades\Route;
@@ -14,5 +15,7 @@ foreach (config('tenancy.central_domains') as $domain) {
         Route::group(['prefix' => '/ems'], function () {
             Route::post('/occupy/{tenant_id}', [OccupationController::class, 'occupy']);
         });
+
+        Route::get('/auth/{provider}/callback', [CentralOAuthController::class, 'callback']);
     });
 }
