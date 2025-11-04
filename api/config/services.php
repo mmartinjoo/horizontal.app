@@ -98,7 +98,7 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_AUTH_CLIENT_ID'),
         'client_secret' => env('GOOGLE_AUTH_CLIENT_SECRET'),
-        'redirect' => 'https://tenant2-horizontal.loca.lt/api/auth/google/callback',
+        'redirect' => 'https://horizontal.loca.lt/api/auth/google/callback',
     ],
 
     // TODO: merge with Google

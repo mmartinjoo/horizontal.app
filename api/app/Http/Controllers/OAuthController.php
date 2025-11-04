@@ -17,14 +17,12 @@ class OAuthController extends Controller
         $this->validateProvider($provider);
 
         $tenantId = tenancy()->tenant->id;
-        $selfRedirectUrl = config("services.{$provider}.redirect") . '?tenant_id=' . $tenantId;
-
-        config([
-            "services.{$provider}.redirect" => $selfRedirectUrl,
-        ]);
 
         $redirectUrl = Socialite::driver($provider)
-            ->stateless()
+            ->stateless()            
+            ->with([
+                'state' => "tenant_id={$tenantId}",
+            ])
             ->redirect()
             ->getTargetUrl();
 

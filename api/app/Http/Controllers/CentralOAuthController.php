@@ -5,17 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CentralOAuthController
 {
     public function callback(Request $request, string $provider)
     {
         $request->validate([
-            'tenant_id' => ['required', 'exists:tenants,id'],
             'code' => ['required', 'string'],
+            'state' => ['required']
         ]);
 
-        $tenant = Tenant::findOrFail($request->get('tenant_id'));
+        $tenantId = Str::after($request->get('state'), 'tenant_id=');
+        if (!$tenantId) {
+            abort(429, "tenant_id is required");
+        }
+        $tenant = Tenant::findOrFail($tenantId);
         $domain = $tenant->domains()->first();
 
         if (App::isLocal()) {
