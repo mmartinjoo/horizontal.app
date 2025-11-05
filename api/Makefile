@@ -19,4 +19,6 @@ tunnel-tenant1:
 
 tunnel-tenant2:
 	lt --port 9999 --subdomain tenant2-horizontal
-# 	lt --host tenant2.localhost --port 9999
+
+tunnel-central:
+	lt --port 9999 --subdomain horizontal

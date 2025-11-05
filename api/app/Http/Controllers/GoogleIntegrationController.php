@@ -3,24 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\GoogleOAuthCallbackRequest;
-use App\Models\GoogleIntegration;
+use App\Models\GoogleChatIntegration;
 use App\Services\Integration\Google\GoogleOAuthService;
+use App\Services\Url;
+use Carbon\Carbon;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
-class GoogleIntegrationController extends Controller
+abstract class GoogleIntegrationController extends Controller
 {
+    abstract protected function hasExistingIntegration(): bool;
+    abstract protected function getStateCacheKey(): string;
+    abstract protected function createIntegration(array $userInfo, array $tokenData, Carbon $expiresAt): Model;
+
     public function __construct(
-        private GoogleOAuthService $googleOAuthService,
+        protected GoogleOAuthService $googleOAuthService,
     ) {
     }
 
     public function authorize(): JsonResponse
     {
-        $existingIntegration = GoogleIntegration::first();
-        if ($existingIntegration) {
+        if ($this->hasExistingIntegration()) {
             return response()->json([
                 'error' => 'You already have a Google integration. Please disconnect first.',
             ], 409);
@@ -30,11 +36,11 @@ class GoogleIntegrationController extends Controller
             $authData = $this->googleOAuthService->generateAuthorizationUrl();
 
             // Store the state temporarily in cache for validation
-            Cache::set('google_oauth_state-' . $authData['state'], $authData['state'], 600); // 10 minutes
+            Cache::set($this->getStateCacheKey() . $authData['random_str'], $authData['random_str'], 600); // 10 minutes
 
             return response()->json([
                 'authorization_url' => $authData['authorization_url'],
-                'state' => $authData['state'],
+                'random_str' => $authData['random_str'],
             ]);
         } catch (Exception $e) {
             return response()->json([
@@ -47,6 +53,7 @@ class GoogleIntegrationController extends Controller
     {
         $code = $request->input('code');
         $state = $request->input('state');
+        $randomStr = Url::extractKeyFromState($state, 'random_str');
 
         // Check for OAuth errors
         if ($request->has('error')) {
@@ -56,8 +63,8 @@ class GoogleIntegrationController extends Controller
         }
 
         // Validate OAuth state to prevent CSRF attacks
-        $cacheState = Cache::get('google_oauth_state-' . $state);
-        if (!$cacheState || !$this->googleOAuthService->validateState($state, $cacheState)) {
+        $cacheState = Cache::get($this->getStateCacheKey() . $randomStr);
+        if (!$cacheState || !$this->googleOAuthService->validateState($randomStr, $cacheState)) {
             return response()->json([
                 'error' => 'Invalid OAuth state. Please restart the authorization process.',
             ], 400);
@@ -70,17 +77,9 @@ class GoogleIntegrationController extends Controller
 
             $expiresAt = now()->addSeconds($tokenData['expires_in'] ?? 86400); // Default 24 hours
 
-            $integration = GoogleIntegration::create([
-                'user_name' => $userInfo['displayName'] ?? $userInfo['name'] ?? null,
-                'user_email' => $userInfo['email'] ?? null,
-                'google_user_id' => $userInfo['id'] ?? null,
-                'access_token' => $tokenData['access_token'],
-                'refresh_token' => $tokenData['refresh_token'] ?? null,
-                'expires_at' => $expiresAt,
-                'scope' => isset($tokenData['scope']) ? explode(',', $tokenData['scope']) : ['read', 'write'],
-            ]);
+            $integration = $this->createIntegration($userInfo, $tokenData, $expiresAt);
 
-            Cache::forget('google_oauth_state-' . $state);
+            Cache::forget($this->getStateCacheKey() . $randomStr);
 
             return response()->json([
                 'message' => 'Google integration successfully connected',
@@ -94,7 +93,7 @@ class GoogleIntegrationController extends Controller
             ]);
         } catch (Exception $e) {
             // Clear session data on error
-            Cache::forget('google_oauth_state-' . $state);
+            Cache::forget($this->getStateCacheKey() . $randomStr);
 
             return response()->json([
                 'error' => 'Failed to complete OAuth authorization: ' . $e->getMessage(),
@@ -104,7 +103,7 @@ class GoogleIntegrationController extends Controller
 
     public function status(Request $request): JsonResponse
     {
-        $integration = GoogleIntegration::first();
+        $integration = GoogleChatIntegration::first();
 
         if (!$integration) {
             return response()->json([
@@ -135,7 +134,7 @@ class GoogleIntegrationController extends Controller
 
     public function disconnect(Request $request): JsonResponse
     {
-        $integration = GoogleIntegration::first();
+        $integration = GoogleChatIntegration::first();
 
         if (!$integration) {
             return response()->json([

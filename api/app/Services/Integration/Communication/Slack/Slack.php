@@ -2,6 +2,7 @@
 
 namespace App\Services\Integration\Communication\Slack;
 
+use App\Models\SlackIntegration;
 use App\Services\Integration\Communication\Communication;
 use App\Services\Integration\Communication\DataTransferObjects\Channel;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
@@ -9,6 +10,7 @@ use App\Services\Integration\Communication\DataTransferObjects\User;
 use App\Services\Integration\Communication\Exceptions\FailedToLoadChannelsException;
 use App\Services\Integration\Communication\Exceptions\FailedToLoadMessagesException;
 use App\Services\Integration\Communication\Exceptions\UserNotFoundException;
+use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
@@ -25,7 +27,6 @@ class Slack implements Communication
 
     public function __construct(
         private string $baseUrl,
-        private string $botUserOauthToken
     ) {
     }
 
@@ -47,7 +48,7 @@ class Slack implements Communication
                     $data['cursor'] = $cursor;
                 }
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+                    'Authorization' => 'Bearer ' . $this->getAccessToken(),
                 ])
                     ->get($this->baseUrl . '/conversations.list', $data)
                     ->throw()
@@ -93,7 +94,7 @@ class Slack implements Communication
                 }
 
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+                    'Authorization' => 'Bearer ' . $this->getAccessToken(),
                 ])
                     ->get($this->baseUrl . '/conversations.history', $data)
                     ->throw()
@@ -154,7 +155,7 @@ class Slack implements Communication
                 }
 
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+                    'Authorization' => 'Bearer ' . $this->getAccessToken(),
                 ])
                     ->get($this->baseUrl . '/conversations.history', $data)
                     ->throw()
@@ -216,7 +217,7 @@ class Slack implements Communication
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+                'Authorization' => 'Bearer ' . $this->getAccessToken(),
             ])
                 ->get($this->baseUrl . '/conversations.replies', $data)
                 ->throw()
@@ -248,7 +249,7 @@ class Slack implements Communication
     public function permalink(string $channelID, string $messageID): string
     {
         $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+                'Authorization' => 'Bearer ' . $this->getAccessToken(),
             ])
             ->get($this->baseUrl . '/chat.getPermalink', [
                 'channel' => $channelID,
@@ -273,7 +274,7 @@ class Slack implements Communication
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->botUserOauthToken,
+            'Authorization' => 'Bearer ' . $this->getAccessToken(),
         ])
             ->get($this->baseUrl . '/users.list', [
                 'limit' => 500,
@@ -374,5 +375,16 @@ class Slack implements Communication
             $ids[] = $id;
         }
         return collect($ids);
+    }
+
+    private function getAccessToken(): string
+    {
+        $integration = SlackIntegration::first();
+
+        if (!$integration) {
+            throw new Exception('No Slack integration found');
+        }
+
+        return $integration->access_token;
     }
 }

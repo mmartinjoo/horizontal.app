@@ -23,7 +23,9 @@ class LinearOAuthService
 
     public function generateAuthorizationUrl(): array
     {
-        $state = Str::random(40);
+        $str = Str::random(40);
+        $tenantId = tenancy()->tenant->id;
+        $state = "tenant_id={$tenantId}|random_str={$str}";
 
         $queryParams = http_build_query([
             'client_id' => $this->clientId,
@@ -35,7 +37,7 @@ class LinearOAuthService
 
         return [
             'authorization_url' => self::LINEAR_OAUTH_BASE_URL . '?' . $queryParams,
-            'state' => $state,
+            'random_str' => $str,
         ];
     }
 

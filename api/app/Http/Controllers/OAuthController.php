@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Exception;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -12,12 +12,17 @@ use Laravel\Socialite\Facades\Socialite;
 
 class OAuthController extends Controller
 {
-    public function redirectToProvider(string $provider): JsonResponse
+    public function redirectToProvider(string $provider)
     {
         $this->validateProvider($provider);
 
+        $tenantId = tenancy()->tenant->id;
+
         $redirectUrl = Socialite::driver($provider)
-            ->stateless()
+            ->stateless()            
+            ->with([
+                'state' => "tenant_id={$tenantId}",
+            ])
             ->redirect()
             ->getTargetUrl();
 
@@ -29,7 +34,7 @@ class OAuthController extends Controller
     /**
      * Handle OAuth provider callback
      */
-    public function handleProviderCallback(string $provider)
+    public function handleProviderCallback(Request $request, string $provider)
     {
         $this->validateProvider($provider);
 

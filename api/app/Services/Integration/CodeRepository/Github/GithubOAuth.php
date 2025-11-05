@@ -15,8 +15,9 @@ class GithubOAuth
     public function generateAuthorizationUrl(): array
     {
         $appName = $this->config['app_name'];
+        $tenantId = tenancy()->tenant->id;
         return [
-            'authorization_url' => "https://github.com/apps/{$appName}/installations/new",
+            'authorization_url' => "https://github.com/apps/{$appName}/installations/new?state=tenant_id={$tenantId}",
         ];
     }
 

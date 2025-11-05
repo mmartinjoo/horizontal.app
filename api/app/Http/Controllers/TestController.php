@@ -17,16 +17,19 @@ use App\Services\GraphDB\GraphDB;
 use App\Services\Indexing\Orchestrator\Orchestrator;
 use App\Services\Indexing\Orchestrator\Supervisor\StuckBucketSupervisor;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
+use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use App\Services\Integration\TaskManagement\Jira\Jira;
 use App\Services\Integration\TaskManagement\Linear\Linear;
+use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
-    public function index(Orchestrator $orchestrator, GraphDB $graphDB)
+    public function index(Slack $slack)
     {
-        $graphDB->run('MATCH (n) DETACH DELETE n');
-        $orchestrator->schedule();
+        foreach ($slack->channels() as $channel) {
+            dump($channel);
+        }
     }
 
     public function token()

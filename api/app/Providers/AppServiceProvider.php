@@ -2,12 +2,17 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\GoogleChatIntegrationController;
+use App\Http\Controllers\GoogleDriveIntegrationController;
 use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Integration\Communication\Slack\Slack;
-use App\Services\Integration\Google\GoogleOAuthService;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
+use App\Services\Integration\Communication\Slack\SlackOAuthService;
+use App\Services\Integration\Google\GoogleChatOAuthService;
+use App\Services\Integration\Google\GoogleDriveOAuthService;
+use App\Services\Integration\Google\GoogleOAuthService;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
 use App\Services\KnowledgeGraph\GraphBuilder;
@@ -85,9 +90,24 @@ class AppServiceProvider extends ServiceProvider
             ->give(config('services.linear.client_secret'));
 
         $this->app
-            ->when(GoogleOAuthService::class)
+            ->when(GoogleChatIntegrationController::class)
+            ->needs(GoogleOAuthService::class)
+            ->give(GoogleChatOAuthService::class);
+
+        $this->app
+            ->when(GoogleDriveIntegrationController::class)
+            ->needs(GoogleOAuthService::class)
+            ->give(GoogleDriveOAuthService::class);
+
+        $this->app
+            ->when(GoogleChatOAuthService::class)
             ->needs('$config')
-            ->give(config('services.google_integration'));
+            ->give(config('services.google_chat'));
+
+        $this->app
+            ->when(GoogleDriveOAuthService::class)
+            ->needs('$config')
+            ->give(config('services.google_drive'));
 
         $this->app
             ->when(LinearOAuthService::class)
@@ -110,11 +130,6 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app
             ->when(Slack::class)
-            ->needs('$botUserOauthToken')
-            ->give(config('services.slack.bot_user_oauth_token'));
-
-        $this->app
-            ->when(Slack::class)
             ->needs('$baseUrl')
             ->give(config('services.slack.base_url'));
 
@@ -132,5 +147,10 @@ class AppServiceProvider extends ServiceProvider
             ->when(GithubOAuth::class)
             ->needs('$config')
             ->give(config('services.github_integration'));
+
+        $this->app
+            ->when(SlackOAuthService::class)
+            ->needs('$config')
+            ->give(config('services.slack'));
     }
 }

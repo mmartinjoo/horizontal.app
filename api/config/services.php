@@ -52,8 +52,11 @@ return [
     ],
 
     'slack' => [
-        'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+        'app_id' => env('SLACK_APP_ID'),
+        'client_id' => env('SLACK_CLIENT_ID'),
+        'client_secret' => env('SLACK_CLIENT_SECRET'),
         'base_url' => env('SLACK_BASE_URL'),
+        'redirect_uri' => env('SLACK_REDIRECT_URI'),
     ],
 
     'linear' => [
@@ -75,37 +78,40 @@ return [
 
     // this is for OAuth login
     // socialite requires a key called `github`
-    'github' => [        
+    'github' => [
         'app_id' => env('GITHUB_AUTH_APP_ID'),
         'client_id' => env('GITHUB_AUTH_CLIENT_ID'),
         'client_secret' => env('GITHUB_AUTH_CLIENT_SECRET'),
         'private_key' => env('GITHUB_AUTH_PRIVATE_KEY'),
-        'redirect' => 'https://tenant2-horizontal.loca.lt/api/auth/github/callback',
+        'redirect' => env('GITHUB_AUTH_REDIRECT_URL'),
     ],
 
-    // the same logic applies here as for GitHub
-    'google_integration' => [
-        'client_id' => env('GOOGLE_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_OAUTH_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
-        'project_id' => env('GOOGLE_PROJECT_ID'),
-        'auth_uri' => env('GOOGLE_AUTH_URI'),
-        'token_uri' => env('GOOGLE_TOKEN_URI'),
-        'auth_provider_x509_cert_url' => env('GOOGLE_AUTH_PROVIDER_X509_CERT_URL'),
-        'redirect_uris' => ['https://tenant2-horizontal.loca.lt' . env('GOOGLE_REDIRECT_URI')],
+    'google_chat' => [
+        'client_id' => env('GOOGLE_CHAT_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CHAT_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_CHAT_OAUTH_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
+        'project_id' => env('GOOGLE_CHAT_PROJECT_ID'),
+        'auth_uri' => env('GOOGLE_CHAT_AUTH_URI'),
+        'token_uri' => env('GOOGLE_CHAT_TOKEN_URI'),
+        'auth_provider_x509_cert_url' => env('GOOGLE_CHAT_AUTH_PROVIDER_X509_CERT_URL'),
+        'redirect_uris' => [env('GOOGLE_CHAT_REDIRECT_URI')],
     ],
 
-    'google' => [
-        'client_id' => env('GOOGLE_AUTH_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_AUTH_CLIENT_SECRET'),
-        'redirect' => 'https://tenant2-horizontal.loca.lt/api/auth/google/callback',
-    ],
-
-    // TODO: merge with Google
     'google_drive' => [
         'client_id' => env('GOOGLE_DRIVE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
-        'refresh_token' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
-        'access_token' => env('GOOGLE_DRIVE_ACCESS_TOKEN'),
+        'redirect' => env('GOOGLE_DRIVE_OAUTH_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
+        'project_id' => env('GOOGLE_DRIVE_PROJECT_ID'),
+        'auth_uri' => env('GOOGLE_DRIVE_AUTH_URI'),
+        'token_uri' => env('GOOGLE_DRIVE_TOKEN_URI'),
+        'auth_provider_x509_cert_url' => env('GOOGLE_DRIVE_AUTH_PROVIDER_X509_CERT_URL'),
+        'redirect_uris' => [env('GOOGLE_DRIVE_REDIRECT_URI')],
+    ],
+
+    // this refers to the Socialite login provider
+    'google' => [
+        'client_id' => env('GOOGLE_AUTH_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_AUTH_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_AUTH_REDIRECT_URL'),
     ],
 ];

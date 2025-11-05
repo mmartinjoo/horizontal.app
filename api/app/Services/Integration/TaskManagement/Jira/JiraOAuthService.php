@@ -24,9 +24,11 @@ class JiraOAuthService
         private string $redirectUri
     ) {}
 
-    public function generateAuthorizationUrl(string $jiraBaseUrl, ?string $state = null): array
+    public function generateAuthorizationUrl(string $jiraBaseUrl): array
     {
-        $state = $state ?: Str::random(40);
+        $randomStr = Str::random(40);
+        $tenantId = tenancy()->tenant->id;
+        $state = "tenant_id={$tenantId}|random_str={$randomStr}";
 
         $queryParams = http_build_query([
             'audience' => 'api.atlassian.com',
@@ -40,12 +42,12 @@ class JiraOAuthService
 
         return [
             'authorization_url' => self::ATLASSIAN_OAUTH_BASE_URL . '?' . $queryParams,
-            'state' => $state,
+            'random_str' => $randomStr,
             'jira_base_url' => $this->normalizeJiraUrl($jiraBaseUrl),
         ];
     }
 
-    public function exchangeCodeForToken(string $code, string $state): array
+    public function exchangeCodeForToken(string $code): array
     {
         $response = Http::asForm()->post(self::ATLASSIAN_TOKEN_URL, [
             'grant_type' => 'authorization_code',

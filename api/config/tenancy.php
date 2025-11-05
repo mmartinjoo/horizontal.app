@@ -23,6 +23,7 @@ return [
         'loca.lt',
         'nginx',
         'localhost:9996',
+        'horizontal.loca.lt',
     ],
 
     /**

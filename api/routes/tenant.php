@@ -5,13 +5,15 @@ declare(strict_types=1);
 use App\Http\Controllers\GithubIntegrationController;
 use App\Http\Controllers\JiraIntegrationController;
 use App\Http\Controllers\LinearIntegrationController;
-use App\Http\Controllers\GoogleIntegrationController;
+use App\Http\Controllers\GoogleChatIntegrationController;
+use App\Http\Controllers\GoogleDriveIntegrationController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 use App\Http\Controllers\OAuthController;
+use App\Http\Controllers\SlackIntegrationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,10 +32,6 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
 ])->prefix('/api')->group(function () {
-    Route::get('/multitenancy-test', function () {
-        dd(\App\Models\User::first());
-    });
-
     Route::get('/test', [\App\Http\Controllers\TestController::class, 'index']);
     Route::get('/test/auth/token', [\App\Http\Controllers\TestController::class, 'token']);
 
@@ -64,11 +62,18 @@ Route::middleware([
         Route::delete('disconnect', [LinearIntegrationController::class, 'disconnect']);
     });
 
-    Route::get('/integrations/google/oauth/callback', [GoogleIntegrationController::class, 'callback']);
-    Route::middleware('auth:sanctum')->prefix('/integrations/google/oauth')->group(function () {
-        Route::post('authorize', [GoogleIntegrationController::class, 'authorize']);
-        Route::get('status', [GoogleIntegrationController::class, 'status']);
-        Route::delete('disconnect', [GoogleIntegrationController::class, 'disconnect']);
+    Route::get('/integrations/google_chat/oauth/callback', [GoogleChatIntegrationController::class, 'callback']);
+    Route::middleware('auth:sanctum')->prefix('/integrations/google_chat/oauth')->group(function () {
+        Route::post('authorize', [GoogleChatIntegrationController::class, 'authorize']);
+        Route::get('status', [GoogleChatIntegrationController::class, 'status']);
+        Route::delete('disconnect', [GoogleChatIntegrationController::class, 'disconnect']);
+    });
+
+    Route::get('/integrations/google_drive/oauth/callback', [GoogleDriveIntegrationController::class, 'callback']);
+    Route::middleware('auth:sanctum')->prefix('/integrations/google_drive/oauth')->group(function () {
+        Route::post('authorize', [GoogleDriveIntegrationController::class, 'authorize']);
+        Route::get('status', [GoogleDriveIntegrationController::class, 'status']);
+        Route::delete('disconnect', [GoogleDriveIntegrationController::class, 'disconnect']);
     });
 
     Route::get('/integrations/github/oauth/callback', [GithubIntegrationController::class, 'callback']);
@@ -76,6 +81,13 @@ Route::middleware([
         Route::post('authorize', [GithubIntegrationController::class, 'authorize']);
         Route::get('status', [GithubIntegrationController::class, 'status']);
         Route::delete('disconnect', [GithubIntegrationController::class, 'disconnect']);
+    });
+
+    Route::get('/integrations/slack/oauth/callback', [SlackIntegrationController::class, 'callback']);
+    Route::middleware('auth:sanctum')->prefix('/integrations/slack/oauth')->group(function () {
+        Route::post('authorize', [SlackIntegrationController::class, 'authorize']);
+        Route::get('status', [SlackIntegrationController::class, 'status']);
+        Route::delete('disconnect', [SlackIntegrationController::class, 'disconnect']);
     });
 
     // OAuth routes
