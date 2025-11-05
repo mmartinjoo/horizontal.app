@@ -6,6 +6,7 @@ use App\Http\Controllers\GithubIntegrationController;
 use App\Http\Controllers\JiraIntegrationController;
 use App\Http\Controllers\LinearIntegrationController;
 use App\Http\Controllers\GoogleChatIntegrationController;
+use App\Http\Controllers\GoogleDriveIntegrationController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
@@ -65,6 +66,13 @@ Route::middleware([
         Route::post('authorize', [GoogleChatIntegrationController::class, 'authorize']);
         Route::get('status', [GoogleChatIntegrationController::class, 'status']);
         Route::delete('disconnect', [GoogleChatIntegrationController::class, 'disconnect']);
+    });
+
+    Route::get('/integrations/google_drive/oauth/callback', [GoogleDriveIntegrationController::class, 'callback']);
+    Route::middleware('auth:sanctum')->prefix('/integrations/google_drive/oauth')->group(function () {
+        Route::post('authorize', [GoogleDriveIntegrationController::class, 'authorize']);
+        Route::get('status', [GoogleDriveIntegrationController::class, 'status']);
+        Route::delete('disconnect', [GoogleDriveIntegrationController::class, 'disconnect']);
     });
 
     Route::get('/integrations/github/oauth/callback', [GithubIntegrationController::class, 'callback']);

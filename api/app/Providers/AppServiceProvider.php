@@ -3,12 +3,14 @@
 namespace App\Providers;
 
 use App\Http\Controllers\GoogleChatIntegrationController;
+use App\Http\Controllers\GoogleDriveIntegrationController;
 use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
 use App\Services\Integration\Google\GoogleChatOAuthService;
+use App\Services\Integration\Google\GoogleDriveOAuthService;
 use App\Services\Integration\Google\GoogleOAuthService;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
@@ -92,9 +94,19 @@ class AppServiceProvider extends ServiceProvider
             ->give(GoogleChatOAuthService::class);
 
         $this->app
+            ->when(GoogleDriveIntegrationController::class)
+            ->needs(GoogleOAuthService::class)
+            ->give(GoogleDriveOAuthService::class);
+
+        $this->app
             ->when(GoogleChatOAuthService::class)
             ->needs('$config')
             ->give(config('services.google_chat'));
+
+        $this->app
+            ->when(GoogleDriveOAuthService::class)
+            ->needs('$config')
+            ->give(config('services.google_drive'));
 
         $this->app
             ->when(LinearOAuthService::class)

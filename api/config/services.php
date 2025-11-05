@@ -111,12 +111,4 @@ return [
         'client_secret' => env('GOOGLE_AUTH_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_AUTH_REDIRECT_URL'),
     ],
-
-    // TODO: merge with Google
-    'google_drive' => [
-        'client_id' => env('GOOGLE_DRIVE_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
-        'refresh_token' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
-        'access_token' => env('GOOGLE_DRIVE_ACCESS_TOKEN'),
-    ],
 ];

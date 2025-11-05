@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GoogleChatIntegration;
+use App\Models\GoogleDriveIntegration;
 use App\Services\Integration\Google\GoogleOAuthService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
-class GoogleChatIntegrationController extends GoogleIntegrationController
+class GoogleDriveIntegrationController extends GoogleIntegrationController
 {
     public function __construct(
         protected GoogleOAuthService $googleOAuthService,
@@ -16,17 +16,17 @@ class GoogleChatIntegrationController extends GoogleIntegrationController
 
     protected function hasExistingIntegration(): bool
     {
-        return GoogleChatIntegration::count() !== 0;
+        return GoogleDriveIntegration::count() !== 0;
     }
 
     protected function getStateCacheKey(): string
     {
-        return 'google_chat_oauth_state-';
+        return 'google_drive_oauth_state-';
     }
 
     protected function createIntegration(array $userInfo, array $tokenData, Carbon $expiresAt): Model
     {
-        return GoogleChatIntegration::create([
+        return GoogleDriveIntegration::create([
             'user_name' => $userInfo['displayName'] ?? $userInfo['name'] ?? null,
             'user_email' => $userInfo['email'] ?? null,
             'google_user_id' => $userInfo['id'] ?? null,

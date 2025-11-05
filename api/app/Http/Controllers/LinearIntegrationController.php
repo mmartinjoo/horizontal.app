@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LinearOAuthCallbackRequest;
 use App\Models\LinearIntegration;
 use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
+use App\Services\Url;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -48,7 +49,7 @@ class LinearIntegrationController extends Controller
     {
         $code = $request->input('code');
         $state = $request->input('state');
-        $randomStr = Str::after($state, 'random_str=');
+        $randomStr = Url::extractKeyFromState($state, 'random_str');
 
         // Check for OAuth errors
         if ($request->has('error')) {

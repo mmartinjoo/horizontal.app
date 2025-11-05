@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tenant;
-use Exception;
+use App\Services\Url;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 
@@ -15,7 +15,7 @@ class CentralIntegrationController
             'state' => ['required'],
         ]);
 
-        $tenantId = $this->extractTenantIdFromState($request->get('state'));
+        $tenantId = Url::extractKeyFromState($request->get('state'), 'tenant_id');
         $tenant = Tenant::findOrFail($tenantId);
         $domain = $tenant->domains()->first();
 
@@ -26,18 +26,5 @@ class CentralIntegrationController
         }
 
         return redirect()->away($url . '?' . $request->getQueryString());
-    }
-
-    private function extractTenantIdFromState(string $state): string
-    {
-        // array be like ['tenant_id=abc', 'random_str=xyz']
-        $parts = explode('|', $state);
-        foreach ($parts as $part) {
-            if (str_starts_with($part, 'tenant_id=')) {
-                return substr($part, strlen('tenant_id='));
-            }
-        }
-
-        throw new Exception('tenant_id not found');
     }
 }

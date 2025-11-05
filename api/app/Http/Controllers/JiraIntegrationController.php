@@ -6,6 +6,7 @@ use App\Http\Requests\JiraOAuthAuthorizeRequest;
 use App\Http\Requests\JiraOAuthCallbackRequest;
 use App\Models\JiraIntegration;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
+use App\Services\Url;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -55,7 +56,7 @@ class JiraIntegrationController extends Controller
     {
         $code = $request->input('code');
         $state = $request->input('state');
-        $randomStr = Str::after($state, 'random_str=');
+        $randomStr = Url::extractKeyFromState($state, 'random_str');
 
         // Validate OAuth state to prevent CSRF attacks
         $cacheState = Cache::get('jira_oauth_state-' . $randomStr);

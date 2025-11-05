@@ -27,7 +27,7 @@ abstract class GoogleOAuthService
         );
         return [
             'authorization_url' => $url,
-            'random_str' => $state,
+            'random_str' => $randomStr,
         ];
     }
 
