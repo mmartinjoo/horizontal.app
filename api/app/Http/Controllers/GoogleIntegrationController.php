@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\GoogleOAuthCallbackRequest;
-use App\Models\GoogleIntegration;
+use App\Models\GoogleChatIntegration;
 use App\Services\Integration\Google\GoogleOAuthService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -73,7 +73,7 @@ abstract class GoogleIntegrationController extends Controller
 
             $expiresAt = now()->addSeconds($tokenData['expires_in'] ?? 86400); // Default 24 hours
 
-            $integration = GoogleIntegration::create([
+            $integration = GoogleChatIntegration::create([
                 'user_name' => $userInfo['displayName'] ?? $userInfo['name'] ?? null,
                 'user_email' => $userInfo['email'] ?? null,
                 'google_user_id' => $userInfo['id'] ?? null,
@@ -107,7 +107,7 @@ abstract class GoogleIntegrationController extends Controller
 
     public function status(Request $request): JsonResponse
     {
-        $integration = GoogleIntegration::first();
+        $integration = GoogleChatIntegration::first();
 
         if (!$integration) {
             return response()->json([
@@ -138,7 +138,7 @@ abstract class GoogleIntegrationController extends Controller
 
     public function disconnect(Request $request): JsonResponse
     {
-        $integration = GoogleIntegration::first();
+        $integration = GoogleChatIntegration::first();
 
         if (!$integration) {
             return response()->json([

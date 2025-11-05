@@ -3,6 +3,7 @@
 namespace App\Services\Integration\Storage\GoogleDrive;
 
 use App\Exceptions\Storage\FileDownloadException;
+use App\Models\GoogleDriveIntegration;
 use App\Services\Indexing\FilePrioritizer;
 use App\Services\Integration\Storage\DataTransferObjects\File;
 use App\Services\Integration\Storage\DataTransferObjects\Folder;
@@ -39,11 +40,9 @@ class GoogleDrive implements StorageIntegration
 
     public function __construct(private FilePrioritizer $prioritizer)
     {
+        $integration = $this->getValidIntegration();
         $client = new Client();
-        $client->setClientId(config('services.google_drive.client_id'));;
-        $client->setClientSecret(config('services.google_drive.client_secret'));;
-        $client->refreshToken(config('services.google_drive.refresh_token'));;
-        $client->setApplicationName('Horizontal');
+        $client->setAccessToken($integration->access_token);    
 
         $this->drive = new Drive($client);
         $adapter = new GoogleDriveAdapter($this->drive);
@@ -187,5 +186,16 @@ class GoogleDrive implements StorageIntegration
     {
         $fields = 'modifiedTime,createdTime,viewedByMeTime,owners,sharingUser';
         return $this->drive->files->get($file->extraMetadata()['id'], ['fields' => $fields]);
+    }
+
+    private function getValidIntegration(): GoogleDriveIntegration
+    {
+        $integration = GoogleDriveIntegration::first();
+        if (!$integration) {
+            throw new Exception('No Google integration found');
+        }
+
+        // TODO: Ensure token is valid (refresh if needed)
+        return $integration;
     }
 }

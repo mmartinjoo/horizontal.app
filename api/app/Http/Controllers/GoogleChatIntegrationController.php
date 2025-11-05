@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GoogleIntegration;
+use App\Models\GoogleChatIntegration;
 use App\Services\Integration\Google\GoogleOAuthService;
 
 class GoogleChatIntegrationController extends GoogleIntegrationController
@@ -14,6 +14,6 @@ class GoogleChatIntegrationController extends GoogleIntegrationController
 
     protected function hasExistingIntegration(): bool
     {
-        return GoogleIntegration::count() !== 0;
+        return GoogleChatIntegration::count() !== 0;
     }
 }

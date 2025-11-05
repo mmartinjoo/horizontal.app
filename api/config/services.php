@@ -94,6 +94,17 @@ return [
         'redirect_uris' => [env('GOOGLE_CHAT_REDIRECT_URI')],
     ],
 
+    'google_drive' => [
+        'client_id' => env('GOOGLE_DRIVE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_DRIVE_OAUTH_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
+        'project_id' => env('GOOGLE_DRIVE_PROJECT_ID'),
+        'auth_uri' => env('GOOGLE_DRIVE_AUTH_URI'),
+        'token_uri' => env('GOOGLE_DRIVE_TOKEN_URI'),
+        'auth_provider_x509_cert_url' => env('GOOGLE_DRIVE_AUTH_PROVIDER_X509_CERT_URL'),
+        'redirect_uris' => [env('GOOGLE_DRIVE_REDIRECT_URI')],
+    ],
+
     // this refers to the Socialite login provider
     'google' => [
         'client_id' => env('GOOGLE_AUTH_CLIENT_ID'),

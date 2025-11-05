@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 
-class GoogleIntegration extends Model
+class GoogleChatIntegration extends Model
 {
     use HasFactory;
 

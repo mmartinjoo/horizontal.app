@@ -2,7 +2,7 @@
 
 namespace App\Services\Integration\Communication\GoogleChat;
 
-use App\Models\GoogleIntegration;
+use App\Models\GoogleChatIntegration;
 use App\Services\Integration\Communication\Communication;
 use App\Services\Integration\Communication\DataTransferObjects\Channel;
 use App\Services\Integration\Communication\DataTransferObjects\Message;
@@ -105,9 +105,9 @@ class GoogleChat implements Communication
         return LazyCollection::empty();
     }
 
-    private function getValidIntegration(): GoogleIntegration
+    private function getValidIntegration(): GoogleChatIntegration
     {
-        $integration = GoogleIntegration::first();
+        $integration = GoogleChatIntegration::first();
         if (!$integration) {
             throw new Exception('No Google integration found');
         }
