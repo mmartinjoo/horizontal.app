@@ -6,27 +6,20 @@ use Google\Client;
 use Google\Service\Oauth2;
 use Illuminate\Support\Str;
 
-class GoogleOAuthService
+abstract class GoogleOAuthService
 {
-    private Client $client;
+    protected Client $client;
 
-    public function __construct(private array $config) 
+    public function __construct(protected array $config) 
     {
-        $redirecUrl = "https://tenant2-horizontal.loca.lt/api/integrations/google/oauth/callback";
-        $this->client = new Client();
-        $this->client->setAuthConfig($config);
-        $this->client->setAccessType('offline');
-        $this->client->addScope('https://www.googleapis.com/auth/chat.spaces.readonly');
-        $this->client->addScope('https://www.googleapis.com/auth/chat.memberships.readonly');
-        $this->client->addScope('https://www.googleapis.com/auth/chat.messages.readonly');
-        $this->client->addScope('https://www.googleapis.com/auth/userinfo.profile');
-        $this->client->addScope('https://www.googleapis.com/auth/userinfo.email');
-        $this->client->addScope('openid');
     }
 
     public function generateAuthorizationUrl(): array
     {
-        $state = Str::random(40);
+        $randomStr = Str::random(40);
+        $tenantId = tenancy()->tenant->id;
+        $state = "tenant_id={$tenantId}|random_str={$randomStr}";
+
         $url = $this->client->createAuthUrl(
             queryParams: [
                 'state' => $state,
@@ -34,7 +27,7 @@ class GoogleOAuthService
         );
         return [
             'authorization_url' => $url,
-            'state' => $state,
+            'random_str' => $state,
         ];
     }
 

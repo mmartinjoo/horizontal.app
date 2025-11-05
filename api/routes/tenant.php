@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\GithubIntegrationController;
 use App\Http\Controllers\JiraIntegrationController;
 use App\Http\Controllers\LinearIntegrationController;
-use App\Http\Controllers\GoogleIntegrationController;
+use App\Http\Controllers\GoogleChatIntegrationController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
@@ -60,11 +60,11 @@ Route::middleware([
         Route::delete('disconnect', [LinearIntegrationController::class, 'disconnect']);
     });
 
-    Route::get('/integrations/google/oauth/callback', [GoogleIntegrationController::class, 'callback']);
-    Route::middleware('auth:sanctum')->prefix('/integrations/google/oauth')->group(function () {
-        Route::post('authorize', [GoogleIntegrationController::class, 'authorize']);
-        Route::get('status', [GoogleIntegrationController::class, 'status']);
-        Route::delete('disconnect', [GoogleIntegrationController::class, 'disconnect']);
+    Route::get('/integrations/google_chat/oauth/callback', [GoogleChatIntegrationController::class, 'callback']);
+    Route::middleware('auth:sanctum')->prefix('/integrations/google_chat/oauth')->group(function () {
+        Route::post('authorize', [GoogleChatIntegrationController::class, 'authorize']);
+        Route::get('status', [GoogleChatIntegrationController::class, 'status']);
+        Route::delete('disconnect', [GoogleChatIntegrationController::class, 'disconnect']);
     });
 
     Route::get('/integrations/github/oauth/callback', [GithubIntegrationController::class, 'callback']);

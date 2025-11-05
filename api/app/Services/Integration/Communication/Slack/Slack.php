@@ -25,7 +25,7 @@ class Slack implements Communication
 
     public function __construct(
         private string $baseUrl,
-        private string $botUserOauthToken
+        private string $botUserOauthToken,
     ) {
     }
 

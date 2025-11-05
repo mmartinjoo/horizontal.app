@@ -52,8 +52,6 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    # environment:
-      # - VITE_API_URL=http://tenant2.localhost:9999/api
     depends_on:
       - api
 
@@ -149,7 +147,7 @@ services:
       dockerfile: Dockerfile
       target: worker
     deploy:
-      replicas: 1
+      replicas: 4
     restart: unless-stopped
     volumes:
       - ./graphbuilder:/app

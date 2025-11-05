@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\GoogleChatIntegrationController;
 use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Integration\Communication\Slack\Slack;
-use App\Services\Integration\Google\GoogleOAuthService;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
+use App\Services\Integration\Google\GoogleChatOAuthService;
+use App\Services\Integration\Google\GoogleOAuthService;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
 use App\Services\KnowledgeGraph\GraphBuilder;
@@ -85,9 +87,14 @@ class AppServiceProvider extends ServiceProvider
             ->give(config('services.linear.client_secret'));
 
         $this->app
-            ->when(GoogleOAuthService::class)
+            ->when(GoogleChatIntegrationController::class)
+            ->needs(GoogleOAuthService::class)
+            ->give(GoogleChatOAuthService::class);
+
+        $this->app
+            ->when(GoogleChatOAuthService::class)
             ->needs('$config')
-            ->give(config('services.google_integration'));
+            ->give(config('services.google_chat'));
 
         $this->app
             ->when(LinearOAuthService::class)
