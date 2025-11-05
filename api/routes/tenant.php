@@ -30,10 +30,6 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
 ])->prefix('/api')->group(function () {
-    Route::get('/multitenancy-test', function () {
-        dd(\App\Models\User::first());
-    });
-
     Route::get('/test', [\App\Http\Controllers\TestController::class, 'index']);
     Route::get('/test/auth/token', [\App\Http\Controllers\TestController::class, 'token']);
 
