@@ -55,7 +55,6 @@ return [
         'app_id' => env('SLACK_APP_ID'),
         'client_id' => env('SLACK_CLIENT_ID'),
         'client_secret' => env('SLACK_CLIENT_SECRET'),
-        'signing_secret' => env('SLACK_SIGNING_SECRET'),
         'base_url' => env('SLACK_BASE_URL'),
         'redirect_uri' => env('SLACK_REDIRECT_URI'),
     ],

@@ -130,11 +130,6 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app
             ->when(Slack::class)
-            ->needs('$botUserOauthToken')
-            ->give(config('services.slack.bot_user_oauth_token'));
-
-        $this->app
-            ->when(Slack::class)
             ->needs('$baseUrl')
             ->give(config('services.slack.base_url'));
 
