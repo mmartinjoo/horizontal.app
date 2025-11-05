@@ -9,6 +9,7 @@ use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class JiraIntegrationController extends Controller
 {
@@ -32,12 +33,12 @@ class JiraIntegrationController extends Controller
             );
 
             // Store the state and jira_base_url temporarily in session/cache for validation
-            Cache::set('jira_oauth_state-' . $authData['state'], $authData['state']);
-            Cache::set('jira_base_url-' . $authData['state'], $authData['jira_base_url']);
+            Cache::set('jira_oauth_state-' . $authData['random_str'], $authData['random_str']);
+            Cache::set('jira_base_url-' . $authData['random_str'], $authData['jira_base_url']);
 
             return response()->json([
                 'authorization_url' => $authData['authorization_url'],
-                'state' => $authData['state'],
+                'random_str' => $authData['random_str'],
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
@@ -54,12 +55,13 @@ class JiraIntegrationController extends Controller
     {
         $code = $request->input('code');
         $state = $request->input('state');
+        $randomStr = Str::after($state, 'random_str=');
 
         // Validate OAuth state to prevent CSRF attacks
-        $cacheState = Cache::get('jira_oauth_state-' . $state);
-        $jiraBaseUrl = Cache::get('jira_base_url-' . $state);
+        $cacheState = Cache::get('jira_oauth_state-' . $randomStr);
+        $jiraBaseUrl = Cache::get('jira_base_url-' . $randomStr);
 
-        if (!$cacheState || !$this->jiraOAuthService->validateState($state, $cacheState)) {
+        if (!$cacheState || !$this->jiraOAuthService->validateState($randomStr, $cacheState)) {
             return response()->json([
                 'error' => 'Invalid OAuth state. Please restart the authorization process.',
             ], 400);
@@ -104,8 +106,8 @@ class JiraIntegrationController extends Controller
                 'scope' => explode(' ', $tokenData['scope'] ?? 'read:jira-user read:jira-work'),
             ]);
 
-            Cache::forget('jira_oauth_state-' . $state);
-            Cache::forget('jira_base_url-' . $state);
+            Cache::forget('jira_oauth_state-' . $randomStr);
+            Cache::forget('jira_base_url-' . $randomStr);
 
             return response()->json([
                 'message' => 'Jira integration successfully connected',
@@ -118,8 +120,8 @@ class JiraIntegrationController extends Controller
             ]);
         } catch (\Exception $e) {
             // Clear session data on error
-            Cache::forget('jira_oauth_state-' . $state);
-            Cache::forget('jira_base_url-' . $state);
+            Cache::forget('jira_oauth_state-' . $randomStr);
+            Cache::forget('jira_base_url-' . $randomStr);
 
             return response()->json([
                 'error' => 'Failed to complete OAuth authorization: ' . $e->getMessage(),
