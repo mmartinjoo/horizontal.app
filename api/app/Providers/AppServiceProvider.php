@@ -9,6 +9,7 @@ use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
+use App\Services\Integration\Communication\Slack\SlackOAuthService;
 use App\Services\Integration\Google\GoogleChatOAuthService;
 use App\Services\Integration\Google\GoogleDriveOAuthService;
 use App\Services\Integration\Google\GoogleOAuthService;
@@ -151,5 +152,10 @@ class AppServiceProvider extends ServiceProvider
             ->when(GithubOAuth::class)
             ->needs('$config')
             ->give(config('services.github_integration'));
+
+        $this->app
+            ->when(SlackOAuthService::class)
+            ->needs('$config')
+            ->give(config('services.slack'));
     }
 }

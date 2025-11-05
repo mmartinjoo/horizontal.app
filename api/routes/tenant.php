@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 use App\Http\Controllers\OAuthController;
+use App\Http\Controllers\SlackIntegrationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -80,6 +81,13 @@ Route::middleware([
         Route::post('authorize', [GithubIntegrationController::class, 'authorize']);
         Route::get('status', [GithubIntegrationController::class, 'status']);
         Route::delete('disconnect', [GithubIntegrationController::class, 'disconnect']);
+    });
+
+    Route::get('/integrations/slack/oauth/callback', [SlackIntegrationController::class, 'callback']);
+    Route::middleware('auth:sanctum')->prefix('/integrations/slack/oauth')->group(function () {
+        Route::post('authorize', [SlackIntegrationController::class, 'authorize']);
+        Route::get('status', [SlackIntegrationController::class, 'status']);
+        Route::delete('disconnect', [SlackIntegrationController::class, 'disconnect']);
     });
 
     // OAuth routes
