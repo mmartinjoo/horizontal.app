@@ -67,8 +67,17 @@ class SlackOAuthService
         return hash_equals($expectedState, $providedState);
     }
 
-    public function getUserInfo(string $accessToken): array
+    public function getUserInfo(string $accessToken, string $userId): array
     {
-        
+        $response = Http::withToken($accessToken)
+            ->get('https://slack.com/api/users.info', [
+                'user' => $userId,
+            ]);
+
+        if (!$response->successful() || !$response->json('ok')) {
+            throw new Exception('Failed to get user info: ' . $response->body());
+        }
+
+        return $response->json('user');
     }
 }

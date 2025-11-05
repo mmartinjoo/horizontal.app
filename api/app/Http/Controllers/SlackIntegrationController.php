@@ -8,6 +8,7 @@ use App\Services\Integration\Communication\Slack\SlackOAuthService;
 use App\Services\Url;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 
 class SlackIntegrationController extends Controller
@@ -69,15 +70,17 @@ class SlackIntegrationController extends Controller
             // Exchange authorization code for access token
             $tokenData = $this->slackOAuthService->exchangeCodeForToken($code);
 
+            $userId = $tokenData['authed_user']['id'];
+
             // Get user information
-            $userInfo = $this->slackOAuthService->getUserInfo($tokenData['access_token']);
+            $userInfo = $this->slackOAuthService->getUserInfo($tokenData['access_token'], $userId);
 
             // Calculate token expiration time
             $expiresAt = now()->addSeconds($tokenData['expires_in'] ?? 86400); // Default 24 hours
 
             $integration = SlackIntegration::create([
-                'user_name' => $userInfo['displayName'] ?? $userInfo['name'] ?? null,
-                'user_email' => $userInfo['email'] ?? null,
+                'user_name' => $userInfo['profile']['real_name'] ?? $userInfo['name'] ?? null,
+                'user_email' => Arr::get($userInfo, 'profile.email'),
                 'slack_user_id' => $userInfo['id'] ?? null,
                 'access_token' => $tokenData['access_token'],
                 'refresh_token' => $tokenData['refresh_token'] ?? null,
