@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\GoogleChatIntegration;
 use App\Services\Integration\Google\GoogleOAuthService;
+use App\Services\Url;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -35,5 +36,15 @@ class GoogleChatIntegrationController extends GoogleIntegrationController
             'expires_at' => $expiresAt,
             'scope' => isset($tokenData['scope']) ? explode(',', $tokenData['scope']) : ['read', 'write'],
         ]);
+    }
+
+    protected function createRedirectUrlToOnboarding(string $errorMessage): string
+    {
+        return Url::createOnboardingFrontendUrl(
+            tenant: tenancy()->tenant, 
+            step: 'communication', 
+            provider: 'google_chat', 
+            errorMessage: $errorMessage,
+        );
     }
 }

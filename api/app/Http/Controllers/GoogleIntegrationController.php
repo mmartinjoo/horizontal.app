@@ -19,6 +19,7 @@ abstract class GoogleIntegrationController extends Controller
     abstract protected function hasExistingIntegration(): bool;
     abstract protected function getStateCacheKey(): string;
     abstract protected function createIntegration(array $userInfo, array $tokenData, Carbon $expiresAt): Model;
+    abstract protected function createRedirectUrlToOnboarding(string $errorMessage): string;
 
     public function __construct(
         protected GoogleOAuthService $googleOAuthService,
@@ -50,55 +51,37 @@ abstract class GoogleIntegrationController extends Controller
         }
     }
 
-    public function callback(GoogleOAuthCallbackRequest $request): JsonResponse
+    public function callback(GoogleOAuthCallbackRequest $request)
     {
-        $code = $request->input('code');
-        $state = $request->input('state');
-        $randomStr = Url::extractKeyFromState($state, 'random_str');
-
-        // Check for OAuth errors
-        if ($request->has('error')) {
-            return response()->json([
-                'error' => 'OAuth authorization failed: ' . $request->input('error_description', $request->input('error')),
-            ], 400);
-        }
-
-        // Validate OAuth state to prevent CSRF attacks
-        $cacheState = Cache::get($this->getStateCacheKey() . $randomStr);
-        if (!$cacheState || !$this->googleOAuthService->validateState($randomStr, $cacheState)) {
-            return response()->json([
-                'error' => 'Invalid OAuth state. Please restart the authorization process.',
-            ], 400);
-        }
-
+        $errorMessage = '';
         try {
+            $code = $request->input('code');
+            $state = $request->input('state');
+            $randomStr = Url::extractKeyFromState($state, 'random_str');
+
+            // Check for OAuth errors
+            if ($request->has('error')) {
+                $errorMessage = 'OAuth authorization failed: ' . $request->input('error_description', $request->input('error'));
+                throw new Exception($errorMessage);
+            }
+
+            // Validate OAuth state to prevent CSRF attacks
+            $cacheState = Cache::get($this->getStateCacheKey() . $randomStr);
+            if (!$cacheState || !$this->googleOAuthService->validateState($randomStr, $cacheState)) {
+                $errorMessage = 'Invalid OAuth state. Please restart the authorization process.'; 
+                throw new Exception($errorMessage);
+            }
+
             $tokenData = $this->googleOAuthService->exchangeCodeForToken($code);
             
             $userInfo = $this->googleOAuthService->getUserInfo($tokenData['access_token']);
 
             $expiresAt = now()->addSeconds($tokenData['expires_in'] ?? 86400); // Default 24 hours
 
-            $integration = $this->createIntegration($userInfo, $tokenData, $expiresAt);
-
+            $this->createIntegration($userInfo, $tokenData, $expiresAt);            
+        } finally {
             Cache::forget($this->getStateCacheKey() . $randomStr);
-
-            return response()->json([
-                'message' => 'Google integration successfully connected',
-                'integration' => [
-                    'id' => $integration->id,
-                    'user_name' => $integration->user_name,
-                    'user_email' => $integration->user_email,
-                    'expires_at' => $integration->expires_at,
-                    'scope' => $integration->scope,
-                ],
-            ]);
-        } catch (Exception $e) {
-            // Clear session data on error
-            Cache::forget($this->getStateCacheKey() . $randomStr);
-
-            return response()->json([
-                'error' => 'Failed to complete OAuth authorization: ' . $e->getMessage(),
-            ], 500);
+            return redirect()->away($this->createRedirectUrlToOnboarding($errorMessage));
         }
     }
 

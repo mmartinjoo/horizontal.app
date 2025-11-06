@@ -8,6 +8,16 @@ use Illuminate\Support\Facades\App;
 
 class Url
 {
+    public static function createOnboardingFrontendUrl(Tenant $tenant, string $step, string $provider, string $errorMessage): string
+    {
+        $domain = $tenant->domains()->first();
+        if (App::isLocal()) {
+            return "http://{$domain->domain}:9996/onboarding/{$step}?provider=$provider&error=$errorMessage";
+        } else {
+            return "https://{$domain->domain}/onboarding/{$step}?provider=$provider&error=$errorMessage";
+        }
+    }
+
     public static function createTenantIntegrationCallbackUrl(Tenant $tenant, string $provider): string
     {
         $domain = $tenant->domains()->first();

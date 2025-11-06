@@ -7,6 +7,7 @@ use App\Models\GithubRepository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
+use App\Services\Url;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -28,24 +29,27 @@ class GithubIntegrationController
 
     public function callback(Request $request)
     {
-        $installationId = $request->get('installation_id');
-        if (!$installationId) {
-            return response('GitHub integration failed', 400);
+        $errorMessage = '';
+        try {
+            $installationId = $request->get('installation_id');
+            if (!$installationId) {
+                $errorMessage = 'GitHub integration failed';
+                throw new Exception($errorMessage);
+            }
+
+            match ($request->get('setup_action')) {
+                'install' => $this->installApp($installationId),
+                'update' => $this->updateApp($installationId),
+                default => throw new Exception('Unknown setup action'),
+            };
+        } finally {
+            return redirect()->away(Url::createOnboardingFrontendUrl(
+                tenant: tenancy()->tenant, 
+                step: 'code-repository', 
+                provider: 'github', 
+                errorMessage: $errorMessage
+            ));
         }
-
-        $integration = match ($request->get('setup_action')) {
-            'install' => $this->installApp($installationId),
-            'update' => $this->updateApp($installationId),
-            default => dd($request->get('setup_action')),
-        };
-
-        return response()->json([
-            'message' => 'GitHub integration successfully connected',
-            'integration' => [
-                'id' => $integration->id,
-                'installation_id' => $integration->installation_id,
-            ],
-        ]);
     }
 
     public function status()
@@ -101,38 +105,13 @@ class GithubIntegrationController
 
     private function installApp(int $installationId): GithubIntegration
     {
-        $integration = GithubIntegration::create([
+        return GithubIntegration::create([
             'installation_id' => $installationId,
         ]);
-
-        /** @var Repository $repository */
-        foreach ($this->github->repositories() as $repository) {
-            GithubRepository::create([
-                'github_integration_id' => $integration->id,
-                'external_id' => $repository->externalId,
-                'name' => $repository->name,
-            ]);
-        }
-
-        return $integration;
     }
 
     private function updateApp(int $installationId): GithubIntegration
     {
-        $integration = GithubIntegration::where('installation_id', $installationId)->firstOrFail();
-        GithubRepository::query()
-            ->where('github_integration_id', $integration->id)
-            ->delete();
-
-        /** @var Repository $repository */
-        foreach ($this->github->repositories() as $repository) {
-            GithubRepository::create([
-                'github_integration_id' => $integration->id,
-                'external_id' => $repository->externalId,
-                'name' => $repository->name,
-            ]);
-        }
-
-        return $integration;
+        return GithubIntegration::where('installation_id', $installationId)->firstOrFail();
     }
 }
