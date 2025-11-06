@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\SlackIntegration;
+use App\Models\GoogleChatIntegration;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -9,17 +9,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('slack_channels', function (Blueprint $table) {
+        Schema::create('google_chat_channels', function (Blueprint $table) {
             $table->id();
             $table->string('external_id');
             $table->string('name');
-            $table->foreignIdFor(SlackIntegration::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(GoogleChatIntegration::class)->constrained()->cascadeOnDelete();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('slack_channels');
+        Schema::dropIfExists('google_chat_channels');
     }
 };

@@ -59,8 +59,6 @@ const loading = ref(true)
 const connectingProvider = ref(null)
 const communicationIntegrations = ref([])
 
-const baseUrl = '/api'
-
 onMounted(async () => {
   try {
     await fetchIntegrations()
@@ -84,7 +82,7 @@ const handleConnect = async (provider) => {
     }))
 
     // Call the backend to get OAuth URL
-    const response = await fetch(`${baseUrl}/api/integrations/${provider}/oauth/authorize`, {
+    const response = await fetch(`/api/integrations/${provider}/oauth/authorize`, {
       method: 'POST',
       headers: getAuthHeaders(),
     })
@@ -114,7 +112,7 @@ const handleDisconnect = async (provider) => {
   }
 
   try {
-    const response = await fetch(`${baseUrl}/api/integrations/${provider}/oauth/disconnect`, {
+    const response = await fetch(`/api/integrations/${provider}/oauth/disconnect`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     })

@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\GithubIntegration;
+use App\Models\GoogleChatChannel;
 use App\Models\GoogleChatIntegration;
 use App\Models\GoogleDriveIntegration;
 use App\Models\JiraIntegration;
+use App\Models\JiraProject;
 use App\Models\LinearIntegration;
+use App\Models\LinearProject;
 use App\Models\SlackChannel;
 use App\Models\SlackIntegration;
 use Illuminate\Http\JsonResponse;
@@ -80,22 +83,14 @@ class IntegrationController extends Controller
         return response()->json($integrations);
     }
 
-    /**
-     * Check if Slack integration is configured with selected channels.
-     */
     private function isSlackConfigured(): bool
     {
         return SlackChannel::query()->exists();
     }
 
-    /**
-     * Check if Google Chat integration is configured.
-     */
     private function isGoogleChatConfigured(): bool
     {
-        $integration = GoogleChatIntegration::first();
-
-        return $integration && $integration->hasValidToken();
+        return GoogleChatChannel::query()->exists();
     }
 
     /**
@@ -103,19 +98,12 @@ class IntegrationController extends Controller
      */
     private function isLinearConfigured(): bool
     {
-        $integration = LinearIntegration::first();
-
-        return $integration && $integration->hasValidToken();
+        return LinearProject::query()->exists();
     }
 
-    /**
-     * Check if Jira integration is configured.
-     */
     private function isJiraConfigured(): bool
     {
-        $integration = JiraIntegration::first();
-
-        return $integration && $integration->hasValidToken();
+        return JiraProject::query()->exists();
     }
 
     /**
