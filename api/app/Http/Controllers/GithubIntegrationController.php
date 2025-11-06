@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\GithubIntegration;
+use App\Models\GithubRepository;
+use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
 use App\Services\Url;
@@ -41,11 +43,10 @@ class GithubIntegrationController
                 default => throw new Exception('Unknown setup action'),
             };
         } finally {
-            return redirect()->away(Url::createOnboardingFrontendUrl(
+            return redirect()->away(Url::createOnboardingCallbackFrontendUrl(
                 tenant: tenancy()->tenant, 
-                step: 'code-repository', 
-                provider: 'github', 
-                errorMessage: $errorMessage,
+                provider: 'github',
+                step: 'code-repository',
             ));
         }
     }
@@ -111,5 +112,48 @@ class GithubIntegrationController
     private function updateApp(int $installationId): GithubIntegration
     {
         return GithubIntegration::where('installation_id', $installationId)->firstOrFail();
+    }
+
+    public function resources(GitHub $github)
+    {
+        $resources = $github->repositories()
+            ->map(function (Repository $repository) {
+                return [
+                    'id' => $repository->externalId,
+                    'title' => $repository->name,
+                    'description' => '',
+                ];
+            });
+
+        return response()->json([
+            'resources' => $resources,
+        ]);
+    }
+
+    public function configure(Request $request, GitHub $github)
+    {
+        $request->validate([
+            'selected_resources' => ['required', 'array'],
+            'selected_resources.*' => ['required', 'string'],
+        ]);
+
+        $selectedResourceIds = $request->get('selected_resources');
+        $integration = GithubIntegration::firstOrFail();
+
+        GithubRepository::query()
+            ->where('github_integration_id', $integration->id)
+            ->delete();
+
+        $resources = $github->repositories();
+        /** @var Repository $resource */
+        foreach ($resources as $resource) {
+            if (in_array($resource->externalId, $selectedResourceIds)) {
+                GithubRepository::create([
+                    'name' => $resource->name,
+                    'external_id' => $resource->externalId,
+                    'github_integration_id' => $integration->id,
+                ]);
+            }
+        }
     }
 }

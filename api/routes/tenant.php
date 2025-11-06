@@ -81,6 +81,8 @@ Route::middleware([
     });
 
     Route::get('/integrations/github/oauth/callback', [GithubIntegrationController::class, 'callback']);
+    Route::get('/integrations/github/resources', [GithubIntegrationController::class, 'resources']);
+    Route::post('/integrations/github/configure', [GithubIntegrationController::class, 'configure']);
     Route::middleware('auth:sanctum')->prefix('/integrations/github/oauth')->group(function () {
         Route::post('authorize', [GithubIntegrationController::class, 'authorize']);
         Route::get('status', [GithubIntegrationController::class, 'status']);

@@ -85,7 +85,7 @@ export function useOnboarding() {
 
   const fetchOnboardingStatus = async () => {
     try {
-      const response = await fetch(`${baseUrl}/api/onboarding/status`, {
+      const response = await fetch(`/api/onboarding/status`, {
         headers: getAuthHeaders(),
       })
 
@@ -109,7 +109,7 @@ export function useOnboarding() {
 
   const updateOnboardingStep = async (step) => {
     try {
-      const response = await fetch(`${baseUrl}/api/onboarding/update`, {
+      const response = await fetch(`/api/onboarding/update`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ current_step: step }),
@@ -132,7 +132,7 @@ export function useOnboarding() {
 
   const completeOnboarding = async () => {
     try {
-      const response = await fetch(`${baseUrl}/api/onboarding/complete`, {
+      const response = await fetch(`/api/onboarding/complete`, {
         method: 'POST',
         headers: getAuthHeaders(),
       })
