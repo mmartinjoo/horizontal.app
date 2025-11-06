@@ -76,7 +76,7 @@ class JiraIntegrationController extends Controller
 
         try {
             // Exchange authorization code for access token
-            $tokenData = $this->jiraOAuthService->exchangeCodeForToken($code, $state);
+            $tokenData = $this->jiraOAuthService->exchangeCodeForToken($code);
 
             // Get accessible resources to find cloud ID
             $accessibleResources = $this->jiraOAuthService->getAccessibleResources($tokenData['access_token']);

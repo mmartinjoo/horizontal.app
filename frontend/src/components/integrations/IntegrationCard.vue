@@ -53,7 +53,7 @@
           <!-- Connect Button -->
           <button
             v-if="!integration.connected"
-            @click="$emit('connect', integration.provider)"
+            @click="onConnectClick(integration)"
             :disabled="loading"
             class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -126,5 +126,15 @@ defineProps({
   },
 })
 
-defineEmits(['connect', 'configure', 'disconnect'])
+const emit = defineEmits(['connect', 'configure', 'disconnect'])
+
+const onConnectClick = function (integration) {
+  console.log(integration);
+  const extraData = {};
+  if (integration.provider === 'jira') {
+    const jiraBaseUrl = prompt('Please provider your Jira base URL. This is where you can access your Jira instance.', 'https://your-company.atlassian.net/');
+    extraData.jira_base_url = jiraBaseUrl;
+  }
+  emit('connect', integration.provider, extraData)
+}
 </script>

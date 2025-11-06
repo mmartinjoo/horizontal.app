@@ -70,8 +70,9 @@ onMounted(async () => {
   }
 })
 
-const handleConnect = async (provider) => {
+const handleConnect = async (provider, extraData) => {
   try {
+    console.log(extraData);
     connectingProvider.value = provider
 
     localStorage.setItem('onboarding_context', JSON.stringify({
@@ -83,6 +84,7 @@ const handleConnect = async (provider) => {
     const response = await fetch(`/api/integrations/${provider}/oauth/authorize`, {
       method: 'POST',
       headers: getAuthHeaders(),
+      body: JSON.stringify(extraData),
     })
 
     if (!response.ok) {
