@@ -56,7 +56,7 @@ const router = createRouter({
     {
       path: '/onboarding/code_repository',
       name: 'onboarding-code-repository',
-      component: () => import('../views/onboarding/OnboardingStorage.vue'), // Reuse storage for now
+      component: () => import('../views/onboarding/OnboardingCodeRepository.vue'),
       meta: { requiresAuth: true, onboarding: true }
     },
     {
