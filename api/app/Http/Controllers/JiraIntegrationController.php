@@ -110,8 +110,8 @@ class JiraIntegrationController extends Controller
             Cache::forget('jira_base_url-' . $randomStr);
             return redirect()->away(Url::createOnboardingFrontendUrl(
                 tenant: tenancy()->tenant, 
-                step: 'communication', 
-                provider: 'slack', 
+                step: 'task-management', 
+                provider: 'jira', 
                 errorMessage: $errorMessage,
             ));
         }

@@ -8,9 +8,7 @@ use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
 use App\Services\Url;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 
 class LinearIntegrationController extends Controller
 {
@@ -45,40 +43,33 @@ class LinearIntegrationController extends Controller
         }
     }
 
-    public function callback(LinearOAuthCallbackRequest $request): JsonResponse
+    public function callback(LinearOAuthCallbackRequest $request)
     {
-        $code = $request->input('code');
-        $state = $request->input('state');
-        $randomStr = Url::extractKeyFromState($state, 'random_str');
-
-        // Check for OAuth errors
-        if ($request->has('error')) {
-            return response()->json([
-                'error' => 'OAuth authorization failed: ' . $request->input('error_description', $request->input('error')),
-            ], 400);
-        }
-
-        // Validate OAuth state to prevent CSRF attacks
-        $cacheState = Cache::get('linear_oauth_state-' . $randomStr);
-
-        if (!$cacheState || !$this->linearOAuthService->validateState($randomStr, $cacheState)) {
-            return response()->json([
-                'error' => 'Invalid OAuth state. Please restart the authorization process.',
-            ], 400);
-        }
-
+        $errorMessage = '';
         try {
-            // Exchange authorization code for access token
+            $code = $request->input('code');
+            $state = $request->input('state');
+            $randomStr = Url::extractKeyFromState($state, 'random_str');
+
+            // Check for OAuth errors
+            if ($request->has('error')) {
+                $errorMessage = 'OAuth authorization failed: ' . $request->input('error_description', $request->input('error'));
+                throw new Exception($errorMessage);
+            }
+
+            // Validate OAuth state to prevent CSRF attacks
+            $cacheState = Cache::get('linear_oauth_state-' . $randomStr);
+
+            if (!$cacheState || !$this->linearOAuthService->validateState($randomStr, $cacheState)) {
+                $errorMessage = 'Invalid OAuth state. Please restart the authorization process.';
+                throw new Exception($errorMessage);
+            }
+
             $tokenData = $this->linearOAuthService->exchangeCodeForToken($code);
-
-            // Get user information
             $userInfo = $this->linearOAuthService->getUserInfo($tokenData['access_token']);
-
-            // Calculate token expiration time
             $expiresAt = now()->addSeconds($tokenData['expires_in'] ?? 86400); // Default 24 hours
 
-            // Create the Linear integration record
-            $integration = LinearIntegration::create([
+            LinearIntegration::create([
                 'user_name' => $userInfo['displayName'] ?? $userInfo['name'] ?? null,
                 'user_email' => $userInfo['email'] ?? null,
                 'linear_user_id' => $userInfo['id'] ?? null,
@@ -87,26 +78,14 @@ class LinearIntegrationController extends Controller
                 'expires_at' => $expiresAt,
                 'scope' => isset($tokenData['scope']) ? explode(',', $tokenData['scope']) : ['read', 'write'],
             ]);
-
+        } finally {
             Cache::forget('linear_oauth_state-' . $randomStr);
-
-            return response()->json([
-                'message' => 'Linear integration successfully connected',
-                'integration' => [
-                    'id' => $integration->id,
-                    'user_name' => $integration->user_name,
-                    'user_email' => $integration->user_email,
-                    'expires_at' => $integration->expires_at,
-                    'scope' => $integration->scope,
-                ],
-            ]);
-        } catch (Exception $e) {
-            // Clear session data on error
-            Cache::forget('linear_oauth_state-' . $randomStr);
-
-            return response()->json([
-                'error' => 'Failed to complete OAuth authorization: ' . $e->getMessage(),
-            ], 500);
+            return redirect()->away(Url::createOnboardingFrontendUrl(
+                tenant: tenancy()->tenant, 
+                step: 'task-management', 
+                provider: 'linear', 
+                errorMessage: $errorMessage,
+            ));
         }
     }
 
