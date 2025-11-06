@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\GithubIntegration;
+use App\Models\GithubRepository;
 use App\Models\GoogleChatChannel;
 use App\Models\GoogleChatIntegration;
+use App\Models\GoogleDriveFolder;
 use App\Models\GoogleDriveIntegration;
 use App\Models\JiraIntegration;
 use App\Models\JiraProject;
@@ -106,21 +108,13 @@ class IntegrationController extends Controller
         return JiraProject::query()->exists();
     }
 
-    /**
-     * Check if Google Drive integration is configured.
-     */
     private function isGoogleDriveConfigured(): bool
     {
-        $integration = GoogleDriveIntegration::first();
-
-        return $integration && $integration->hasValidToken();
+        return GoogleDriveFolder::query()->exists();
     }
 
-    /**
-     * Check if GitHub integration is configured.
-     */
     private function isGithubConfigured(): bool
     {
-        return GithubIntegration::query()->exists();
+        return GithubRepository::query()->exists();
     }
 }
