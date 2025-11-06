@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SlackOAuthCallbackRequest;
+use App\Models\SlackChannel;
 use App\Models\SlackIntegration;
+use App\Services\Integration\Communication\DataTransferObjects\Channel;
+use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\Communication\Slack\SlackOAuthService;
 use App\Services\Url;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 
@@ -88,11 +92,10 @@ class SlackIntegrationController extends Controller
             ]);
         } finally {
             Cache::forget('slack_oauth_state-' . $randomStr);
-            return redirect()->away(Url::createOnboardingFrontendUrl(
+            return redirect()->away(Url::createOnboardingCallbackFrontendUrl(
                 tenant: tenancy()->tenant, 
-                step: 'communication', 
-                provider: 'slack', 
-                errorMessage: $errorMessage,
+                provider: 'slack',
+                step: 'communication',
             ));
         }
     }
@@ -157,6 +160,50 @@ class SlackIntegrationController extends Controller
             return response()->json([
                 'error' => 'Failed to disconnect Slack integration: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function resources(Slack $slack)
+    {
+        $resources = $slack->channels()
+            ->map(function (Channel $channel) {
+                return [
+                    'id' => $channel->externalId,
+                    'title' => $channel->name,
+                    'description' => '',
+                ];
+            });
+
+        return response()->json([
+            'resources' => $resources,
+        ]);
+    }
+
+    public function configure(Request $request, Slack $slack)
+    {
+        $request->validate([
+            'selected_resources' => ['required', 'array'],
+            'selected_resources.*' => ['required', 'string'],
+        ]);
+
+        $selectedResourceIds = $request->get('selected_resources');
+        $integration = SlackIntegration::firstOrFail();
+
+        SlackChannel::query()
+            ->where('slack_integration_id', $integration->id)
+            ->delete();
+
+        $resources = $slack->channels();
+
+        /** @var Channel $resource */
+        foreach ($resources as $resource) {
+            if (in_array($resource->externalId, $selectedResourceIds)) {
+                SlackChannel::create([
+                    'name' => $resource->name,
+                    'external_id' => $resource->externalId,
+                    'slack_integration_id' => $integration->id,
+                ]);
+            }
         }
     }
 }

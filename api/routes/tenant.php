@@ -90,6 +90,8 @@ Route::middleware([
     });
 
     Route::get('/integrations/slack/oauth/callback', [SlackIntegrationController::class, 'callback']);
+    Route::get('/integrations/slack/resources', [SlackIntegrationController::class, 'resources']);
+    Route::post('/integrations/slack/configure', [SlackIntegrationController::class, 'configure']);
     Route::middleware('auth:sanctum')->prefix('/integrations/slack/oauth')->group(function () {
         Route::post('authorize', [SlackIntegrationController::class, 'authorize']);
         Route::get('status', [SlackIntegrationController::class, 'status']);
