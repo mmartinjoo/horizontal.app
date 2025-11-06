@@ -54,18 +54,16 @@ class SlackIntegrationController extends Controller
 
             // Check for OAuth errors
             if ($request->has('error')) {
-                return response()->json([
-                    'error' => 'OAuth authorization failed: ' . $request->input('error_description', $request->input('error')),
-                ], 400);
+                $errorMessage = 'OAuth authorization failed: ' . $request->input('error_description', $request->input('error'));
+                throw new Exception($errorMessage); 
             }
 
             // Validate OAuth state to prevent CSRF attacks
             $cacheState = Cache::get('slack_oauth_state-' . $randomStr);
 
             if (!$cacheState || !$this->slackOAuthService->validateState($randomStr, $cacheState)) {
-                return response()->json([
-                    'error' => 'Invalid OAuth state. Please restart the authorization process.',
-                ], 400);
+                $errorMessage = 'Invalid OAuth state. Please restart the authorization process.';
+                throw new Exception($errorMessage);
             }
 
             // Exchange authorization code for access token
@@ -79,7 +77,7 @@ class SlackIntegrationController extends Controller
             // Calculate token expiration time
             $expiresAt = now()->addSeconds($tokenData['expires_in'] ?? 86400); // Default 24 hours
 
-            $integration = SlackIntegration::create([
+            SlackIntegration::create([
                 'user_name' => $userInfo['profile']['real_name'] ?? $userInfo['name'] ?? null,
                 'user_email' => Arr::get($userInfo, 'profile.email'),
                 'slack_user_id' => $userInfo['id'] ?? null,
@@ -97,9 +95,7 @@ class SlackIntegrationController extends Controller
                 errorMessage: $errorMessage
             ));
         }
-        
     }
-        
 
     public function status(): JsonResponse
     {
