@@ -44,29 +44,30 @@ class SlackIntegrationController extends Controller
         }
     }
 
-    public function callback(SlackOAuthCallbackRequest $request): JsonResponse
+    public function callback(SlackOAuthCallbackRequest $request)
     {
-        $code = $request->input('code');
-        $state = $request->input('state');
-        $randomStr = Url::extractKeyFromState($state, 'random_str');
-
-        // Check for OAuth errors
-        if ($request->has('error')) {
-            return response()->json([
-                'error' => 'OAuth authorization failed: ' . $request->input('error_description', $request->input('error')),
-            ], 400);
-        }
-
-        // Validate OAuth state to prevent CSRF attacks
-        $cacheState = Cache::get('slack_oauth_state-' . $randomStr);
-
-        if (!$cacheState || !$this->slackOAuthService->validateState($randomStr, $cacheState)) {
-            return response()->json([
-                'error' => 'Invalid OAuth state. Please restart the authorization process.',
-            ], 400);
-        }
-
+        $errorMessage = '';
         try {
+            $code = $request->input('code');
+            $state = $request->input('state');
+            $randomStr = Url::extractKeyFromState($state, 'random_str');
+
+            // Check for OAuth errors
+            if ($request->has('error')) {
+                return response()->json([
+                    'error' => 'OAuth authorization failed: ' . $request->input('error_description', $request->input('error')),
+                ], 400);
+            }
+
+            // Validate OAuth state to prevent CSRF attacks
+            $cacheState = Cache::get('slack_oauth_state-' . $randomStr);
+
+            if (!$cacheState || !$this->slackOAuthService->validateState($randomStr, $cacheState)) {
+                return response()->json([
+                    'error' => 'Invalid OAuth state. Please restart the authorization process.',
+                ], 400);
+            }
+
             // Exchange authorization code for access token
             $tokenData = $this->slackOAuthService->exchangeCodeForToken($code);
 
@@ -87,28 +88,18 @@ class SlackIntegrationController extends Controller
                 'expires_at' => $expiresAt,
                 'scope' => isset($tokenData['scope']) ? explode(',', $tokenData['scope']) : ['read', 'write'],
             ]);
-
+        } finally {
             Cache::forget('slack_oauth_state-' . $randomStr);
-
-            return response()->json([
-                'message' => 'Slack integration successfully connected',
-                'integration' => [
-                    'id' => $integration->id,
-                    'user_name' => $integration->user_name,
-                    'user_email' => $integration->user_email,
-                    'expires_at' => $integration->expires_at,
-                    'scope' => $integration->scope,
-                ],
-            ]);
-        } catch (Exception $e) {
-            // Clear session data on error
-            Cache::forget('slack_oauth_state-' . $randomStr);
-
-            return response()->json([
-                'error' => 'Failed to complete OAuth authorization: ' . $e->getMessage(),
-            ], 500);
+            return redirect()->away(Url::createOnboardingFrontendUrl(
+                tenant: tenancy()->tenant, 
+                step: 'communication', 
+                provider: 'slack', 
+                errorMessage: $errorMessage
+            ));
         }
+        
     }
+        
 
     public function status(): JsonResponse
     {
