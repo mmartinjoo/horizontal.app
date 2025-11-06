@@ -37,7 +37,7 @@ const redirectToAuth = () => {
   router.push('/auth')
 }
 
-onMounted(() => {
+onMounted(async () => {
   try {
     // Get the token from the URL query parameter
     const urlParams = new URLSearchParams(window.location.search)
@@ -53,6 +53,35 @@ onMounted(() => {
 
     // Clear the token from the URL for security
     window.history.replaceState({}, document.title, '/after-login')
+
+    // Check if user needs onboarding
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    try {
+      const response = await fetch(`${baseUrl}/api/integrations`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        }
+      })
+
+      if (response.ok) {
+        const integrations = await response.json()
+        const hasAnyIntegration = Object.values(integrations).some(category =>
+          category.some(integration => integration.connected)
+        )
+
+        // Redirect to onboarding if no integrations are connected
+        if (!hasAnyIntegration) {
+          setTimeout(() => {
+            router.push('/onboarding')
+          }, 500)
+          return
+        }
+      }
+    } catch (err) {
+      console.error('Error checking integrations:', err)
+      // Continue to /ask even if integration check fails
+    }
 
     // Redirect to the ask page
     setTimeout(() => {

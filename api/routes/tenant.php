@@ -3,17 +3,18 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\GithubIntegrationController;
-use App\Http\Controllers\JiraIntegrationController;
-use App\Http\Controllers\LinearIntegrationController;
 use App\Http\Controllers\GoogleChatIntegrationController;
 use App\Http\Controllers\GoogleDriveIntegrationController;
+use App\Http\Controllers\IntegrationController;
+use App\Http\Controllers\JiraIntegrationController;
+use App\Http\Controllers\LinearIntegrationController;
+use App\Http\Controllers\OAuthController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\SlackIntegrationController;
 use App\Http\Controllers\WorkflowController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
-use App\Http\Controllers\OAuthController;
-use App\Http\Controllers\SlackIntegrationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +38,7 @@ Route::middleware([
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/questions/ask', [QuestionController::class, 'ask']);
+        Route::get('/integrations', [IntegrationController::class, 'index']);
     });
 
     Route::group(['prefix' => 'orchestrator'], function () {
@@ -46,7 +48,7 @@ Route::middleware([
         Route::post('/workflows/buckets/items/completed', [WorkflowController::class, 'markItemsAsCompleted']);
         Route::post('/workflows/buckets/items/failed', [WorkflowController::class, 'markItemsAsFailed']);
         Route::post('/documents/next-batch', [WorkflowController::class, 'nextBatch']);
-    });    
+    });
 
     Route::get('/integrations/jira/oauth/callback', [JiraIntegrationController::class, 'callback']);
     Route::middleware('auth:sanctum')->prefix('/integrations/jira/oauth')->group(function () {
