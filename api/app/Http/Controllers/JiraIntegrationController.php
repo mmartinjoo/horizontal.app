@@ -10,7 +10,7 @@ use App\Services\Url;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
+use Exception;
 
 class JiraIntegrationController extends Controller
 {
@@ -52,29 +52,28 @@ class JiraIntegrationController extends Controller
         }
     }
 
-    public function callback(JiraOAuthCallbackRequest $request): JsonResponse
+    public function callback(JiraOAuthCallbackRequest $request)
     {
-        $code = $request->input('code');
-        $state = $request->input('state');
-        $randomStr = Url::extractKeyFromState($state, 'random_str');
-
-        // Validate OAuth state to prevent CSRF attacks
-        $cacheState = Cache::get('jira_oauth_state-' . $randomStr);
-        $jiraBaseUrl = Cache::get('jira_base_url-' . $randomStr);
-
-        if (!$cacheState || !$this->jiraOAuthService->validateState($randomStr, $cacheState)) {
-            return response()->json([
-                'error' => 'Invalid OAuth state. Please restart the authorization process.',
-            ], 400);
-        }
-
-        if (!$jiraBaseUrl) {
-            return response()->json([
-                'error' => 'Session expired. Please restart the authorization process.',
-            ], 400);
-        }
-
+        $errorMessage = '';
         try {
+            $code = $request->input('code');
+            $state = $request->input('state');
+            $randomStr = Url::extractKeyFromState($state, 'random_str');
+
+            // Validate OAuth state to prevent CSRF attacks
+            $cacheState = Cache::get('jira_oauth_state-' . $randomStr);
+            $jiraBaseUrl = Cache::get('jira_base_url-' . $randomStr);
+
+            if (!$cacheState || !$this->jiraOAuthService->validateState($randomStr, $cacheState)) {
+                $errorMessage = 'Invalid OAuth state. Please restart the authorization process.';
+                throw new Exception($errorMessage);
+            }
+
+            if (!$jiraBaseUrl) {
+                $errorMessage = 'Session expired. Please restart the authorization process.';
+                throw new Exception($errorMessage);
+            }
+
             // Exchange authorization code for access token
             $tokenData = $this->jiraOAuthService->exchangeCodeForToken($code);
 
@@ -91,14 +90,14 @@ class JiraIntegrationController extends Controller
             }
 
             if (!$cloudId) {
-                throw new \Exception('Could not find cloud ID for Jira instance');
+                $errorMessage = 'Could not find cloud ID for Jira instance';
+                throw new Exception($errorMessage);
             }
 
             // Calculate token expiration time
             $expiresAt = now()->addSeconds($tokenData['expires_in'] ?? 3600);
 
-            // Create the Jira integration record
-            $integration = JiraIntegration::create([
+            JiraIntegration::create([
                 'jira_base_url' => $jiraBaseUrl,
                 'cloud_id' => $cloudId,
                 'access_token' => $tokenData['access_token'],
@@ -106,27 +105,15 @@ class JiraIntegrationController extends Controller
                 'expires_at' => $expiresAt,
                 'scope' => explode(' ', $tokenData['scope'] ?? 'read:jira-user read:jira-work'),
             ]);
-
+        } finally {
             Cache::forget('jira_oauth_state-' . $randomStr);
             Cache::forget('jira_base_url-' . $randomStr);
-
-            return response()->json([
-                'message' => 'Jira integration successfully connected',
-                'integration' => [
-                    'id' => $integration->id,
-                    'jira_base_url' => $integration->jira_base_url,
-                    'expires_at' => $integration->expires_at,
-                    'scope' => $integration->scope,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            // Clear session data on error
-            Cache::forget('jira_oauth_state-' . $randomStr);
-            Cache::forget('jira_base_url-' . $randomStr);
-
-            return response()->json([
-                'error' => 'Failed to complete OAuth authorization: ' . $e->getMessage(),
-            ], 500);
+            return redirect()->away(Url::createOnboardingFrontendUrl(
+                tenant: tenancy()->tenant, 
+                step: 'communication', 
+                provider: 'slack', 
+                errorMessage: $errorMessage,
+            ));
         }
     }
 

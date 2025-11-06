@@ -47,7 +47,7 @@ class GithubIntegrationController
                 tenant: tenancy()->tenant, 
                 step: 'code-repository', 
                 provider: 'github', 
-                errorMessage: $errorMessage
+                errorMessage: $errorMessage,
             ));
         }
     }

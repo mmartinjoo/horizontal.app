@@ -92,7 +92,7 @@ class SlackIntegrationController extends Controller
                 tenant: tenancy()->tenant, 
                 step: 'communication', 
                 provider: 'slack', 
-                errorMessage: $errorMessage
+                errorMessage: $errorMessage,
             ));
         }
     }
