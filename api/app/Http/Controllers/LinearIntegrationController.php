@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LinearOAuthCallbackRequest;
 use App\Models\LinearIntegration;
+use App\Models\LinearProject;
+use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
+use App\Services\Integration\TaskManagement\Linear\Linear;
 use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
 use App\Services\Url;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class LinearIntegrationController extends Controller
@@ -80,11 +84,10 @@ class LinearIntegrationController extends Controller
             ]);
         } finally {
             Cache::forget('linear_oauth_state-' . $randomStr);
-            return redirect()->away(Url::createOnboardingFrontendUrl(
+            return redirect()->away(Url::createOnboardingCallbackFrontendUrl(
                 tenant: tenancy()->tenant, 
-                step: 'task-management', 
-                provider: 'linear', 
-                errorMessage: $errorMessage,
+                provider: 'linear',
+                step: 'task-management',
             ));
         }
     }
@@ -149,6 +152,40 @@ class LinearIntegrationController extends Controller
             return response()->json([
                 'error' => 'Failed to disconnect Linear integration: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function resources(Linear $linear)
+    {
+        return response()->json([
+            'resources' => $linear->projects(),
+        ]);
+    }
+
+    public function configure(Request $request, Linear $linear)
+    {
+        $request->validate([
+            'selected_resources' => ['required', 'array'],
+            'selected_resources.*' => ['required', 'string'],
+        ]);
+
+        $selectedResourceIds = $request->get('selected_resources');
+        $integration = LinearIntegration::firstOrFail();
+
+        LinearProject::query()
+            ->where('linear_integration_id', $integration->id)
+            ->delete();
+
+        $resources = $linear->projects();
+        /** @var Project $resource */
+        foreach ($resources as $resource) {
+            if (in_array($resource->id, $selectedResourceIds)) {
+                LinearProject::create([
+                    'title' => $resource->title,
+                    'external_id' => $resource->id,
+                    'linear_integration_id' => $integration->id,
+                ]);
+            }
         }
     }
 }

@@ -12,7 +12,7 @@ return new class extends Migration
         Schema::create('linear_projects', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->integer('external_id');
+            $table->string('external_id');
             $table->foreignIdFor(LinearIntegration::class)->constrained()->cascadeOnDelete();
             $table->timestamps();
 

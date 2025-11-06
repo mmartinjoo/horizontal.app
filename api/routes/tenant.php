@@ -58,6 +58,8 @@ Route::middleware([
     });
 
     Route::get('/integrations/linear/oauth/callback', [LinearIntegrationController::class, 'callback']);
+    Route::get('/integrations/linear/resources', [LinearIntegrationController::class, 'resources']);
+    Route::post('/integrations/linear/configure', [LinearIntegrationController::class, 'configure']);
     Route::middleware('auth:sanctum')->prefix('/integrations/linear/oauth')->group(function () {
         Route::post('authorize', [LinearIntegrationController::class, 'authorize']);
         Route::get('status', [LinearIntegrationController::class, 'status']);

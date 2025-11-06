@@ -26,10 +26,11 @@ use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
-    public function index(Slack $slack)
+    public function index(Linear $linear)
     {
-        $url = Url::createTenantIntegrationCallbackUrlWithCode(tenancy()->tenant, 'github', 'asf-1234');
-        return $url;
+        // LinearProject::query()
+        //     ->where('linear_integration_id', 5)
+        //     ->delete();
     }
 
     public function token()

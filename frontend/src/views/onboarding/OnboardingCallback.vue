@@ -98,8 +98,6 @@ const loadingResources = ref(false)
 const saving = ref(false)
 const returnStep = ref('communication')
 
-const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
 const PROVIDER_NAMES = {
   slack: 'Slack',
   google_chat: 'Google Chat',
@@ -128,6 +126,7 @@ onMounted(async () => {
   } else {
     // Try to get provider from query params
     provider.value = route.query.provider
+    returnStep.value = route.query.step
   }
 
   if (!provider.value) {
@@ -147,7 +146,7 @@ onMounted(async () => {
   try {
     // Check integration status
     const statusResponse = await fetch(
-      `${baseUrl}/api/integrations/${provider.value}/oauth/status`,
+      `/api/integrations/${provider.value}/oauth/status`,
       {
         headers: getAuthHeaders(),
       }
@@ -177,7 +176,7 @@ const fetchResources = async () => {
   loadingResources.value = true
   try {
     const response = await fetch(
-      `${baseUrl}/api/integrations/${provider.value}/resources`,
+      `/api/integrations/${provider.value}/resources`,
       {
         headers: getAuthHeaders(),
       }
@@ -204,7 +203,7 @@ const handleSaveConfiguration = async () => {
   saving.value = true
   try {
     const response = await fetch(
-      `${baseUrl}/api/integrations/${provider.value}/configure`,
+      `/api/integrations/${provider.value}/configure`,
       {
         method: 'POST',
         headers: getAuthHeaders(),

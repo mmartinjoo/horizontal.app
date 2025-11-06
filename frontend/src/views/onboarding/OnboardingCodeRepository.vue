@@ -78,7 +78,7 @@ const handleConnect = async (provider, extraData) => {
     localStorage.setItem('onboarding_context', JSON.stringify({
       active: true,
       provider,
-      step: 'code_repository',
+      step: 'code-repository',
     }))
 
     const response = await fetch(`/api/integrations/${provider}/oauth/authorize`, {

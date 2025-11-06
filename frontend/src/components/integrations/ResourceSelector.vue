@@ -58,7 +58,7 @@
             :for="`resource-${resource.id}`"
             class="ml-3 flex-1 text-sm text-gray-900 cursor-pointer"
           >
-            <div class="font-medium">{{ resource.name }}</div>
+            <div class="font-medium">{{ resource.title }}</div>
             <div v-if="resource.description" class="text-xs text-gray-500">
               {{ resource.description }}
             </div>
