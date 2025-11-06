@@ -42,7 +42,7 @@ const router = createRouter({
       meta: { requiresAuth: true, onboarding: true }
     },
     {
-      path: '/onboarding/task_management',
+      path: '/onboarding/task-management',
       name: 'onboarding-task-management',
       component: () => import('../views/onboarding/OnboardingTaskManagement.vue'),
       meta: { requiresAuth: true, onboarding: true }
@@ -54,7 +54,7 @@ const router = createRouter({
       meta: { requiresAuth: true, onboarding: true }
     },
     {
-      path: '/onboarding/code_repository',
+      path: '/onboarding/code-repository',
       name: 'onboarding-code-repository',
       component: () => import('../views/onboarding/OnboardingCodeRepository.vue'),
       meta: { requiresAuth: true, onboarding: true }
