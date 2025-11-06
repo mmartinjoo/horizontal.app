@@ -59,8 +59,6 @@ const loading = ref(true)
 const connectingProvider = ref(null)
 const storageIntegrations = ref([])
 
-const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
 onMounted(async () => {
   try {
     await fetchIntegrations()
@@ -82,7 +80,7 @@ const handleConnect = async (provider) => {
       step: 'storage',
     }))
 
-    const response = await fetch(`${baseUrl}/api/integrations/${provider}/oauth/authorize`, {
+    const response = await fetch(`/api/integrations/${provider}/oauth/authorize`, {
       method: 'POST',
       headers: getAuthHeaders(),
     })
@@ -109,7 +107,7 @@ const handleDisconnect = async (provider) => {
   }
 
   try {
-    const response = await fetch(`${baseUrl}/api/integrations/${provider}/oauth/disconnect`, {
+    const response = await fetch(`/api/integrations/${provider}/oauth/disconnect`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     })

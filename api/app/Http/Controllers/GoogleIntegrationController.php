@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\GoogleOAuthCallbackRequest;
 use App\Models\GoogleChatIntegration;
+use App\Models\GoogleDriveIntegration;
 use App\Services\Integration\Google\GoogleOAuthService;
 use App\Services\Url;
 use Carbon\Carbon;
@@ -132,13 +133,13 @@ abstract class GoogleIntegrationController extends Controller
         ]);
     }
 
-    public function disconnect(Request $request): JsonResponse
+    public function disconnect(): JsonResponse
     {
-        $integration = GoogleChatIntegration::first();
+        $integration = GoogleDriveIntegration::first();
 
         if (!$integration) {
             return response()->json([
-                'error' => 'No Google integration found',
+                'error' => 'No Google Drive integration found',
             ], 404);
         }
 
@@ -155,7 +156,7 @@ abstract class GoogleIntegrationController extends Controller
             $integration->delete();
 
             return response()->json([
-                'message' => 'Google integration successfully disconnected',
+                'message' => 'Google Drive integration successfully disconnected',
                 'disconnected_integration' => $integrationDetails,
             ]);
         } catch (Exception $e) {
