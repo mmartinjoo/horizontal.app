@@ -67,6 +67,8 @@ Route::middleware([
     });
 
     Route::get('/integrations/google_chat/oauth/callback', [GoogleChatIntegrationController::class, 'callback']);
+    Route::get('/integrations/google_chat/resources', [GoogleChatIntegrationController::class, 'resources']);
+    Route::post('/integrations/google_chat/configure', [GoogleChatIntegrationController::class, 'configure']);
     Route::middleware('auth:sanctum')->prefix('/integrations/google_chat/oauth')->group(function () {
         Route::post('authorize', [GoogleChatIntegrationController::class, 'authorize']);
         Route::get('status', [GoogleChatIntegrationController::class, 'status']);

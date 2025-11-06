@@ -9,10 +9,13 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 abstract class GoogleIntegrationController extends Controller
 {
+    abstract public function resources();   
+    abstract public function configure(Request $request);
     abstract protected function hasExistingIntegration(): bool;
     abstract protected function getIntegration(): Model;
     abstract protected function getStateCacheKey(): string;
