@@ -3,20 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\GoogleOAuthCallbackRequest;
-use App\Models\GoogleChatIntegration;
-use App\Models\GoogleDriveIntegration;
 use App\Services\Integration\Google\GoogleOAuthService;
 use App\Services\Url;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 abstract class GoogleIntegrationController extends Controller
 {
     abstract protected function hasExistingIntegration(): bool;
+    abstract protected function getIntegration(): Model;
     abstract protected function getStateCacheKey(): string;
     abstract protected function createIntegration(array $userInfo, array $tokenData, Carbon $expiresAt): Model;
     abstract protected function createRedirectUrlToOnboarding(string $errorMessage): string;
@@ -85,9 +83,9 @@ abstract class GoogleIntegrationController extends Controller
         }
     }
 
-    public function status(Request $request): JsonResponse
+    public function status(): JsonResponse
     {
-        $integration = GoogleChatIntegration::first();
+        $integration = $this->getIntegration();
 
         if (!$integration) {
             return response()->json([
@@ -118,7 +116,7 @@ abstract class GoogleIntegrationController extends Controller
 
     public function disconnect(): JsonResponse
     {
-        $integration = GoogleDriveIntegration::first();
+        $integration = $this->getIntegration();
 
         if (!$integration) {
             return response()->json([

@@ -20,6 +20,11 @@ class GoogleDriveIntegrationController extends GoogleIntegrationController
         return GoogleDriveIntegration::count() !== 0;
     }
 
+    protected function getIntegration(): Model
+    {
+        return GoogleDriveIntegration::first();
+    }
+
     protected function getStateCacheKey(): string
     {
         return 'google_drive_oauth_state-';

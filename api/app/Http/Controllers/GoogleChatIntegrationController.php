@@ -20,6 +20,11 @@ class GoogleChatIntegrationController extends GoogleIntegrationController
         return GoogleChatIntegration::count() !== 0;
     }
 
+    protected function getIntegration(): Model
+    {
+        return GoogleChatIntegration::first();
+    }
+
     protected function getStateCacheKey(): string
     {
         return 'google_chat_oauth_state-';

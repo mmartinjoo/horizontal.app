@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\GithubIntegration;
-use App\Models\GithubRepository;
-use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
 use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
 use App\Services\Url;
