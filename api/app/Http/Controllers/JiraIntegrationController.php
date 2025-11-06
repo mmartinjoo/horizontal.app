@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\JiraOAuthAuthorizeRequest;
 use App\Http\Requests\JiraOAuthCallbackRequest;
 use App\Models\JiraIntegration;
+use App\Models\JiraProject;
+use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
+use App\Services\Integration\TaskManagement\Jira\Jira;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use App\Services\Url;
 use Illuminate\Http\JsonResponse;
@@ -108,11 +111,10 @@ class JiraIntegrationController extends Controller
         } finally {
             Cache::forget('jira_oauth_state-' . $randomStr);
             Cache::forget('jira_base_url-' . $randomStr);
-            return redirect()->away(Url::createOnboardingFrontendUrl(
+            return redirect()->away(Url::createOnboardingCallbackFrontendUrl(
                 tenant: tenancy()->tenant, 
-                step: 'task-management', 
-                provider: 'jira', 
-                errorMessage: $errorMessage,
+                provider: 'jira',
+                step: 'task-management',
             ));
         }
     }
@@ -176,6 +178,49 @@ class JiraIntegrationController extends Controller
             return response()->json([
                 'error' => 'Failed to disconnect Jira integration: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function resources(Jira $jira)
+    {
+        $resources = $jira->projects()
+            ->map(function (Project $project) {
+                return [
+                    'id' => $project->id,
+                    'title' => $project->title,
+                    'description' => '',
+                ];
+            });
+
+        return response()->json([
+            'resources' => $resources,
+        ]);
+    }
+
+    public function configure(Request $request, Jira $jira)
+    {
+        $request->validate([
+            'selected_resources' => ['required', 'array'],
+            'selected_resources.*' => ['required', 'string'],
+        ]);
+
+        $selectedResourceIds = $request->get('selected_resources');
+        $integration = JiraIntegration::firstOrFail();
+
+        JiraProject::query()
+            ->where('jira_integration_id', $integration->id)
+            ->delete();
+
+        $resources = $jira->projects();
+        /** @var Project $resource */
+        foreach ($resources as $resource) {
+            if (in_array($resource->id, $selectedResourceIds)) {
+                JiraProject::create([
+                    'title' => $resource->title,
+                    'external_id' => $resource->id,
+                    'jira_integration_id' => $integration->id,
+                ]);
+            }
         }
     }
 }

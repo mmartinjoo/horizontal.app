@@ -51,6 +51,8 @@ Route::middleware([
     });
 
     Route::get('/integrations/jira/oauth/callback', [JiraIntegrationController::class, 'callback']);
+    Route::get('/integrations/jira/resources', [JiraIntegrationController::class, 'resources']);
+    Route::post('/integrations/jira/configure', [JiraIntegrationController::class, 'configure']);
     Route::middleware('auth:sanctum')->prefix('/integrations/jira/oauth')->group(function () {
         Route::post('authorize', [JiraIntegrationController::class, 'authorize']);
         Route::get('status', [JiraIntegrationController::class, 'status']);

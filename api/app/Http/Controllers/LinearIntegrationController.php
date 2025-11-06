@@ -157,8 +157,17 @@ class LinearIntegrationController extends Controller
 
     public function resources(Linear $linear)
     {
+        $resources = $linear->projects()
+            ->map(function (Project $project) {
+                return [
+                    'id' => $project->id,
+                    'title' => $project->title,
+                    'description' => '',
+                ];
+            });
+
         return response()->json([
-            'resources' => $linear->projects(),
+            'resources' => $resources,
         ]);
     }
 
