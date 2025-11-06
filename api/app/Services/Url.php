@@ -2,10 +2,29 @@
 
 namespace App\Services;
 
+use App\Models\Tenant;
 use Exception;
+use Illuminate\Support\Facades\App;
 
 class Url
 {
+    public static function createTenantIntegrationCallbackUrl(Tenant $tenant, string $provider): string
+    {
+        $domain = $tenant->domains()->first();
+        if (App::isLocal()) {
+            return "http://{$domain->domain}:9996/api/integrations/{$provider}/oauth/callback";
+        } else {
+            return "https://{$domain->domain}/api/integrations/{$provider}/oauth/callback";
+        }
+    }
+
+    public static function createTenantIntegrationCallbackUrlWithCode(Tenant $tenant, string $provider, string $code): string
+    {
+        $url = self::createTenantIntegrationCallbackUrl($tenant, $provider);
+        return sprintf("%s?code=%s", $url, $code);
+    }
+
+
     /**
      * `state` is an OAUth GET param use in integrations and OAuth login
      * It can contain many fields: `state=tenant_id=abc|random_str=asdf|code=1234`

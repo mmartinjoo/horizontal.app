@@ -21,15 +21,15 @@ use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use App\Services\Integration\TaskManagement\Jira\Jira;
 use App\Services\Integration\TaskManagement\Linear\Linear;
+use App\Services\Url;
 use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
     public function index(Slack $slack)
     {
-        foreach ($slack->channels() as $channel) {
-            dump($channel);
-        }
+        $url = Url::createTenantIntegrationCallbackUrlWithCode(tenancy()->tenant, 'github', 'asf-1234');
+        return $url;
     }
 
     public function token()
