@@ -76,6 +76,8 @@ Route::middleware([
     });
 
     Route::get('/integrations/google_drive/oauth/callback', [GoogleDriveIntegrationController::class, 'callback']);
+    Route::get('/integrations/google_drive/resources', [GoogleDriveIntegrationController::class, 'resources']);
+    Route::post('/integrations/google_drive/configure', [GoogleDriveIntegrationController::class, 'configure']);
     Route::middleware('auth:sanctum')->prefix('/integrations/google_drive/oauth')->group(function () {
         Route::post('authorize', [GoogleDriveIntegrationController::class, 'authorize']);
         Route::get('status', [GoogleDriveIntegrationController::class, 'status']);

@@ -2,17 +2,68 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GoogleDriveFolder;
 use App\Models\GoogleDriveIntegration;
 use App\Services\Integration\Google\GoogleOAuthService;
+use App\Services\Integration\Storage\DataTransferObjects\Folder;
+use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use App\Services\Url;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 
 class GoogleDriveIntegrationController extends GoogleIntegrationController
 {
     public function __construct(
         protected GoogleOAuthService $googleOAuthService,
     ) {
+    }
+
+    public function resources()
+    {
+        $googleDrive = app(GoogleDrive::class);
+        $resources = $googleDrive->folders()
+            ->map(function (Folder $folder) {
+                return [
+                    'id' => $folder->id,
+                    'title' => $folder->path,
+                    'description' => '',
+                ];
+            });
+
+        return response()->json([
+            'resources' => $resources,
+        ]);
+    }
+
+    public function configure(Request $request)
+    {
+        $googleDrive = app(GoogleDrive::class);
+
+        $request->validate([
+            'selected_resources' => ['required', 'array'],
+            'selected_resources.*' => ['required', 'string'],
+        ]);
+
+        $selectedResourceIds = $request->get('selected_resources');
+        $integration = GoogleDriveIntegration::firstOrFail();
+
+        GoogleDriveFolder::query()
+            ->where('google_drive_integration_id', $integration->id)
+            ->delete();
+
+        $resources = $googleDrive->folders();
+
+        /** @var Folder $resource */
+        foreach ($resources as $resource) {
+            if (in_array($resource->id, $selectedResourceIds)) {
+                GoogleDriveFolder::create([
+                    'name' => $resource->path,
+                    'external_id' => $resource->id,
+                    'google_drive_integration_id' => $integration->id,
+                ]);
+            }
+        }
     }
 
     protected function hasExistingIntegration(): bool
@@ -45,11 +96,10 @@ class GoogleDriveIntegrationController extends GoogleIntegrationController
 
     protected function createRedirectUrlToOnboarding(string $errorMessage): string
     {
-        return Url::createOnboardingFrontendUrl(
+        return Url::createOnboardingCallbackFrontendUrl(
             tenant: tenancy()->tenant, 
-            step: 'storage', 
-            provider: 'google_drive', 
-            errorMessage: $errorMessage,
+            provider: 'google_drive',
+            step: 'storage',
         );
     }
 }
