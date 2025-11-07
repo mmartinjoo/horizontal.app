@@ -13,6 +13,7 @@ use App\Services\SearchEngine\DataTransferObjects\SearchResult;
 use Bolt\protocol\v1\structures\Path as BoltPath;
 use Bolt\protocol\v5\structures\Node;
 use Exception;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class SearchEngine
@@ -75,7 +76,7 @@ class SearchEngine
 
                 return [
                     'id' => $node->properties[$idCol],
-                    'title' => $node->properties['title'],
+                    'title' => Arr::get($node->properties, 'title'),
                     'text' => $node->properties['text'],
                     'type' => $node->properties['document_type'],
                 ];
