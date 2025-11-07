@@ -107,56 +107,10 @@ export function useOnboarding() {
     }
   }
 
-  const updateOnboardingStep = async (step) => {
-    try {
-      const response = await fetch(`/api/onboarding/update`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ current_step: step }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update onboarding step')
-      }
-
-      saveCurrentStep(step)
-      const data = await response.json()
-      onboardingStatus.value = data
-
-      return data
-    } catch (error) {
-      console.error('Error updating onboarding step:', error)
-      throw error
-    }
-  }
-
-  const completeOnboarding = async () => {
-    try {
-      const response = await fetch(`/api/onboarding/complete`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to complete onboarding')
-      }
-
-      clearOnboardingState()
-      const data = await response.json()
-      onboardingStatus.value = data
-
-      return data
-    } catch (error) {
-      console.error('Error completing onboarding:', error)
-      throw error
-    }
-  }
-
   const nextStep = async () => {
     const nextIndex = currentStepIndex.value + 1
     if (nextIndex < STEP_ORDER.length) {
       const nextStepValue = STEP_ORDER[nextIndex]
-      await updateOnboardingStep(nextStepValue)
       return nextStepValue
     }
     return null
@@ -166,7 +120,6 @@ export function useOnboarding() {
     const prevIndex = currentStepIndex.value - 1
     if (prevIndex >= 0) {
       const prevStepValue = STEP_ORDER[prevIndex]
-      await updateOnboardingStep(prevStepValue)
       return prevStepValue
     }
     return null
@@ -174,7 +127,6 @@ export function useOnboarding() {
 
   const goToStep = async (step) => {
     if (STEP_ORDER.includes(step)) {
-      await updateOnboardingStep(step)
       return step
     }
     return null
@@ -197,8 +149,6 @@ export function useOnboarding() {
     // Methods
     fetchIntegrations,
     fetchOnboardingStatus,
-    updateOnboardingStep,
-    completeOnboarding,
     nextStep,
     previousStep,
     goToStep,
