@@ -61,7 +61,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     deploy:
-      replicas: 1
+      replicas: 4
     volumes:
       - ./api:/var/www
       - ./api/storage:/var/www/storage
@@ -184,7 +184,7 @@ services:
     ports:
       - "7687:7687"
       - "7444:7444"
-    command: [ "--log-level=TRACE" ]
+    command: [ "--log-level=TRACE", "--data-recovery-on-startup=true", "--storage-snapshot-interval-sec=300", "--storage-snapshot-on-exit=true", "--storage-wal-enabled=true", "--also-log-to-stderr=true", "--memory-limit=0" ]
     environment:
       - MEMGRAPH_USER=horizontal
       - MEMGRAPH_PASSWORD=password
