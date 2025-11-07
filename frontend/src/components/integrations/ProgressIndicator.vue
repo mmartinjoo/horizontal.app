@@ -1,13 +1,13 @@
 <template>
   <nav aria-label="Progress">
-    <ol role="list" class="flex items-center">
+    <ol role="list" class="flex items-center justify-center">
       <li
         v-for="(step, stepIdx) in steps"
         :key="step.name"
-        :class="[stepIdx !== steps.length - 1 ? 'pr-8 sm:pr-20' : '', 'relative']"
+        :class="[stepIdx !== steps.length - 1 ? 'pr-8 sm:pr-20' : '', 'relative flex flex-col items-center']"
       >
         <template v-if="step.status === 'complete'">
-          <div class="absolute inset-0 flex items-center" aria-hidden="true">
+          <div class="absolute inset-0 flex items-center top-4" aria-hidden="true">
             <div class="h-0.5 w-full bg-indigo-600"></div>
           </div>
           <a
@@ -28,9 +28,10 @@
             </svg>
             <span class="sr-only">{{ step.name }}</span>
           </a>
+          <span class="mt-2 text-xs font-medium text-indigo-600">{{ step.name }}</span>
         </template>
         <template v-else-if="step.status === 'current'">
-          <div class="absolute inset-0 flex items-center" aria-hidden="true">
+          <div class="absolute inset-0 flex items-center top-4" aria-hidden="true">
             <div class="h-0.5 w-full bg-gray-200"></div>
           </div>
           <a
@@ -44,9 +45,10 @@
             ></span>
             <span class="sr-only">{{ step.name }}</span>
           </a>
+          <span class="mt-2 text-xs font-medium text-indigo-600">{{ step.name }}</span>
         </template>
         <template v-else>
-          <div class="absolute inset-0 flex items-center" aria-hidden="true">
+          <div class="absolute inset-0 flex items-center top-4" aria-hidden="true">
             <div class="h-0.5 w-full bg-gray-200"></div>
           </div>
           <a
@@ -59,6 +61,7 @@
             ></span>
             <span class="sr-only">{{ step.name }}</span>
           </a>
+          <span class="mt-2 text-xs font-medium text-gray-500">{{ step.name }}</span>
         </template>
       </li>
     </ol>

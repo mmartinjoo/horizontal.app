@@ -11,9 +11,9 @@ const onboardingStatus = ref(null)
 const STEPS = {
   WELCOME: 'welcome',
   COMMUNICATION: 'communication',
-  TASK_MANAGEMENT: 'task_management',
+  TASK_MANAGEMENT: 'task-management',
   STORAGE: 'storage',
-  CODE_REPOSITORY: 'code_repository',
+  CODE_REPOSITORY: 'code-repository',
   COMPLETE: 'complete',
 }
 

@@ -89,12 +89,13 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useOnboarding } from '@/composables/useOnboarding'
 import ProgressIndicator from '@/components/integrations/ProgressIndicator.vue'
 
 const router = useRouter()
+const route = useRoute()
 const {
   currentStep,
   currentStepIndex,
@@ -103,8 +104,28 @@ const {
   nextStep,
   previousStep,
   completeOnboarding,
+  saveCurrentStep,
   STEPS,
 } = useOnboarding()
+
+// Sync currentStep with route
+const syncStepFromRoute = () => {
+  const pathParts = route.path.split('/')
+  const routeStep = pathParts[pathParts.length - 1] // Get last part of path
+
+  // Only update if it's a valid step and different from current
+  if (routeStep && Object.values(STEPS).includes(routeStep) && currentStep.value !== routeStep) {
+    saveCurrentStep(routeStep)
+  }
+}
+
+onMounted(() => {
+  syncStepFromRoute()
+})
+
+watch(() => route.path, () => {
+  syncStepFromRoute()
+})
 
 const stepNames = ['Communication', 'Task Management', 'Storage', 'Code Repository']
 
