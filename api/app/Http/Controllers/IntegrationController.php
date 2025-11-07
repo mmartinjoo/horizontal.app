@@ -28,7 +28,7 @@ class IntegrationController extends Controller
                 [
                     'provider' => 'slack',
                     'name' => 'Slack',
-                    'description' => 'Connect your Slack workspace to search messages and channels',
+                    'description' => 'Connect your Slack workspace and channels',
                     'icon' => '/icons/slack.svg',
                     'connected' => SlackIntegration::query()->exists(),
                     'configured' => $this->isSlackConfigured(),
@@ -36,7 +36,7 @@ class IntegrationController extends Controller
                 [
                     'provider' => 'google_chat',
                     'name' => 'Google Chat',
-                    'description' => 'Search your Google Chat conversations and spaces',
+                    'description' => 'Connect your Google Chat conversations and spaces',
                     'icon' => '/icons/google-chat.svg',
                     'connected' => GoogleChatIntegration::query()->exists(),
                     'configured' => $this->isGoogleChatConfigured(),
@@ -46,7 +46,7 @@ class IntegrationController extends Controller
                 [
                     'provider' => 'linear',
                     'name' => 'Linear',
-                    'description' => 'Access your Linear issues and projects',
+                    'description' => 'Connect your Linear issues and projects',
                     'icon' => '/icons/linear.svg',
                     'connected' => LinearIntegration::query()->exists(),
                     'configured' => $this->isLinearConfigured(),
@@ -54,7 +54,7 @@ class IntegrationController extends Controller
                 [
                     'provider' => 'jira',
                     'name' => 'Jira',
-                    'description' => 'Search your Jira issues and projects',
+                    'description' => 'Connect your Jira issues and projects',
                     'icon' => '/icons/jira.svg',
                     'connected' => JiraIntegration::query()->exists(),
                     'configured' => $this->isJiraConfigured(),
@@ -64,7 +64,7 @@ class IntegrationController extends Controller
                 [
                     'provider' => 'google_drive',
                     'name' => 'Google Drive',
-                    'description' => 'Search files and documents from Google Drive',
+                    'description' => 'Connect your files and folders',
                     'icon' => '/icons/google-drive.svg',
                     'connected' => GoogleDriveIntegration::query()->exists(),
                     'configured' => $this->isGoogleDriveConfigured(),
@@ -74,7 +74,7 @@ class IntegrationController extends Controller
                 [
                     'provider' => 'github',
                     'name' => 'GitHub',
-                    'description' => 'Search your GitHub repositories and code',
+                    'description' => 'Connect your repositories and PRs',
                     'icon' => '/icons/github.svg',
                     'connected' => GithubIntegration::query()->exists(),
                     'configured' => $this->isGithubConfigured(),
