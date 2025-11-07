@@ -111,13 +111,10 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { useOnboarding } from '@/composables/useOnboarding'
 
 const router = useRouter()
-const { clearOnboardingState } = useOnboarding()
 
 const goToApp = () => {
-  clearOnboardingState()
   router.push('/ask')
 }
 </script>

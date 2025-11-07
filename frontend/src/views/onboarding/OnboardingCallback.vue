@@ -117,17 +117,8 @@ const RESOURCE_TYPES = {
 }
 
 onMounted(async () => {
-  // Get onboarding context from localStorage
-  const context = localStorage.getItem('onboarding_context')
-  if (context) {
-    const parsed = JSON.parse(context)
-    provider.value = parsed.provider
-    returnStep.value = parsed.step
-  } else {
-    // Try to get provider from query params
-    provider.value = route.query.provider
-    returnStep.value = route.query.step
-  }
+  provider.value = route.query.provider
+  returnStep.value = route.query.step
 
   if (!provider.value) {
     error.value = 'Missing integration provider information'
@@ -217,9 +208,6 @@ const handleSaveConfiguration = async () => {
       throw new Error('Failed to save configuration')
     }
 
-    // Clear onboarding context
-    localStorage.removeItem('onboarding_context')
-
     // Redirect back to onboarding step
     router.push(`/onboarding/${returnStep.value}`)
   } catch (err) {
@@ -231,15 +219,11 @@ const handleSaveConfiguration = async () => {
 }
 
 const handleCloseModal = () => {
-  // Clear onboarding context
-  localStorage.removeItem('onboarding_context')
-
   // Return to onboarding step
   router.push(`/onboarding/${returnStep.value}`)
 }
 
 const returnToOnboarding = () => {
-  localStorage.removeItem('onboarding_context')
   router.push(`/onboarding/${returnStep.value}`)
 }
 </script>

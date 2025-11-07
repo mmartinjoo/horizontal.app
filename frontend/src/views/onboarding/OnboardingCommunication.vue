@@ -74,14 +74,6 @@ const handleConnect = async (provider) => {
   try {
     connectingProvider.value = provider
 
-    // Save onboarding context to localStorage
-    localStorage.setItem('onboarding_context', JSON.stringify({
-      active: true,
-      provider,
-      step: 'communication',
-    }))
-
-    // Call the backend to get OAuth URL
     const response = await fetch(`/api/integrations/${provider}/oauth/authorize`, {
       method: 'POST',
       headers: getAuthHeaders(),

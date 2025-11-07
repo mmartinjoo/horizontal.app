@@ -75,12 +75,6 @@ const handleConnect = async (provider, extraData) => {
     console.log(extraData)
     connectingProvider.value = provider
 
-    localStorage.setItem('onboarding_context', JSON.stringify({
-      active: true,
-      provider,
-      step: 'code-repository',
-    }))
-
     const response = await fetch(`/api/integrations/${provider}/oauth/authorize`, {
       method: 'POST',
       headers: getAuthHeaders(),

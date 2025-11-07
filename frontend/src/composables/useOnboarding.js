@@ -1,10 +1,8 @@
 import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuth } from './useAuth'
 
-const ONBOARDING_STATE_KEY = 'onboarding_state'
-
 // Shared state across all instances
-const currentStep = ref(localStorage.getItem(ONBOARDING_STATE_KEY) || 'welcome')
 const integrations = ref({})
 const onboardingStatus = ref(null)
 
@@ -28,6 +26,16 @@ const STEP_ORDER = [
 
 export function useOnboarding() {
   const { getAuthHeaders } = useAuth()
+  const route = useRoute()
+
+  // Derive currentStep from the current route
+  const currentStep = computed(() => {
+    const pathParts = route.path.split('/')
+    const stepFromRoute = pathParts[pathParts.length - 1]
+
+    // Validate it's a valid step, otherwise default to welcome
+    return Object.values(STEPS).includes(stepFromRoute) ? stepFromRoute : STEPS.WELCOME
+  })
 
   const isOnboardingComplete = computed(() => {
     return onboardingStatus.value?.completed || false
@@ -52,16 +60,6 @@ export function useOnboarding() {
     // or if they're on the welcome step
     return currentStep.value === STEPS.WELCOME || hasAnyIntegration.value
   })
-
-  const saveCurrentStep = (step) => {
-    currentStep.value = step
-    localStorage.setItem(ONBOARDING_STATE_KEY, step)
-  }
-
-  const clearOnboardingState = () => {
-    localStorage.removeItem(ONBOARDING_STATE_KEY)
-    currentStep.value = STEPS.WELCOME
-  }
 
   const fetchIntegrations = async () => {
     try {
@@ -152,7 +150,5 @@ export function useOnboarding() {
     nextStep,
     previousStep,
     goToStep,
-    saveCurrentStep,
-    clearOnboardingState,
   }
 }
