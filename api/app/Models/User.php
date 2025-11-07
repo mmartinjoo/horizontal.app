@@ -43,12 +43,4 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-
-    /**
-     * Get the onboarding status for the user.
-     */
-    public function onboardingStatus(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(OnboardingStatus::class);
-    }
 }
