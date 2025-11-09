@@ -21,15 +21,15 @@ use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use App\Services\Integration\TaskManagement\Jira\Jira;
 use App\Services\Integration\TaskManagement\Linear\Linear;
+use App\Services\Url;
 use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
-    public function index(Slack $slack)
+    public function index(Orchestrator $orchestrator, GraphDB $graphDB)
     {
-        foreach ($slack->channels() as $channel) {
-            dump($channel);
-        }
+        $graphDB->query('MATCH (n) DETACH DELETE n');
+        $orchestrator->schedule();
     }
 
     public function token()

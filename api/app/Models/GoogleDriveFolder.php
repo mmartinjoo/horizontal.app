@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class JiraProject extends Model
+class GoogleDriveFolder extends Model
 {
     protected $guarded = [];
 }

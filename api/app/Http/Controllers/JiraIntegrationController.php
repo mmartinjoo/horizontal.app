@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Requests\JiraOAuthAuthorizeRequest;
 use App\Http\Requests\JiraOAuthCallbackRequest;
 use App\Models\JiraIntegration;
+use App\Models\JiraProject;
+use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
+use App\Services\Integration\TaskManagement\Jira\Jira;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use App\Services\Url;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
+use Exception;
 
 class JiraIntegrationController extends Controller
 {
@@ -52,31 +55,30 @@ class JiraIntegrationController extends Controller
         }
     }
 
-    public function callback(JiraOAuthCallbackRequest $request): JsonResponse
+    public function callback(JiraOAuthCallbackRequest $request)
     {
-        $code = $request->input('code');
-        $state = $request->input('state');
-        $randomStr = Url::extractKeyFromState($state, 'random_str');
-
-        // Validate OAuth state to prevent CSRF attacks
-        $cacheState = Cache::get('jira_oauth_state-' . $randomStr);
-        $jiraBaseUrl = Cache::get('jira_base_url-' . $randomStr);
-
-        if (!$cacheState || !$this->jiraOAuthService->validateState($randomStr, $cacheState)) {
-            return response()->json([
-                'error' => 'Invalid OAuth state. Please restart the authorization process.',
-            ], 400);
-        }
-
-        if (!$jiraBaseUrl) {
-            return response()->json([
-                'error' => 'Session expired. Please restart the authorization process.',
-            ], 400);
-        }
-
+        $errorMessage = '';
         try {
+            $code = $request->input('code');
+            $state = $request->input('state');
+            $randomStr = Url::extractKeyFromState($state, 'random_str');
+
+            // Validate OAuth state to prevent CSRF attacks
+            $cacheState = Cache::get('jira_oauth_state-' . $randomStr);
+            $jiraBaseUrl = Cache::get('jira_base_url-' . $randomStr);
+
+            if (!$cacheState || !$this->jiraOAuthService->validateState($randomStr, $cacheState)) {
+                $errorMessage = 'Invalid OAuth state. Please restart the authorization process.';
+                throw new Exception($errorMessage);
+            }
+
+            if (!$jiraBaseUrl) {
+                $errorMessage = 'Session expired. Please restart the authorization process.';
+                throw new Exception($errorMessage);
+            }
+
             // Exchange authorization code for access token
-            $tokenData = $this->jiraOAuthService->exchangeCodeForToken($code, $state);
+            $tokenData = $this->jiraOAuthService->exchangeCodeForToken($code);
 
             // Get accessible resources to find cloud ID
             $accessibleResources = $this->jiraOAuthService->getAccessibleResources($tokenData['access_token']);
@@ -91,14 +93,14 @@ class JiraIntegrationController extends Controller
             }
 
             if (!$cloudId) {
-                throw new \Exception('Could not find cloud ID for Jira instance');
+                $errorMessage = 'Could not find cloud ID for Jira instance';
+                throw new Exception($errorMessage);
             }
 
             // Calculate token expiration time
             $expiresAt = now()->addSeconds($tokenData['expires_in'] ?? 3600);
 
-            // Create the Jira integration record
-            $integration = JiraIntegration::create([
+            JiraIntegration::create([
                 'jira_base_url' => $jiraBaseUrl,
                 'cloud_id' => $cloudId,
                 'access_token' => $tokenData['access_token'],
@@ -106,27 +108,14 @@ class JiraIntegrationController extends Controller
                 'expires_at' => $expiresAt,
                 'scope' => explode(' ', $tokenData['scope'] ?? 'read:jira-user read:jira-work'),
             ]);
-
+        } finally {
             Cache::forget('jira_oauth_state-' . $randomStr);
             Cache::forget('jira_base_url-' . $randomStr);
-
-            return response()->json([
-                'message' => 'Jira integration successfully connected',
-                'integration' => [
-                    'id' => $integration->id,
-                    'jira_base_url' => $integration->jira_base_url,
-                    'expires_at' => $integration->expires_at,
-                    'scope' => $integration->scope,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            // Clear session data on error
-            Cache::forget('jira_oauth_state-' . $randomStr);
-            Cache::forget('jira_base_url-' . $randomStr);
-
-            return response()->json([
-                'error' => 'Failed to complete OAuth authorization: ' . $e->getMessage(),
-            ], 500);
+            return redirect()->away(Url::createOnboardingCallbackFrontendUrl(
+                tenant: tenancy()->tenant, 
+                provider: 'jira',
+                step: 'task-management',
+            ));
         }
     }
 
@@ -189,6 +178,49 @@ class JiraIntegrationController extends Controller
             return response()->json([
                 'error' => 'Failed to disconnect Jira integration: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function resources(Jira $jira)
+    {
+        $resources = $jira->projects()
+            ->map(function (Project $project) {
+                return [
+                    'id' => $project->id,
+                    'title' => $project->title,
+                    'description' => '',
+                ];
+            });
+
+        return response()->json([
+            'resources' => $resources,
+        ]);
+    }
+
+    public function configure(Request $request, Jira $jira)
+    {
+        $request->validate([
+            'selected_resources' => ['required', 'array'],
+            'selected_resources.*' => ['required', 'string'],
+        ]);
+
+        $selectedResourceIds = $request->get('selected_resources');
+        $integration = JiraIntegration::firstOrFail();
+
+        JiraProject::query()
+            ->where('jira_integration_id', $integration->id)
+            ->delete();
+
+        $resources = $jira->projects();
+        /** @var Project $resource */
+        foreach ($resources as $resource) {
+            if (in_array($resource->id, $selectedResourceIds)) {
+                JiraProject::create([
+                    'title' => $resource->title,
+                    'external_id' => $resource->id,
+                    'jira_integration_id' => $integration->id,
+                ]);
+            }
         }
     }
 }

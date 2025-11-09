@@ -17,13 +17,9 @@ class CentralIntegrationController
 
         $tenantId = Url::extractKeyFromState($request->get('state'), 'tenant_id');
         $tenant = Tenant::findOrFail($tenantId);
-        $domain = $tenant->domains()->first();
+        
 
-        if (App::isLocal()) {
-            $url = "http://{$domain->domain}:9996/api/integrations/{$provider}/oauth/callback";
-        } else {
-            $url = "https://{$domain->domain}/api/integrations/{$provider}/oauth/callback";
-        }
+        $url = Url::createTenantIntegrationCallbackUrl($tenant, $provider);
 
         return redirect()->away($url . '?' . $request->getQueryString());
     }

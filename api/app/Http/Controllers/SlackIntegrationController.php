@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SlackOAuthCallbackRequest;
+use App\Models\SlackChannel;
 use App\Models\SlackIntegration;
+use App\Services\Integration\Communication\DataTransferObjects\Channel;
+use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\Communication\Slack\SlackOAuthService;
 use App\Services\Url;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 
@@ -44,29 +48,28 @@ class SlackIntegrationController extends Controller
         }
     }
 
-    public function callback(SlackOAuthCallbackRequest $request): JsonResponse
+    public function callback(SlackOAuthCallbackRequest $request)
     {
-        $code = $request->input('code');
-        $state = $request->input('state');
-        $randomStr = Url::extractKeyFromState($state, 'random_str');
-
-        // Check for OAuth errors
-        if ($request->has('error')) {
-            return response()->json([
-                'error' => 'OAuth authorization failed: ' . $request->input('error_description', $request->input('error')),
-            ], 400);
-        }
-
-        // Validate OAuth state to prevent CSRF attacks
-        $cacheState = Cache::get('slack_oauth_state-' . $randomStr);
-
-        if (!$cacheState || !$this->slackOAuthService->validateState($randomStr, $cacheState)) {
-            return response()->json([
-                'error' => 'Invalid OAuth state. Please restart the authorization process.',
-            ], 400);
-        }
-
+        $errorMessage = '';
         try {
+            $code = $request->input('code');
+            $state = $request->input('state');
+            $randomStr = Url::extractKeyFromState($state, 'random_str');
+
+            // Check for OAuth errors
+            if ($request->has('error')) {
+                $errorMessage = 'OAuth authorization failed: ' . $request->input('error_description', $request->input('error'));
+                throw new Exception($errorMessage); 
+            }
+
+            // Validate OAuth state to prevent CSRF attacks
+            $cacheState = Cache::get('slack_oauth_state-' . $randomStr);
+
+            if (!$cacheState || !$this->slackOAuthService->validateState($randomStr, $cacheState)) {
+                $errorMessage = 'Invalid OAuth state. Please restart the authorization process.';
+                throw new Exception($errorMessage);
+            }
+
             // Exchange authorization code for access token
             $tokenData = $this->slackOAuthService->exchangeCodeForToken($code);
 
@@ -78,7 +81,7 @@ class SlackIntegrationController extends Controller
             // Calculate token expiration time
             $expiresAt = now()->addSeconds($tokenData['expires_in'] ?? 86400); // Default 24 hours
 
-            $integration = SlackIntegration::create([
+            SlackIntegration::create([
                 'user_name' => $userInfo['profile']['real_name'] ?? $userInfo['name'] ?? null,
                 'user_email' => Arr::get($userInfo, 'profile.email'),
                 'slack_user_id' => $userInfo['id'] ?? null,
@@ -87,26 +90,13 @@ class SlackIntegrationController extends Controller
                 'expires_at' => $expiresAt,
                 'scope' => isset($tokenData['scope']) ? explode(',', $tokenData['scope']) : ['read', 'write'],
             ]);
-
+        } finally {
             Cache::forget('slack_oauth_state-' . $randomStr);
-
-            return response()->json([
-                'message' => 'Slack integration successfully connected',
-                'integration' => [
-                    'id' => $integration->id,
-                    'user_name' => $integration->user_name,
-                    'user_email' => $integration->user_email,
-                    'expires_at' => $integration->expires_at,
-                    'scope' => $integration->scope,
-                ],
-            ]);
-        } catch (Exception $e) {
-            // Clear session data on error
-            Cache::forget('slack_oauth_state-' . $randomStr);
-
-            return response()->json([
-                'error' => 'Failed to complete OAuth authorization: ' . $e->getMessage(),
-            ], 500);
+            return redirect()->away(Url::createOnboardingCallbackFrontendUrl(
+                tenant: tenancy()->tenant, 
+                provider: 'slack',
+                step: 'communication',
+            ));
         }
     }
 
@@ -170,6 +160,50 @@ class SlackIntegrationController extends Controller
             return response()->json([
                 'error' => 'Failed to disconnect Slack integration: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function resources(Slack $slack)
+    {
+        $resources = $slack->channels()
+            ->map(function (Channel $channel) {
+                return [
+                    'id' => $channel->externalId,
+                    'title' => $channel->name,
+                    'description' => '',
+                ];
+            });
+
+        return response()->json([
+            'resources' => $resources,
+        ]);
+    }
+
+    public function configure(Request $request, Slack $slack)
+    {
+        $request->validate([
+            'selected_resources' => ['required', 'array'],
+            'selected_resources.*' => ['required', 'string'],
+        ]);
+
+        $selectedResourceIds = $request->get('selected_resources');
+        $integration = SlackIntegration::firstOrFail();
+
+        SlackChannel::query()
+            ->where('slack_integration_id', $integration->id)
+            ->delete();
+
+        $resources = $slack->channels();
+
+        /** @var Channel $resource */
+        foreach ($resources as $resource) {
+            if (in_array($resource->externalId, $selectedResourceIds)) {
+                SlackChannel::create([
+                    'name' => $resource->name,
+                    'external_id' => $resource->externalId,
+                    'slack_integration_id' => $integration->id,
+                ]);
+            }
         }
     }
 }

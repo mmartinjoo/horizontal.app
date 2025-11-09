@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tenant;
+use App\Services\Url;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 
 class CentralOAuthController
 {
@@ -22,13 +22,8 @@ class CentralOAuthController
             abort(429, "tenant_id is required");
         }
         $tenant = Tenant::findOrFail($tenantId);
-        $domain = $tenant->domains()->first();
 
-        if (App::isLocal()) {
-            $url = "http://{$domain->domain}:9996/api/auth/{$provider}/callback?code=" . $request->get('code');
-        } else {
-            $url = "https://{$domain->domain}/api/auth/{$provider}/callback?code=" . $request->get('code');
-        }
+        $url = Url::createTenantIntegrationCallbackUrlWithCode($tenant, $provider, $request->get('code'));
 
         return redirect()->away($url);
     }

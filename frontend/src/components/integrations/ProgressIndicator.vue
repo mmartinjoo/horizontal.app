@@ -1,0 +1,96 @@
+<template>
+  <nav aria-label="Progress">
+    <ol role="list" class="flex items-center justify-center">
+      <li
+        v-for="(step, stepIdx) in steps"
+        :key="step.name"
+        :class="[stepIdx !== steps.length - 1 ? 'pr-8 sm:pr-20' : '', 'relative flex flex-col items-center']"
+      >
+        <template v-if="step.status === 'complete'">
+          <div class="absolute inset-0 flex items-center top-3" aria-hidden="true">
+            <div class="h-px w-full bg-slate-300"></div>
+          </div>
+          <a
+            href="#"
+            class="relative flex h-6 w-6 items-center justify-center rounded-full border-2 border-slate-600 bg-white hover:bg-slate-50"
+          >
+            <svg
+              class="h-3.5 w-3.5 text-slate-600"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <span class="sr-only">{{ step.name }}</span>
+          </a>
+          <span class="mt-2 text-xs font-medium text-slate-600">{{ step.name }}</span>
+        </template>
+        <template v-else-if="step.status === 'current'">
+          <div class="absolute inset-0 flex items-center top-3" aria-hidden="true">
+            <div class="h-px w-full bg-slate-200"></div>
+          </div>
+          <a
+            href="#"
+            class="relative flex h-6 w-6 items-center justify-center rounded-full border-2 border-slate-600 bg-white"
+            aria-current="step"
+          >
+            <span
+              class="h-2 w-2 rounded-full bg-slate-600"
+              aria-hidden="true"
+            ></span>
+            <span class="sr-only">{{ step.name }}</span>
+          </a>
+          <span class="mt-2 text-xs font-medium text-slate-900">{{ step.name }}</span>
+        </template>
+        <template v-else>
+          <div class="absolute inset-0 flex items-center top-3" aria-hidden="true">
+            <div class="h-px w-full bg-slate-200"></div>
+          </div>
+          <a
+            href="#"
+            class="group relative flex h-6 w-6 items-center justify-center rounded-full border-2 border-slate-300 bg-white hover:border-slate-400"
+          >
+            <span
+              class="h-2 w-2 rounded-full bg-transparent group-hover:bg-slate-300"
+              aria-hidden="true"
+            ></span>
+            <span class="sr-only">{{ step.name }}</span>
+          </a>
+          <span class="mt-2 text-xs font-medium text-slate-500">{{ step.name }}</span>
+        </template>
+      </li>
+    </ol>
+  </nav>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  currentStep: {
+    type: Number,
+    required: true,
+  },
+  totalSteps: {
+    type: Number,
+    required: true,
+  },
+  stepNames: {
+    type: Array,
+    default: () => ['Communication', 'Task Management', 'Storage', 'Code Repository'],
+  },
+})
+
+const steps = computed(() => {
+  return props.stepNames.map((name, index) => ({
+    name,
+    status:
+      index < props.currentStep ? 'complete' : index === props.currentStep ? 'current' : 'upcoming',
+  }))
+})
+</script>

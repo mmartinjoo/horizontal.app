@@ -2,10 +2,49 @@
 
 namespace App\Services;
 
+use App\Models\Tenant;
 use Exception;
+use Illuminate\Support\Facades\App;
 
 class Url
 {
+    public static function createOnboardingCallbackFrontendUrl(Tenant $tenant, string $provider, string $step): string
+    {
+        $domain = $tenant->domains()->first();
+        if (App::isLocal()) {
+            return "http://{$domain->domain}:9996/onboarding/callback?provider=$provider&step=$step";
+        } else {
+            return "https://{$domain->domain}/onboarding/callback?provider=$provider&step=$step";
+        }
+    }
+
+    public static function createOnboardingFrontendUrl(Tenant $tenant, string $step, string $provider, string $errorMessage): string
+    {
+        $domain = $tenant->domains()->first();
+        if (App::isLocal()) {
+            return "http://{$domain->domain}:9996/onboarding/{$step}?provider=$provider&error=$errorMessage";
+        } else {
+            return "https://{$domain->domain}/onboarding/{$step}?provider=$provider&error=$errorMessage";
+        }
+    }
+
+    public static function createTenantIntegrationCallbackUrl(Tenant $tenant, string $provider): string
+    {
+        $domain = $tenant->domains()->first();
+        if (App::isLocal()) {
+            return "http://{$domain->domain}:9996/api/integrations/{$provider}/oauth/callback";
+        } else {
+            return "https://{$domain->domain}/api/integrations/{$provider}/oauth/callback";
+        }
+    }
+
+    public static function createTenantIntegrationCallbackUrlWithCode(Tenant $tenant, string $provider, string $code): string
+    {
+        $url = self::createTenantIntegrationCallbackUrl($tenant, $provider);
+        return sprintf("%s?code=%s", $url, $code);
+    }
+
+
     /**
      * `state` is an OAUth GET param use in integrations and OAuth login
      * It can contain many fields: `state=tenant_id=abc|random_str=asdf|code=1234`

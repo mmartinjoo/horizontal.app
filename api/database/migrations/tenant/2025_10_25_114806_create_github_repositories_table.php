@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('github_repositories', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(GithubIntegration::class)->constrained();
+            $table->foreignIdFor(GithubIntegration::class)->constrained()->cascadeOnDelete();
             $table->string('external_id');
             $table->string('name');
             $table->timestamps();
