@@ -27,8 +27,8 @@
       </p>
 
       <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <div class="rounded-lg border border-slate-200 bg-white p-6 text-left shadow-sm">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-50 border border-sky-200">
+        <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-sky-50 border border-sky-200">
             <svg
               class="h-5 w-5 text-sky-600"
               fill="none"
@@ -43,14 +43,14 @@
               />
             </svg>
           </div>
-          <h3 class="mt-4 font-semibold text-slate-900">Communication</h3>
-          <p class="mt-2 text-sm text-slate-600">
+          <h3 class="mt-4 font-semibold text-slate-900 text-center">Communication</h3>
+          <p class="mt-2 text-sm text-slate-600 text-center">
             Connect Slack, Google Chat, and other messaging tools
           </p>
         </div>
 
-        <div class="rounded-lg border border-slate-200 bg-white p-6 text-left shadow-sm">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 border border-emerald-200">
+        <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-emerald-50 border border-emerald-200">
             <svg
               class="h-5 w-5 text-emerald-600"
               fill="none"
@@ -65,14 +65,14 @@
               />
             </svg>
           </div>
-          <h3 class="mt-4 font-semibold text-slate-900">Task Management</h3>
-          <p class="mt-2 text-sm text-slate-600">
+          <h3 class="mt-4 font-semibold text-slate-900 text-center">Task Management</h3>
+          <p class="mt-2 text-sm text-slate-600 text-center">
             Connect Linear, Jira, and project management tools
           </p>
         </div>
 
-        <div class="rounded-lg border border-slate-200 bg-white p-6 text-left shadow-sm">
-          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 border border-amber-200">
+        <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-amber-50 border border-amber-200">
             <svg
               class="h-5 w-5 text-amber-600"
               fill="none"
@@ -87,8 +87,8 @@
               />
             </svg>
           </div>
-          <h3 class="mt-4 font-semibold text-slate-900">File Storage</h3>
-          <p class="mt-2 text-sm text-slate-600">
+          <h3 class="mt-4 font-semibold text-slate-900 text-center">File Storage</h3>
+          <p class="mt-2 text-sm text-slate-600 text-center">
             Connect Google Drive and other file storage services
           </p>
         </div>
