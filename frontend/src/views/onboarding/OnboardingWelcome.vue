@@ -28,9 +28,9 @@
 
       <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-sky-50 border border-sky-200">
+          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
             <svg
-              class="h-5 w-5 text-sky-600"
+              class="h-5 w-5 text-slate-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -50,9 +50,9 @@
         </div>
 
         <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-emerald-50 border border-emerald-200">
+          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
             <svg
-              class="h-5 w-5 text-emerald-600"
+              class="h-5 w-5 text-slate-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -72,9 +72,9 @@
         </div>
 
         <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-amber-50 border border-amber-200">
+          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
             <svg
-              class="h-5 w-5 text-amber-600"
+              class="h-5 w-5 text-slate-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -94,9 +94,9 @@
         </div>
 
         <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-violet-50 border border-violet-200">
+          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
             <svg
-              class="h-5 w-5 text-violet-600"
+              class="h-5 w-5 text-slate-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
