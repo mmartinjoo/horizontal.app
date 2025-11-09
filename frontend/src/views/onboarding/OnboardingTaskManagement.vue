@@ -2,15 +2,15 @@
   <OnboardingLayout>
     <div class="mx-auto max-w-5xl">
       <div class="text-center">
-        <h2 class="text-2xl font-bold text-gray-900">Connect Task Management Tools</h2>
-        <p class="mt-2 text-gray-600">
+        <h2 class="text-2xl font-bold text-slate-900">Connect Task Management Tools</h2>
+        <p class="mt-2 text-slate-600">
           Connect your project management tools to search issues and tasks
         </p>
       </div>
 
       <div v-if="loading" class="mt-12 flex justify-center">
         <svg
-          class="h-12 w-12 animate-spin text-indigo-600"
+          class="h-12 w-12 animate-spin text-slate-400"
           fill="none"
           viewBox="0 0 24 24"
         >

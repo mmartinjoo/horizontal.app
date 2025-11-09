@@ -1,9 +1,9 @@
 <template>
   <OnboardingLayout>
     <div class="mx-auto max-w-3xl text-center">
-      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100">
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-sky-50 border border-sky-200">
         <svg
-          class="h-10 w-10 text-indigo-600"
+          class="h-8 w-8 text-sky-600"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -17,20 +17,20 @@
         </svg>
       </div>
 
-      <h2 class="mt-6 text-2xl font-bold text-gray-900">
+      <h2 class="mt-6 text-2xl font-bold text-slate-900">
         Let's get you set up
       </h2>
 
-      <p class="mt-4 text-lg text-gray-600">
+      <p class="mt-4 text-lg text-slate-600">
         Horizontal helps you search across all your tools in one place. To get started, you'll
         need to connect at least one integration.
       </p>
 
-      <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <div class="rounded-lg border border-gray-200 bg-white p-6 text-left">
-          <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
+      <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="rounded-lg border border-slate-200 bg-white p-6 text-left shadow-sm">
+          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-50 border border-sky-200">
             <svg
-              class="h-6 w-6 text-blue-600"
+              class="h-5 w-5 text-sky-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -43,16 +43,16 @@
               />
             </svg>
           </div>
-          <h3 class="mt-4 font-semibold text-gray-900">Communication</h3>
-          <p class="mt-2 text-sm text-gray-600">
+          <h3 class="mt-4 font-semibold text-slate-900">Communication</h3>
+          <p class="mt-2 text-sm text-slate-600">
             Connect Slack, Google Chat, and other messaging tools
           </p>
         </div>
 
-        <div class="rounded-lg border border-gray-200 bg-white p-6 text-left">
-          <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
+        <div class="rounded-lg border border-slate-200 bg-white p-6 text-left shadow-sm">
+          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 border border-emerald-200">
             <svg
-              class="h-6 w-6 text-green-600"
+              class="h-5 w-5 text-emerald-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -65,16 +65,16 @@
               />
             </svg>
           </div>
-          <h3 class="mt-4 font-semibold text-gray-900">Task Management</h3>
-          <p class="mt-2 text-sm text-gray-600">
+          <h3 class="mt-4 font-semibold text-slate-900">Task Management</h3>
+          <p class="mt-2 text-sm text-slate-600">
             Connect Linear, Jira, and project management tools
           </p>
         </div>
 
-        <div class="rounded-lg border border-gray-200 bg-white p-6 text-left">
-          <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-yellow-100">
+        <div class="rounded-lg border border-slate-200 bg-white p-6 text-left shadow-sm">
+          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 border border-amber-200">
             <svg
-              class="h-6 w-6 text-yellow-600"
+              class="h-5 w-5 text-amber-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -87,16 +87,16 @@
               />
             </svg>
           </div>
-          <h3 class="mt-4 font-semibold text-gray-900">File Storage</h3>
-          <p class="mt-2 text-sm text-gray-600">
+          <h3 class="mt-4 font-semibold text-slate-900">File Storage</h3>
+          <p class="mt-2 text-sm text-slate-600">
             Connect Google Drive and other file storage services
           </p>
         </div>
       </div>
 
-      <div class="mt-10 rounded-lg bg-blue-50 p-4">
-        <p class="text-sm text-blue-900">
-          <strong>Note:</strong> You must connect at least one integration to use Horizontal.
+      <div class="mt-12 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <p class="text-sm text-slate-700">
+          <strong class="text-slate-900">Note:</strong> You must connect at least one integration to use Horizontal.
           Don't worry, you can always add more integrations later from your settings.
         </p>
       </div>

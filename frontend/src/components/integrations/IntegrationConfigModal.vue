@@ -29,13 +29,13 @@
             >
               <DialogTitle
                 as="h3"
-                class="text-lg font-medium leading-6 text-gray-900"
+                class="text-lg font-semibold leading-6 text-slate-900"
               >
                 Configure {{ integrationName }}
               </DialogTitle>
 
               <div class="mt-2">
-                <p class="text-sm text-gray-500">
+                <p class="text-sm text-slate-600">
                   {{ description }}
                 </p>
               </div>
@@ -49,14 +49,14 @@
               <div class="mt-6 flex items-center justify-end space-x-3">
                 <button
                   type="button"
-                  class="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                  class="inline-flex justify-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
                   @click="$emit('close')"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="inline-flex justify-center rounded-md border border-transparent bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   @click="$emit('save')"
                   :disabled="loading"
                 >

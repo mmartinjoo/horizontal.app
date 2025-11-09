@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+  <div class="min-h-screen bg-slate-50">
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <!-- Header -->
       <div class="text-center">
-        <h1 class="text-3xl font-bold tracking-tight text-gray-900">
+        <h1 class="text-3xl font-bold tracking-tight text-slate-900">
           Welcome to Horizontal
         </h1>
-        <p class="mt-2 text-lg text-gray-600">
+        <p class="mt-2 text-lg text-slate-600">
           Connect your tools to get started
         </p>
       </div>
@@ -26,12 +26,12 @@
       </div>
 
       <!-- Navigation -->
-      <div class="mt-12 flex items-center justify-between border-t border-gray-200 pt-6">
+      <div class="mt-16 flex items-center justify-between border-t border-slate-200 pt-8">
         <button
           v-if="showBackButton"
           @click="handleBack"
           type="button"
-          class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          class="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
         >
           <svg
             class="mr-2 h-4 w-4"
@@ -54,7 +54,7 @@
           <button
             @click="handleNext"
             type="button"
-            class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center rounded-md bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {{ isLastStep ? 'Finish' : 'Next' }}
             <svg

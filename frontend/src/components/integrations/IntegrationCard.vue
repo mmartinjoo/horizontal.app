@@ -1,16 +1,16 @@
 <template>
   <div
-    class="relative rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+    class="relative rounded-lg border border-slate-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md"
   >
     <!-- Status Badge -->
     <div v-if="integration.connected" class="absolute right-4 top-4">
       <span
         class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-        :class="integration.configured ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+        :class="integration.configured ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'"
       >
         <span
           class="mr-1.5 h-2 w-2 rounded-full"
-          :class="integration.configured ? 'bg-green-400' : 'bg-yellow-400'"
+          :class="integration.configured ? 'bg-emerald-500' : 'bg-amber-500'"
         ></span>
         {{ integration.configured ? 'Connected' : 'Setup required' }}
       </span>
@@ -33,17 +33,17 @@
 
       <!-- Content -->
       <div class="flex-1 min-w-0">
-        <h3 class="text-lg font-semibold text-gray-900">{{ integration.name }}</h3>
-        <p class="mt-1 text-sm text-gray-500">{{ integration.description }}</p>
+        <h3 class="text-lg font-semibold text-slate-900">{{ integration.name }}</h3>
+        <p class="mt-1 text-sm text-slate-600">{{ integration.description }}</p>
 
         <!-- Actions -->
-        <div class="mt-4 flex items-center space-x-3">
+        <div class="mt-5 flex items-center space-x-3">
           <!-- Connect Button -->
           <button
             v-if="!integration.connected"
             @click="onConnectClick(integration)"
             :disabled="loading"
-            class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center rounded-md bg-sky-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg
               v-if="loading"
@@ -72,7 +72,7 @@
           <button
             v-if="integration.connected && !integration.configured"
             @click="$emit('configure', integration.provider)"
-            class="inline-flex items-center rounded-md bg-yellow-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600"
+            class="inline-flex items-center rounded-md border border-amber-300 bg-amber-50 px-3.5 py-2 text-sm font-semibold text-amber-700 shadow-sm hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
           >
             Configure
           </button>
@@ -81,7 +81,7 @@
           <button
             v-if="integration.connected && integration.configured"
             @click="$emit('configure', integration.provider)"
-            class="inline-flex items-center rounded-md bg-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400"
+            class="inline-flex items-center rounded-md border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
           >
             Reconfigure
           </button>
@@ -90,7 +90,7 @@
           <button
             v-if="integration.connected"
             @click="$emit('disconnect', integration.provider)"
-            class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400"
+            class="inline-flex items-center rounded-md border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:border-red-300 hover:text-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
           >
             Disconnect
           </button>

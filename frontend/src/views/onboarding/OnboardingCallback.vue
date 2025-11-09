@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center">
+  <div class="min-h-screen bg-slate-50 flex items-center justify-center">
     <div class="max-w-md w-full">
       <div v-if="error" class="rounded-lg bg-red-50 p-6">
         <div class="flex">
@@ -48,10 +48,10 @@
         </template>
       </IntegrationConfigModal>
 
-      <div v-if="!error && !showConfigModal" class="rounded-lg bg-white p-6 shadow-sm">
+      <div v-if="!error && !showConfigModal" class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div class="flex justify-center">
           <svg
-            class="h-12 w-12 animate-spin text-indigo-600"
+            class="h-12 w-12 animate-spin text-slate-400"
             fill="none"
             viewBox="0 0 24 24"
           >
@@ -70,7 +70,7 @@
             ></path>
           </svg>
         </div>
-        <p class="mt-4 text-center text-gray-600">Processing OAuth callback...</p>
+        <p class="mt-4 text-center text-slate-600">Processing OAuth callback...</p>
       </div>
     </div>
   </div>

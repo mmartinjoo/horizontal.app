@@ -7,15 +7,15 @@
         :class="[stepIdx !== steps.length - 1 ? 'pr-8 sm:pr-20' : '', 'relative flex flex-col items-center']"
       >
         <template v-if="step.status === 'complete'">
-          <div class="absolute inset-0 flex items-center top-4" aria-hidden="true">
-            <div class="h-0.5 w-full bg-indigo-600"></div>
+          <div class="absolute inset-0 flex items-center top-3" aria-hidden="true">
+            <div class="h-px w-full bg-slate-300"></div>
           </div>
           <a
             href="#"
-            class="relative flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 hover:bg-indigo-900"
+            class="relative flex h-6 w-6 items-center justify-center rounded-full border-2 border-slate-600 bg-white hover:bg-slate-50"
           >
             <svg
-              class="h-5 w-5 text-white"
+              class="h-3.5 w-3.5 text-slate-600"
               viewBox="0 0 20 20"
               fill="currentColor"
               aria-hidden="true"
@@ -28,40 +28,40 @@
             </svg>
             <span class="sr-only">{{ step.name }}</span>
           </a>
-          <span class="mt-2 text-xs font-medium text-indigo-600">{{ step.name }}</span>
+          <span class="mt-2 text-xs font-medium text-slate-600">{{ step.name }}</span>
         </template>
         <template v-else-if="step.status === 'current'">
-          <div class="absolute inset-0 flex items-center top-4" aria-hidden="true">
-            <div class="h-0.5 w-full bg-gray-200"></div>
+          <div class="absolute inset-0 flex items-center top-3" aria-hidden="true">
+            <div class="h-px w-full bg-slate-200"></div>
           </div>
           <a
             href="#"
-            class="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-indigo-600 bg-white"
+            class="relative flex h-6 w-6 items-center justify-center rounded-full border-2 border-slate-600 bg-white"
             aria-current="step"
           >
             <span
-              class="h-2.5 w-2.5 rounded-full bg-indigo-600"
+              class="h-2 w-2 rounded-full bg-slate-600"
               aria-hidden="true"
             ></span>
             <span class="sr-only">{{ step.name }}</span>
           </a>
-          <span class="mt-2 text-xs font-medium text-indigo-600">{{ step.name }}</span>
+          <span class="mt-2 text-xs font-medium text-slate-900">{{ step.name }}</span>
         </template>
         <template v-else>
-          <div class="absolute inset-0 flex items-center top-4" aria-hidden="true">
-            <div class="h-0.5 w-full bg-gray-200"></div>
+          <div class="absolute inset-0 flex items-center top-3" aria-hidden="true">
+            <div class="h-px w-full bg-slate-200"></div>
           </div>
           <a
             href="#"
-            class="group relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-gray-300 bg-white hover:border-gray-400"
+            class="group relative flex h-6 w-6 items-center justify-center rounded-full border-2 border-slate-300 bg-white hover:border-slate-400"
           >
             <span
-              class="h-2.5 w-2.5 rounded-full bg-transparent group-hover:bg-gray-300"
+              class="h-2 w-2 rounded-full bg-transparent group-hover:bg-slate-300"
               aria-hidden="true"
             ></span>
             <span class="sr-only">{{ step.name }}</span>
           </a>
-          <span class="mt-2 text-xs font-medium text-gray-500">{{ step.name }}</span>
+          <span class="mt-2 text-xs font-medium text-slate-500">{{ step.name }}</span>
         </template>
       </li>
     </ol>
