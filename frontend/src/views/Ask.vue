@@ -77,37 +77,31 @@ const formatAnswer = (text) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-white">
+  <div class="min-h-screen bg-white">
     <!-- Navigation Bar -->
-    <nav class="bg-white border-b border-gray-200 shadow-sm">
-      <div class="max-w-7xl mx-auto px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
+    <nav class="border-b border-slate-200">
+      <div class="max-w-4xl mx-auto px-4 lg:px-6">
+        <div class="flex justify-between items-center h-14">
           <div class="flex-shrink-0">
-            <a href="/" class="text-2xl font-bold text-black">Horizontal</a>
+            <a href="/" class="text-lg font-semibold text-slate-900">Horizontal</a>
           </div>
-          <div class="flex items-center space-x-4">
-            <div class="text-sm text-gray-500">Ask anything about your team's knowledge</div>
-            <button
-              @click="logout"
-              class="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
-            >
-              Logout
-            </button>
-          </div>
+          <button
+            @click="logout"
+            class="text-sm text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-5xl mx-auto px-6 lg:px-8 py-12">
+    <main class="max-w-3xl mx-auto px-4 lg:px-6 py-8">
       <!-- Search Section -->
-      <div class="mb-12">
-        <h1 class="text-4xl lg:text-5xl font-bold text-black mb-4 text-center">
-          Ask a <span class="bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">question</span>
+      <div class="mb-8">
+        <h1 class="text-2xl font-medium text-slate-900 mb-6 text-center">
+          Ask your knowledge base
         </h1>
-        <p class="text-lg text-gray-600 text-center mb-8">
-          Search across all your team's knowledge in one place
-        </p>
 
         <!-- Search Form -->
         <form @submit="handleSubmit" class="w-full">
@@ -116,85 +110,62 @@ const formatAnswer = (text) => {
               type="text"
               v-model="question"
               :disabled="isLoading"
-              placeholder="What was the root cause of the last production bug?"
-              class="w-full px-6 py-4 pr-32 bg-white border-2 border-gray-200 rounded-2xl text-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              placeholder="Ask anything"
+              class="w-full px-4 py-3 pr-24 bg-white border border-slate-200 rounded-full text-base focus:outline-none focus:border-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
             <button
               type="submit"
               :disabled="isLoading || !question.trim()"
-              class="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-2.5 rounded-xl font-semibold hover:from-purple-600 hover:to-purple-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-purple-500 disabled:hover:to-purple-600"
+              class="absolute right-2 top-1/2 -translate-y-1/2 bg-sky-600 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-sky-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-sky-600"
             >
-              {{ isLoading ? 'Searching...' : 'Ask' }}
+              {{ isLoading ? '...' : 'Ask' }}
             </button>
           </div>
         </form>
       </div>
 
       <!-- Error Message -->
-      <div v-if="error" class="mb-8 p-6 bg-red-50 border border-red-200 rounded-2xl">
-        <div class="flex items-start space-x-3">
-          <svg class="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <p class="text-red-800 font-medium">{{ error }}</p>
-        </div>
+      <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg">
+        <p class="text-red-700 text-sm">{{ error }}</p>
       </div>
 
       <!-- Loading State -->
-      <div v-if="isLoading" class="text-center py-12">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-        <p class="mt-4 text-gray-600">Searching through your knowledge base...</p>
+      <div v-if="isLoading" class="py-8">
+        <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-slate-200 border-t-slate-600"></div>
       </div>
 
       <!-- Results -->
-      <div v-if="answer && !isLoading" class="space-y-8">
+      <div v-if="answer && !isLoading" class="space-y-6">
         <!-- Answer Section -->
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div class="bg-gradient-to-r from-purple-50 to-blue-50 px-6 py-4 border-b border-gray-100">
-            <h2 class="text-xl font-bold text-gray-900 flex items-center space-x-2">
-              <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              <span>Answer</span>
-            </h2>
+        <div class="border border-slate-200 rounded-lg overflow-hidden">
+          <div class="px-5 py-3 border-b border-slate-200">
+            <h2 class="text-sm font-medium text-slate-700">Answer</h2>
           </div>
-          <div class="px-6 py-6">
-            <div class="prose max-w-none text-gray-800 leading-relaxed" v-html="formatAnswer(answer)"></div>
+          <div class="px-5 py-4">
+            <div class="prose prose-sm max-w-none text-slate-700 leading-relaxed" v-html="formatAnswer(answer)"></div>
           </div>
         </div>
 
         <!-- Relevant Documents Section -->
-        <div v-if="relevantDocuments.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div class="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-gray-100">
-            <h2 class="text-xl font-bold text-gray-900 flex items-center space-x-2">
-              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              <span>Relevant Documents ({{ relevantDocuments.length }})</span>
-            </h2>
+        <div v-if="relevantDocuments.length > 0" class="border border-slate-200 rounded-lg overflow-hidden">
+          <div class="px-5 py-3 border-b border-slate-200">
+            <h2 class="text-sm font-medium text-slate-700">Sources ({{ relevantDocuments.length }})</h2>
           </div>
-          <div class="px-6 py-6 space-y-4">
+          <div class="px-5 py-4 space-y-3">
             <div
               v-for="doc in relevantDocuments"
               :key="doc.id"
-              class="p-5 bg-gray-50 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all duration-200"
+              class="p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
             >
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <div class="flex items-center space-x-3 mb-2">
-                    <span class="text-2xl">{{ getSourceIcon(doc.source) }}</span>
-                    <h3 class="font-semibold text-gray-900 text-lg">{{ doc.title }}</h3>
-                  </div>
-                  <p v-if="doc.preview" class="text-gray-600 text-sm mb-3 line-clamp-2">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-medium text-slate-900 text-sm mb-1">{{ doc.title }}</h3>
+                  <p v-if="doc.preview" class="text-slate-600 text-xs mb-2 line-clamp-2">
                     {{ doc.preview }}
                   </p>
-                  <div class="flex items-center space-x-4 text-sm text-gray-500">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-white border border-gray-200">
-                      <span class="capitalize">{{ doc.source.replace('_', ' ') }}</span>
-                    </span>
-                    <span v-if="doc.source_type" class="inline-flex items-center px-3 py-1 rounded-full bg-white border border-gray-200">
-                      {{ doc.source_type }}
-                    </span>
+                  <div class="flex items-center gap-2 text-xs text-slate-500">
+                    <span class="capitalize">{{ doc.source.replace('_', ' ') }}</span>
+                    <span v-if="doc.source_type">· {{ doc.source_type }}</span>
                   </div>
                 </div>
                 <a
@@ -202,12 +173,9 @@ const formatAnswer = (text) => {
                   :href="doc.source_url"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="ml-4 flex-shrink-0 text-purple-600 hover:text-purple-700 font-medium text-sm flex items-center space-x-1 transition-colors"
+                  class="flex-shrink-0 text-slate-600 hover:text-slate-900 text-xs underline transition-colors"
                 >
-                  <span>View</span>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                  </svg>
+                  View
                 </a>
               </div>
             </div>
@@ -215,33 +183,20 @@ const formatAnswer = (text) => {
         </div>
       </div>
 
-      <!-- Empty State -->
-      <div v-if="!answer && !isLoading && !error" class="text-center py-16">
-        <div class="w-24 h-24 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full mx-auto mb-6 flex items-center justify-center">
-          <svg class="w-12 h-12 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-        </div>
-        <h3 class="text-2xl font-bold text-gray-900 mb-2">Ask anything</h3>
-        <p class="text-gray-600 max-w-md mx-auto">
-          Search across all your documents, issues, conversations, and code to find the information you need.
-        </p>
-      </div>
     </main>
   </div>
 </template>
 
 <style scoped>
-.bg-clip-text {
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.prose p {
+  margin-bottom: 0.75rem;
 }
 
 .prose p:last-child {

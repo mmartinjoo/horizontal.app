@@ -26,11 +26,11 @@
         need to connect at least one integration.
       </p>
 
-      <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-sky-50 border border-sky-200">
+          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
             <svg
-              class="h-5 w-5 text-sky-600"
+              class="h-5 w-5 text-slate-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -50,9 +50,9 @@
         </div>
 
         <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-emerald-50 border border-emerald-200">
+          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
             <svg
-              class="h-5 w-5 text-emerald-600"
+              class="h-5 w-5 text-slate-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -72,9 +72,9 @@
         </div>
 
         <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-amber-50 border border-amber-200">
+          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
             <svg
-              class="h-5 w-5 text-amber-600"
+              class="h-5 w-5 text-slate-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -90,6 +90,28 @@
           <h3 class="mt-4 font-semibold text-slate-900 text-center">File Storage</h3>
           <p class="mt-2 text-sm text-slate-600 text-center">
             Connect Google Drive and other file storage services
+          </p>
+        </div>
+
+        <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div class="flex h-10 w-10 mx-auto items-center justify-center rounded-lg bg-slate-100 border border-slate-200">
+            <svg
+              class="h-5 w-5 text-slate-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+              />
+            </svg>
+          </div>
+          <h3 class="mt-4 font-semibold text-slate-900 text-center">Code Repository</h3>
+          <p class="mt-2 text-sm text-slate-600 text-center">
+            Connect GitHub and other code repositories
           </p>
         </div>
       </div>
