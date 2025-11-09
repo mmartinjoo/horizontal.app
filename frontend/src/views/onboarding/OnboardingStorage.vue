@@ -51,9 +51,11 @@ import { useOnboarding } from '@/composables/useOnboarding'
 import { useAuth } from '@/composables/useAuth'
 import OnboardingLayout from './OnboardingLayout.vue'
 import IntegrationCard from '@/components/integrations/IntegrationCard.vue'
+import { useRouter } from 'vue-router'
 
 const { integrations, fetchIntegrations } = useOnboarding()
 const { getAuthHeaders } = useAuth()
+const router = useRouter()
 
 const loading = ref(true)
 const connectingProvider = ref(null)
@@ -92,7 +94,13 @@ const handleConnect = async (provider) => {
 }
 
 const handleConfigure = (provider) => {
-  console.log('Configure:', provider)
+  router.push({ 
+    name: 'onboarding-callback',
+    query: {
+      provider: provider,
+      step: 'storage',
+    },
+  })
 }
 
 const handleDisconnect = async (provider) => {

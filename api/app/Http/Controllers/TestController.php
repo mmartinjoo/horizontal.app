@@ -26,11 +26,10 @@ use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
-    public function index(Linear $linear)
+    public function index(Orchestrator $orchestrator, GraphDB $graphDB)
     {
-        // LinearProject::query()
-        //     ->where('linear_integration_id', 5)
-        //     ->delete();
+        $graphDB->query('MATCH (n) DETACH DELETE n');
+        $orchestrator->schedule();
     }
 
     public function token()
