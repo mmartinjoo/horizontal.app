@@ -54,7 +54,7 @@ class IndexingWorkflowController extends Controller
         return match ($name) {
             'index_slack' => 'Indexing Slack',
             'index_github' => 'Indexing GitHub',
-            'building_graph' => 'Building knowledge graph',
+            'build_graph' => 'Building knowledge graph',
             'build_related_nodes' => 'Enhancing knowledge graph',
             'build_communities' => 'Connecting related information',
             default => ucwords(str_replace('_', ' ', $name)),
