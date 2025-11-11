@@ -101,6 +101,9 @@ class Slack implements Communication
                     ->json();
 
                 if (!$response['ok']) {
+                    if ($response['error'] === 'not_in_channel') {
+                        break;
+                    }
                     throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
                 }
 
@@ -162,6 +165,9 @@ class Slack implements Communication
                     ->json();
 
                 if (!$response['ok']) {
+                    if ($response['error'] === 'not_in_channel') {
+                        break;
+                    }
                     throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
                 }
 
