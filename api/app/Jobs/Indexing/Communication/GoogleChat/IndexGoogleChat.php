@@ -4,12 +4,14 @@ namespace App\Jobs\Indexing\Communication\GoogleChat;
 
 use App\Jobs\Indexing\Communication\IndexChannel;
 use App\Jobs\Indexing\IndexingStepJob;
+use App\Models\GoogleChatChannel;
 use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\Communication\DataTransferObjects\Channel;
 use App\Services\Integration\Communication\GoogleChat\GoogleChat;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 
 class IndexGoogleChat extends IndexingStepJob implements ShouldQueue
@@ -30,7 +32,8 @@ class IndexGoogleChat extends IndexingStepJob implements ShouldQueue
             'job_id' => $this->job->payload()['uuid'],
         ]);
         
-        $channels = $googleChat->channels();
+        $allChannels = $googleChat->channels();
+        $channels = $this->getIndexableResources($allChannels);
 
         /** @var Channel $channel */
         foreach ($channels as $channel) {
@@ -47,5 +50,30 @@ class IndexGoogleChat extends IndexingStepJob implements ShouldQueue
             );
             dispatch($job);
         }
+    }
+
+    /**
+     * @return LazyCollection<GoogleChatChannel>
+     */
+    public function getAuthorizedResources(): LazyCollection
+    {
+        return GoogleChatChannel::all()->lazy();
+    }
+
+    /**
+     * @param LazyCollection<Channel> $resources
+     * @return LazyCollection<Channel>
+     */
+    public function getIndexableResources(LazyCollection $resources): LazyCollection
+    {
+        $authorizedResources = $this->getAuthorizedResources();
+        return LazyCollection::make(function () use ($resources, $authorizedResources) {
+            /** @var Channel $resource */
+            foreach ($resources as $resource) {
+                if ($authorizedResources->contains('external_id', $resource->externalId)) {
+                    yield $resource;
+                }
+            }
+        });
     }
 }
