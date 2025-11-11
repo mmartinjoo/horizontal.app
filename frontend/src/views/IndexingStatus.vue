@@ -99,6 +99,54 @@
           </div>
         </div>
 
+        <!-- Completion Banner -->
+        <div v-if="workflowStatus.status === 'completed'" class="rounded-lg border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex-shrink-0">
+                <svg
+                  class="h-8 w-8 text-emerald-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-emerald-900">Indexing Complete!</h3>
+                <p class="mt-1 text-sm text-emerald-700">
+                  Your knowledge base is ready. You can now start searching across all your connected tools.
+                </p>
+              </div>
+            </div>
+            <button
+              @click="$router.push({ name: 'ask' })"
+              class="ml-4 inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+            >
+              Start Searching
+              <svg
+                class="ml-2 h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 7l5 5m0 0l-5 5m5-5H6"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
         <!-- Steps -->
         <div class="space-y-4">
           <h3 class="text-sm font-medium text-slate-700">Progress</h3>

@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Indexing\WorkflowStatus;
 use App\Models\IndexingWorkflow;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class IndexingWorkflowController extends Controller
 {
-    public function status(): JsonResponse
+    public function status()
     {
         $workflow = IndexingWorkflow::query()
             ->latest('id')
             ->first();
 
-        if (! $workflow) {
+        if (!$workflow) {
             return response()->json([
                 'message' => 'No indexing workflow found',
             ], 404);
@@ -47,6 +47,29 @@ class IndexingWorkflowController extends Controller
             'status' => $workflow->status,
             'steps' => $steps,
         ]);
+    }
+
+    public function completed()
+    {
+        $workflow = IndexingWorkflow::query()
+            ->latest('id')
+            ->first();
+
+        if (!$workflow) {
+            return response()->json([
+                'result' => false,
+            ], 200);
+        }
+
+        if (in_array($workflow->status, [WorkflowStatus::Completed->value, WorkflowStatus::CompletedWithErrors->value])) {
+            return response()->json([
+                'result' => true,
+            ], 200);
+        }
+
+        return response()->json([
+            'result' => false,
+        ], 200);
     }
 
     private function getDisplayName(string $name): string
