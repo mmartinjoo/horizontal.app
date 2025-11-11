@@ -6,10 +6,12 @@ use App\Jobs\Indexing\IndexingStepJob;
 use App\Jobs\Indexing\TaskManagement\IndexProject;
 use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepBucket;
+use App\Models\JiraProject;
 use App\Services\Integration\TaskManagement\DataTransferObjects\Project;
 use App\Services\Integration\TaskManagement\Jira\Jira;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 
 class IndexJira extends IndexingStepJob implements ShouldQueue
@@ -31,7 +33,8 @@ class IndexJira extends IndexingStepJob implements ShouldQueue
             'job_id' => $this->job->payload()['uuid'],
         ]);
 
-        $projects = $jira->projects();
+        $allProjects = $jira->projects();
+        $projects = $this->getIndexableResources($allProjects);
 
         /** @var Project $project */
         foreach ($projects as $project) {
@@ -48,5 +51,30 @@ class IndexJira extends IndexingStepJob implements ShouldQueue
             );
             dispatch($job);
         }
+    }
+
+    /**
+     * @return LazyCollection<JiraProject>
+     */
+    public function getAuthorizedResources(): LazyCollection
+    {
+        return JiraProject::all()->lazy();
+    }
+
+    /**
+     * @param LazyCollection<Project> $resources
+     * @return LazyCollection<Project>
+     */
+    public function getIndexableResources(LazyCollection $resources): LazyCollection
+    {
+        $authorizedResources = $this->getAuthorizedResources();
+        return LazyCollection::make(function () use ($resources, $authorizedResources) {
+            /** @var Project $resource */
+            foreach ($resources as $resource) {
+                if ($authorizedResources->contains('jira_id', $resource->id)) {
+                    yield $resource;
+                }
+            }
+        });
     }
 }

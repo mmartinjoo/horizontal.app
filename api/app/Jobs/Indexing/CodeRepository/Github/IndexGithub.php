@@ -4,6 +4,7 @@ namespace App\Jobs\Indexing\CodeRepository\GitHub;
 
 use App\Jobs\Indexing\CodeRepository\IndexRepository;
 use App\Jobs\Indexing\IndexingStepJob;
+use App\Models\GithubRepository;
 use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
@@ -33,7 +34,8 @@ class IndexGitHub extends IndexingStepJob implements ShouldQueue
         ]);
 
         /** @var LazyCollection<Repository> $repositories */
-        $repositories = $github->repositories();
+        $allRepositories = $github->repositories();
+        $repositories = $this->getIndexableResources($allRepositories);
 
         /** @var Repository $repo */
         foreach ($repositories as $repo) {
@@ -49,5 +51,30 @@ class IndexGitHub extends IndexingStepJob implements ShouldQueue
             );
             dispatch($job);
         }
+    }
+
+    /**
+     * @return LazyCollection<GithubRepository>
+     */
+    public function getAuthorizedResources(): LazyCollection
+    {
+        return GithubRepository::all()->lazy();
+    }
+
+    /**
+     * @param LazyCollection<Repository> $resources
+     * @return LazyCollection<Repository>
+     */
+    public function getIndexableResources(LazyCollection $resources): LazyCollection
+    {
+        $authorizedResources = $this->getAuthorizedResources();
+        return LazyCollection::make(function () use ($resources, $authorizedResources) {
+            /** @var Repository $resource */
+            foreach ($resources as $resource) {
+                if ($authorizedResources->contains('external_id', $resource->externalId)) {
+                    yield $resource;
+                }
+            }
+        });
     }
 }

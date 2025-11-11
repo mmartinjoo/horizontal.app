@@ -2,17 +2,20 @@
 
 namespace App\Jobs\Indexing\Storage\GoogleDrive;
 
+use App\Jobs\Indexing\IndexingIntegration;
 use App\Jobs\Indexing\IndexingStepJob;
 use App\Jobs\Indexing\Storage\IndexFolder;
+use App\Models\GoogleDriveFolder;
 use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\Storage\DataTransferObjects\Folder;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 
-class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue
+class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue, IndexingIntegration
 {
     use Queueable;
 
@@ -31,7 +34,8 @@ class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue
             'job_id' => $this->job->payload()['uuid'],
         ]);
 
-        $folders = $drive->folders();      
+        $allFolders = $drive->folders();
+        $folders = $this->getIndexableResources($allFolders);
 
         /** @var Folder $folder */
         foreach ($folders as $folder) {
@@ -47,5 +51,30 @@ class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue
             );
             dispatch($job);
         }
+    }
+
+    /**
+     * @return LazyCollection<GoogleDriveFolder>
+     */
+    public function getAuthorizedResources(): LazyCollection
+    {
+        return GoogleDriveFolder::all()->lazy();
+    }
+
+    /**
+     * @param LazyCollection<Folder> $resources
+     * @return LazyCollection<Folder>
+     */
+    public function getIndexableResources(LazyCollection $resources): LazyCollection
+    {
+        $authorizedResources = $this->getAuthorizedResources();
+        return LazyCollection::make(function () use ($resources, $authorizedResources) {
+            /** @var Folder $resource */
+            foreach ($resources as $resource) {
+                if ($authorizedResources->contains('external_id', $resource->id)) {
+                    yield $resource;
+                }
+            }
+        });
     }
 }
