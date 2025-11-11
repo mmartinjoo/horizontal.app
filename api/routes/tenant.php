@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\GithubIntegrationController;
 use App\Http\Controllers\GoogleChatIntegrationController;
 use App\Http\Controllers\GoogleDriveIntegrationController;
+use App\Http\Controllers\IndexingWorkflowController;
 use App\Http\Controllers\IntegrationController;
 use App\Http\Controllers\JiraIntegrationController;
 use App\Http\Controllers\LinearIntegrationController;
@@ -39,6 +40,7 @@ Route::middleware([
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/questions/ask', [QuestionController::class, 'ask']);
         Route::get('/integrations', [IntegrationController::class, 'index']);
+        Route::get('/indexing-workflow/status', [IndexingWorkflowController::class, 'status']);
     });
 
     Route::group(['prefix' => 'orchestrator'], function () {
