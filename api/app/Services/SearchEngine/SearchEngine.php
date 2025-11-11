@@ -106,6 +106,7 @@ class SearchEngine
 
             In the document context you are given a title and a text for each document.
             When you use a text chunk from a document, keep track of the document title, and use in the response.
+            DO NOT include the document's ID in your response.
 
             ALWAYS INCLUDE a listacle in your anwser when it fits the content.
             Organize your response into paragprahs and subtitle when it makes sense.
