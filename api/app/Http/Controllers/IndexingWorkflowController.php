@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\Indexing\WorkflowStatus;
 use App\Models\IndexingWorkflow;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class IndexingWorkflowController extends Controller
 {
@@ -74,9 +75,13 @@ class IndexingWorkflowController extends Controller
 
     private function getDisplayName(string $name): string
     {
+        if (Str::startsWith($name, 'index_')) {
+            $vendor = substr($name, 6);
+            $vendor = ucwords(str_replace('_', ' ', $vendor));
+            return "Indexing " . ucfirst($vendor);
+        }
+
         return match ($name) {
-            'index_slack' => 'Indexing Slack',
-            'index_github' => 'Indexing GitHub',
             'build_graph' => 'Building knowledge graph',
             'build_related_nodes' => 'Enhancing knowledge graph',
             'build_communities' => 'Connecting related information',
