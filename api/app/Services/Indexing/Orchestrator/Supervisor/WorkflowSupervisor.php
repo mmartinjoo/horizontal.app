@@ -251,6 +251,17 @@ class WorkflowSupervisor
 
         // finished
         if ($bucket->overall_items === $bucket->processed_items) {
+            // bucket has already been marked, return early
+            // bug: https://linear.app/horizontal/issue/HOR-352/indexing-bucket-finished-at-times-are-overwritten
+            if (in_array($bucket->status, WorkflowStatus::finiteStates())) {
+                return new SupervisorResult(
+                    status: $bucket->status,
+                    isExpectedStatus: true,
+                    finiteState: true,
+                    nextAction: 'terminate',
+                );
+            }
+
             $bucket->update([
                 'finished_at' => now(),
             ]);
