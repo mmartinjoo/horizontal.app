@@ -26,12 +26,6 @@ use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
-    public function index(Orchestrator $orchestrator, GraphDB $graphDB)
-    {
-        $graphDB->query('MATCH (n) DETACH DELETE n');
-        $orchestrator->schedule();
-    }
-
     public function token()
     {
         $user = \App\Models\User::updateOrCreate(

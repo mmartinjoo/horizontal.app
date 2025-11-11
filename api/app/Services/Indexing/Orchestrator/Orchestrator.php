@@ -17,14 +17,20 @@ use App\Jobs\Indexing\TaskManagement\Jira\IndexJira;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
+use App\Services\GraphDB\GraphDB;
 use App\Services\Indexing\Orchestrator\Supervisor\StuckBucketSupervisor;
 use App\Services\Indexing\Orchestrator\Supervisor\WorkflowSupervisor;
 use Exception;
 
 class Orchestrator
 {
-    public function schedule()
+    public function __construct(private GraphDB $graphDB)
     {
+        $this->graphDB->query('MATCH (n) DETACH DELETE n');
+    }
+
+    public function schedule()
+    {        
         $workflow = IndexingWorkflow::create([
             'started_at' => now(),
             'status' => WorkflowStatus::Starting->value,
