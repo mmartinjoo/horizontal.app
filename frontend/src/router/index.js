@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import { useIndexingStatus } from '../composables/useIndexingStatus'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,7 +13,8 @@ const router = createRouter({
     {
       path: '/ask',
       name: 'ask',
-      component: () => import('../views/Ask.vue')
+      component: () => import('../views/Ask.vue'),
+      meta: { requiresAuth: true, requiresIndexingComplete: true }
     },
     {
       path: '/auth',
@@ -23,6 +25,12 @@ const router = createRouter({
       path: '/after-login',
       name: 'after-login',
       component: () => import('../views/AfterLogin.vue')
+    },
+    {
+      path: '/indexing-status',
+      name: 'indexing-status',
+      component: () => import('../views/IndexingStatus.vue'),
+      meta: { requiresAuth: true }
     },
     // Onboarding routes
     {
@@ -77,6 +85,7 @@ const router = createRouter({
 // Navigation guard to protect authenticated routes and check onboarding
 router.beforeEach(async (to, from, next) => {
   const { isAuthenticated } = useAuth()
+  const { checkIndexingComplete } = useIndexingStatus()
 
   // Check if route requires authentication
   if (to.meta.requiresAuth && !isAuthenticated.value) {
@@ -87,6 +96,14 @@ router.beforeEach(async (to, from, next) => {
   const protectedRoutes = ['ask']
   if (protectedRoutes.includes(to.name) && !isAuthenticated.value) {
     return next({ name: 'auth' })
+  }
+
+  // Check if route requires indexing to be complete
+  if (to.meta.requiresIndexingComplete && isAuthenticated.value) {
+    const isComplete = await checkIndexingComplete()
+    if (!isComplete) {
+      return next({ name: 'indexing-status' })
+    }
   }
 
   // TODO: Add onboarding check here
