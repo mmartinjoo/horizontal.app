@@ -24,6 +24,12 @@ const router = createRouter({
       name: 'after-login',
       component: () => import('../views/AfterLogin.vue')
     },
+    {
+      path: '/indexing-status',
+      name: 'indexing-status',
+      component: () => import('../views/IndexingStatus.vue'),
+      meta: { requiresAuth: true }
+    },
     // Onboarding routes
     {
       path: '/onboarding',
