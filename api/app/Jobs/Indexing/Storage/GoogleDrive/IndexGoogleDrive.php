@@ -62,9 +62,8 @@ class IndexGoogleDrive extends IndexingStepJob implements ShouldQueue, IndexingI
     }
 
     /**
-     * @param LazyCollection<GoogleDriveFolder> $resources
-     * @param LazyCollection<GoogleDriveFolder> $authorizedResources
-     * @return LazyCollection<GoogleDriveFolder>
+     * @param LazyCollection<Folder> $resources
+     * @return LazyCollection<Folder>
      */
     public function getIndexableResources(LazyCollection $resources): LazyCollection
     {
