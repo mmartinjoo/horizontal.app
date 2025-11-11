@@ -53,6 +53,9 @@ class IndexSlack extends IndexingStepJob implements ShouldQueue, IndexingIntegra
         }
     }
 
+    /**
+     * @return LazyCollection<SlackChannel>
+     */
     public function getAuthorizedResources(): LazyCollection
     {
         return SlackChannel::all()->lazy();
@@ -60,7 +63,6 @@ class IndexSlack extends IndexingStepJob implements ShouldQueue, IndexingIntegra
 
     /**
      * @param LazyCollection<Channel> $resources
-     * @param LazyCollection<Channel> $authorizedResources
      * @return LazyCollection<Channel>
      */
     public function getIndexableResources(LazyCollection $resources): LazyCollection
