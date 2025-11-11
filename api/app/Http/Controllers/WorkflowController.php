@@ -5,14 +5,31 @@ namespace App\Http\Controllers;
 use App\Enums\Indexing\WorkflowStatus;
 use App\Models\DocumentChunk;
 use App\Models\DocumentComment;
+use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Models\IndexingWorkflowStepItem;
+use App\Services\Indexing\Orchestrator\Orchestrator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class WorkflowController
 {
+    public function start(Orchestrator $orchestrator)
+    {
+        $processingCount = IndexingWorkflow::query()
+            ->whereNotIn('status', WorkflowStatus::finiteStates())
+            ->count();
+
+        if ($processingCount !== 0) {
+            return response()->json([
+                'message' => 'A workflow is still processing',
+            ], Response::HTTP_CONFLICT);
+        }
+
+        $orchestrator->schedule();
+    }
+
     public function createBucket(Request $request)
     {
         $request->validate([

@@ -42,6 +42,7 @@ Route::middleware([
         Route::get('/integrations', [IntegrationController::class, 'index']);
         Route::get('/indexing-workflow/status', [IndexingWorkflowController::class, 'status']);
         Route::get('/indexing-workflow/completed', [IndexingWorkflowController::class, 'completed']);
+        Route::post('/workflows/start', [WorkflowController::class, 'start']);
     });
 
     Route::group(['prefix' => 'orchestrator'], function () {

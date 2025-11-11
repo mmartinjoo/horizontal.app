@@ -284,6 +284,27 @@
             <strong class="text-slate-900">Live updates:</strong>&nbsp;This page refreshes automatically every 5 seconds while indexing is in progress.
           </p>
         </div>
+        <div v-else class="mt-10">
+          <button
+            @click="goToApp"
+            class="inline-flex items-center rounded-md bg-sky-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+          >
+            Go to Horizontal
+            <svg
+              class="ml-2 h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 7l5 5m0 0l-5 5m5-5H6"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -291,14 +312,20 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 
+const router = useRouter()
 const { getAuthHeaders } = useAuth()
 
 const workflowStatus = ref(null)
 const loading = ref(true)
 const error = ref(null)
 let refreshInterval = null
+
+const goToApp = () => {
+  router.push('/ask')
+}
 
 // Check if workflow is in progress
 const isWorkflowInProgress = computed(() => {
@@ -329,8 +356,21 @@ const fetchStatus = async () => {
     }
 
     workflowStatus.value = await response.json()
+
+    try {
+      const completedResponse = await fetch('/api/indexing-workflow/completed', {
+        headers: getAuthHeaders()
+      })
+      const data = await completedResponse.json()
+      if (data['result'] == true) {
+        goToApp();
+      }
+    } catch (err) {
+      console.log(err)
+      throw err
+    }
   } catch (err) {
-    error.value = err.message
+    error.value = 'Something went wrong'
   } finally {
     loading.value = false
   }
