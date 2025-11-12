@@ -5,6 +5,8 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 // Form fields
+const adminUserName = ref('')
+const adminUserEmail = ref('')
 const companyName = ref('')
 const subdomain = ref('')
 const teamSize = ref('')
@@ -55,14 +57,12 @@ const countries = [
 
 // Check if we should show the native content question
 const shouldShowNativeContentQuestion = computed(() => {
-  return country.value && country.value !== 'US' && country.value !== 'GB'
+  return country.value && country.value !== 'US' && country.value !== 'GB' && country.value !== 'CA'
 })
 
 // Auto-generate subdomain from company name
 const handleCompanyNameInput = () => {
-  if (!subdomain.value || subdomain.value === generateSubdomain(companyName.value.slice(0, -1))) {
-    subdomain.value = generateSubdomain(companyName.value)
-  }
+  subdomain.value = generateSubdomain(companyName.value)
 }
 
 const generateSubdomain = (name) => {
@@ -82,6 +82,23 @@ const isSubdomainValid = computed(() => {
 // Form submission
 const handleSubmit = async () => {
   error.value = ''
+
+  if (!adminUserName.value.trim()) {
+    error.value = 'Please enter your name'
+    return
+  }
+
+  if (!adminUserEmail.value.trim()) {
+    error.value = 'Please enter your email'
+    return
+  }
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(adminUserEmail.value)) {
+    error.value = 'Please enter a valid email address'
+    return
+  }
 
   if (!companyName.value.trim()) {
     error.value = 'Please enter your company name'
@@ -116,22 +133,41 @@ const handleSubmit = async () => {
   isLoading.value = true
 
   try {
-    // TODO: Make API call to create tenant
-    console.log('Creating tenant...', {
-      companyName: companyName.value,
-      subdomain: subdomain.value,
-      teamSize: teamSize.value,
-      country: country.value,
-      hasNativeContent: hasNativeContent.value
-    })
+    const response = await fetch(
+      '/api/tenants',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          admin_user_name: adminUserName.value,
+          admin_user_email: adminUserEmail.value,
+          company_name: companyName.value,
+          subdomain: subdomain.value,
+          team_size: teamSize.value,
+          country: country.value,
+          has_native_content: hasNativeContent.value
+        })
+      }    
+    )
+
+    if (response.status !== 201) {
+      error.value = 'Something went wrong while creating your instance. Please contact us at hello@horizontal.app'
+      return
+    }
 
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    // await new Promise(resolve => setTimeout(resolve, 3000))
 
-    // Redirect to tenant app
-    // window.location.href = `https://${subdomain.value}.horizontal.app`
+    if (window.location.href.includes('horizontal.app')) {
+      window.location.href = `https://${subdomain.value}.horizontal.app/auth`  
+    } else {
+      window.location.href = `http://${subdomain.value}.localhost:9996/auth`  
+    }
   } catch (err) {
-    error.value = err.message || 'Something went wrong. Please try again.'
+    error.value = 'Something went wrong while creating your instance. Please contact us at hello@horizontal.app'
   } finally {
     isLoading.value = false
   }
@@ -154,6 +190,38 @@ const handleSubmit = async () => {
       <!-- Form Card -->
       <div class="bg-white rounded-lg border border-slate-200 shadow-sm p-8">
         <form @submit.prevent="handleSubmit" class="space-y-6">
+          <!-- Your Name -->
+          <div>
+            <label for="admin-name" class="block text-sm font-medium text-slate-700 mb-2">
+              Your name
+            </label>
+            <input
+              id="admin-name"
+              v-model="adminUserName"
+              type="text"
+              required
+              placeholder="John Doe"
+              class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors"
+              :disabled="isLoading"
+            />
+          </div>
+
+          <!-- Your Email -->
+          <div>
+            <label for="admin-email" class="block text-sm font-medium text-slate-700 mb-2">
+              Your email
+            </label>
+            <input
+              id="admin-email"
+              v-model="adminUserEmail"
+              type="email"
+              required
+              placeholder="john@acme.com"
+              class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors"
+              :disabled="isLoading"
+            />
+          </div>
+
           <!-- Company Name -->
           <div>
             <label for="company-name" class="block text-sm font-medium text-slate-700 mb-2">
@@ -204,18 +272,14 @@ const handleSubmit = async () => {
             <label for="team-size" class="block text-sm font-medium text-slate-700 mb-2">
               Team Size
             </label>
-            <select
+            <input
               id="team-size"
               v-model="teamSize"
               required
+              type="number"
               class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors"
               :disabled="isLoading"
-            >
-              <option value="" disabled>Select team size</option>
-              <option v-for="size in teamSizes" :key="size.value" :value="size.value">
-                {{ size.label }}
-              </option>
-            </select>
+            >            
           </div>
 
           <!-- Country -->

@@ -55,6 +55,24 @@ class OAuthController extends Controller
                 'error' => $ex->getMessage(),
             ], 401);
         }
+        
+        $email = $socialiteUser->getEmail();
+        $admin = User::query()
+            ->where('email', $email)
+            ->where('role', 'admin')
+            ->first();
+
+        if ($admin) {
+            $admin->update([
+                'provider' => $provider,
+                'provider_id' => $socialiteUser->getId(),
+                'provider_token' => $socialiteUser->token,
+            ]);
+
+            $token = $admin->createToken('oauth-token')->plainTextToken;
+            $url = Url::createAfterLoginFrontendUrl(tenant(), $token);
+            return redirect()->away($url);
+        }
 
         $invitationToken = null;
         if ($request->has('state')) {
@@ -117,21 +135,8 @@ class OAuthController extends Controller
         }
 
         $token = $user->createToken('oauth-token')->plainTextToken;
-
-        if (App::isLocal()) {
-            $tenant = tenant();
-            $domain = $tenant->domains->first();
-            $url = 'http://'.$domain->domain.':9996/after-login?token='.$token;
-
-            // this is needed because the GitHub app cannot have 'localhost' in the callback URL
-            // so we use a local tunnel (see Makefile)
-            // at this point the app is at a URL like https://tenant2-horizontal.loca.lt/
-            // redirecting to a fronted route needs `away`
-            return redirect()->away($url);
-        } else {
-            // in prod everything happens at `tenant.horizontal.app`
-            return redirect('/after-login?token='.$token);
-        }
+        $url = Url::createAfterLoginFrontendUrl(tenant(), $token);
+        return redirect()->away($url);
     }
 
     private function validateProvider(string $provider): void
