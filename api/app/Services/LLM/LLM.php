@@ -18,7 +18,10 @@ abstract class LLM
         $sanitizedText = Str::trim($message);
         if (Str::contains($sanitizedText, '```json')) {
             $sanitizedText = substr($sanitizedText, strpos($sanitizedText, '```json') + 7);
+        } else if (Str::startsWith($sanitizedText, '```')) {
+            $sanitizedText = substr($sanitizedText, strpos($sanitizedText, '```') + 3);
         }
+        
         if (Str::contains($sanitizedText, '```')) {
             $sanitizedText = substr($sanitizedText, 0, strpos($sanitizedText, '```'));
         }
