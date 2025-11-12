@@ -134,9 +134,9 @@ class SearchEngine
             ...ALWAYS
         ");
 
-        $answerData = json_decode($answer, true);
+        $answerData = json_decode($answer, true);        
         if (!$answerData) {
-            throw new Exception('Unable to answer your question');
+            throw new Exception('Unable to answer your question. Answer: ' . $answerData);
         }
 
         $documents = collect();

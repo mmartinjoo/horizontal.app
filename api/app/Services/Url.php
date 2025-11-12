@@ -5,12 +5,14 @@ namespace App\Services;
 use App\Models\Tenant;
 use Exception;
 use Illuminate\Support\Facades\App;
+use Illuminate\Http\Request;
+use Stancl\Tenancy\Database\Models\Domain;
 
 class Url
 {
     public static function createOnboardingCallbackFrontendUrl(Tenant $tenant, string $provider, string $step): string
-    {
-        $domain = $tenant->domains()->first();
+    {        
+        $domain = self::getDomain($tenant);
         if (App::isLocal()) {
             return "http://{$domain->domain}:9996/onboarding/callback?provider=$provider&step=$step";
         } else {
@@ -20,7 +22,7 @@ class Url
 
     public static function createOnboardingFrontendUrl(Tenant $tenant, string $step, string $provider, string $errorMessage): string
     {
-        $domain = $tenant->domains()->first();
+        $domain = self::getDomain($tenant);
         if (App::isLocal()) {
             return "http://{$domain->domain}:9996/onboarding/{$step}?provider=$provider&error=$errorMessage";
         } else {
@@ -28,9 +30,22 @@ class Url
         }
     }
 
+    public static function createTenantOAuthLoginCallbackUrl(Tenant $tenant, string $provider, Request $request): string
+    {
+        $domain = self::getDomain($tenant);
+        if (App::isLocal()) {
+            $url = "http://{$domain->domain}:9996/api/auth/{$provider}/callback";
+        } else {
+            $url = "https://{$domain->domain}/api/auth/{$provider}/callback";
+        }
+
+        $url .= '?' . http_build_query($request->query());
+        return $url;
+    }
+
     public static function createTenantIntegrationCallbackUrl(Tenant $tenant, string $provider): string
     {
-        $domain = $tenant->domains()->first();
+        $domain = self::getDomain($tenant);
         if (App::isLocal()) {
             return "http://{$domain->domain}:9996/api/integrations/{$provider}/oauth/callback";
         } else {
@@ -38,12 +53,32 @@ class Url
         }
     }
 
-    public static function createTenantIntegrationCallbackUrlWithCode(Tenant $tenant, string $provider, string $code): string
+    public static function createTenantIntegrationCallbackUrlWithQuery(Tenant $tenant, string $provider, Request $request): string
     {
         $url = self::createTenantIntegrationCallbackUrl($tenant, $provider);
-        return sprintf("%s?code=%s", $url, $code);
+        $url .= '?' . http_build_query($request->query());
+        return $url;
     }
 
+    public static function createInvitationAcceptanceUrl(Tenant $tenant, string $token): string
+    {
+        $domain = self::getDomain($tenant);
+        if (App::isLocal()) {
+            return "http://{$domain->domain}:9996/accept-invitation?token={$token}";
+        } else {
+            return "https://{$domain->domain}/accept-invitation?token={$token}";
+        }
+    }
+
+    public static function createAfterLoginFrontendUrl(Tenant $tenant, string $token): string
+    {
+        $domain = self::getDomain($tenant);
+        if (App::isLocal()) {            
+            return "http://{$domain->domain}:9996/after-login?token=$token";            
+        } else {
+            return "https://{$domain->domain}/after-login?token=$token";
+        }
+    }
 
     /**
      * `state` is an OAUth GET param use in integrations and OAuth login
@@ -60,5 +95,14 @@ class Url
         }
 
         throw new Exception("$key not found");
+    }
+
+    private static function getDomain(Tenant $tenant): Domain
+    {
+        if (App::isLocal()) {
+            return $tenant->domains()->where('domain', 'LIKE', '%localhost%')->first();
+        } else {
+            return $tenant->domains()->first();
+        }
     }
 }

@@ -40,6 +40,40 @@ export function useAuth() {
     window.location.href = '/auth'
   }
 
+  const redirectToOAuth = async (provider, invitationToken = null) => {
+    try {
+      const url = new URL(`/api/auth/${provider}/redirect`, window.location.origin)
+
+      if (invitationToken) {
+        url.searchParams.append('invitation_token', invitationToken)
+      }
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to initiate ${provider} login`)
+      }
+
+      const data = await response.json()
+
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        throw new Error('No redirect URL received from server')
+      }
+    } catch (err) {
+      console.error('OAuth redirect error:', err)
+      throw err
+    }
+  }
+
   return {
     isAuthenticated,
     getToken,
@@ -47,5 +81,6 @@ export function useAuth() {
     clearToken,
     getAuthHeaders,
     logout,
+    redirectToOAuth,
   }
 }

@@ -85,12 +85,20 @@ const formatAnswer = (text) => {
           <div class="flex-shrink-0">
             <a href="/" class="text-lg font-semibold text-slate-900">Horizontal</a>
           </div>
-          <button
-            @click="logout"
-            class="text-sm text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            Logout
-          </button>
+          <div class="flex items-center space-x-6">
+            <router-link
+              to="/invitations"
+              class="text-sm text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              Invitations
+            </router-link>
+            <button
+              @click="logout"
+              class="text-sm text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     </nav>

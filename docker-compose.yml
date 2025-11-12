@@ -55,6 +55,16 @@ services:
     depends_on:
       - api
 
+  central-app:
+    build:
+      context: ./central-app
+      dockerfile: Dockerfile
+    volumes:
+      - ./central-app:/app
+      - /app/node_modules
+    depends_on:
+      - api
+
   worker-indexing:
     build:
       context: ./api

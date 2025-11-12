@@ -9,27 +9,36 @@ class Fireworks extends LLM implements Embedder
 {
     use HasEmbeddingCache;
 
-    public function completion(string $prompt, $maxTokens = 1024): string
+    public function completion(string $prompt, $maxTokens = 4999): string
     {
         $res = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey,
         ])
             ->timeout(300)
-            ->post('https://api.fireworks.ai/inference/v1/completions', [
+            ->post('https://api.fireworks.ai/inference/v1/chat/completions', [
                     'model' => $this->model,
-                    'prompt' => $prompt,
                     'max_tokens' => $maxTokens,
-                    'temperature' => 0.4,
+                    "top_p" => 1,
+                    "top_k" => 40,
+                    "presence_penalty" => 0,
+                    "frequency_penalty" => 0,
+                    "temperature" => 0.1,
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => $prompt,
+                        ],
+                    ],
                 ],
             )
             ->throw()
             ->json();
 
-        if (empty($res['choices'][0]['text'])) {
+        if (empty($res['choices'][0]['message']['content'])) {
             throw new Exception('Fireworks: No completion found: '.json_encode($res));
         }
 
-        return $this->sanitizeJSON($res['choices'][0]['text']);
+        return $this->sanitizeJSON($res['choices'][0]['message']['content']);
     }
 
     protected function createEmbeddingWithoutCache(string $text): array

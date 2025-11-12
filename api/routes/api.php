@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 foreach (config('tenancy.central_domains') as $domain) {
     Route::domain($domain)->group(function () {
+        Route::post('/tenants', [TenantController::class, 'store']);
         Route::get('/tenants/{tenant}/', [TenantController::class, 'show']);
         Route::get('/health', function () {
             return response()->json(['status' => 'ok']);

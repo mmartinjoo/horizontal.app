@@ -22,6 +22,11 @@ const router = createRouter({
       component: () => import('../views/Auth.vue')
     },
     {
+      path: '/accept-invitation',
+      name: 'accept-invitation',
+      component: () => import('../views/AcceptInvitation.vue')
+    },
+    {
       path: '/after-login',
       name: 'after-login',
       component: () => import('../views/AfterLogin.vue')
@@ -30,6 +35,12 @@ const router = createRouter({
       path: '/indexing-status',
       name: 'indexing-status',
       component: () => import('../views/IndexingStatus.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/invitations',
+      name: 'invitations',
+      component: () => import('../views/Invitations.vue'),
       meta: { requiresAuth: true }
     },
     // Onboarding routes
