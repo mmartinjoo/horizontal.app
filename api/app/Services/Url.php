@@ -41,9 +41,19 @@ class Url
     public static function createTenantIntegrationCallbackUrlWithCode(Tenant $tenant, string $provider, string $code): string
     {
         $url = self::createTenantIntegrationCallbackUrl($tenant, $provider);
-        return sprintf("%s?code=%s", $url, $code);
+
+        return sprintf('%s?code=%s', $url, $code);
     }
 
+    public static function createInvitationAcceptanceUrl(Tenant $tenant, string $token): string
+    {
+        $domain = $tenant->domains()->first();
+        if (App::isLocal()) {
+            return "http://{$domain->domain}:9996/accept-invitation?token={$token}";
+        } else {
+            return "https://{$domain->domain}/accept-invitation?token={$token}";
+        }
+    }
 
     /**
      * `state` is an OAUth GET param use in integrations and OAuth login

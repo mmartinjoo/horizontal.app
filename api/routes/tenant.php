@@ -7,6 +7,7 @@ use App\Http\Controllers\GoogleChatIntegrationController;
 use App\Http\Controllers\GoogleDriveIntegrationController;
 use App\Http\Controllers\IndexingWorkflowController;
 use App\Http\Controllers\IntegrationController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\JiraIntegrationController;
 use App\Http\Controllers\LinearIntegrationController;
 use App\Http\Controllers\OAuthController;
@@ -43,7 +44,10 @@ Route::middleware([
         Route::get('/indexing-workflow/status', [IndexingWorkflowController::class, 'status']);
         Route::get('/indexing-workflow/completed', [IndexingWorkflowController::class, 'completed']);
         Route::post('/workflows/start', [WorkflowController::class, 'start']);
+        Route::post('/invitations', [InvitationController::class, 'store']);
     });
+
+    Route::get('/invitations/{token}', [InvitationController::class, 'show']);
 
     Route::group(['prefix' => 'orchestrator'], function () {
         Route::post('/workflows/buckets', [WorkflowController::class, 'createBucket']);
