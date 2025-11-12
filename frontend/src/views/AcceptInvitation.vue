@@ -19,7 +19,7 @@
             </svg>
           </div>
           <h1 class="text-2xl font-semibold text-slate-900 mb-2">
-            You've been invited!
+            You've been invited
           </h1>
           <p class="text-slate-500 text-xs mt-2">
             Invitation expires {{ formatExpiresAt(invitation.expires_at) }}

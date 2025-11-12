@@ -44,7 +44,7 @@
         <InvitationList />
       </div>
 
-      <div class="mt-8 bg-sky-50 border border-sky-200 rounded-lg p-4">
+      <div class="mt-8 bg-slate-50 border border-slate-200 rounded-lg p-4">
         <div class="flex">
           <div class="flex-shrink-0">
             <svg class="h-5 w-5 text-sky-600" fill="currentColor" viewBox="0 0 20 20">

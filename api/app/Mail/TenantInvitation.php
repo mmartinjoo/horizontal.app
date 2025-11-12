@@ -35,7 +35,7 @@ class TenantInvitation extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'You have been invited to join',
+            subject: 'You have been invited to Horizontal',
         );
     }
 

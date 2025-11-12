@@ -11,7 +11,7 @@
 
         <p>Hello,</p>
 
-        <p>You've been invited to join our platform. Click the button below to accept your invitation and create your account.</p>
+        <p>You've been invited to join Horizontal. Click the button below to accept your invitation and create your account:</p>
 
         <div style="text-align: center; margin: 30px 0;">
             <a href="{{ $acceptUrl }}"

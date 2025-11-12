@@ -39,7 +39,7 @@ export function useInvitations() {
 
       return data
     } catch (err) {
-      error.value = err.message
+      error.value = 'Something went wrong'
       throw err
     } finally {
       isLoading.value = false
