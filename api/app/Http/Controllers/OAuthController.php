@@ -62,12 +62,16 @@ class OAuthController extends Controller
             ->where('role', 'admin')
             ->first();
 
+        // admin user is a special case. it's created when the tenant is created. not by invitation
         if ($admin) {
-            $admin->update([
-                'provider' => $provider,
-                'provider_id' => $socialiteUser->getId(),
-                'provider_token' => $socialiteUser->token,
-            ]);
+            // this is the first login right after tenant creation
+            if (!$admin->provider) {
+                $admin->update([
+                    'provider' => $provider,
+                    'provider_id' => $socialiteUser->getId(),
+                    'provider_token' => $socialiteUser->token,
+                ]);
+            }
 
             $token = $admin->createToken('oauth-token')->plainTextToken;
             $url = Url::createAfterLoginFrontendUrl(tenant(), $token);

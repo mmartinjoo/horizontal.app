@@ -8,7 +8,8 @@ services:
       - ./proxy.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - nginx
-      - frontend
+      - tenant-app
+      - central-app
 
   api:
     build:
@@ -45,12 +46,12 @@ services:
     depends_on:
       - api
 
-  frontend:
+  tenant-app:
     build:
-      context: ./frontend
+      context: ./tenant-app
       dockerfile: Dockerfile
     volumes:
-      - ./frontend:/app
+      - ./tenant-app:/app
       - /app/node_modules
     depends_on:
       - api
@@ -194,7 +195,7 @@ services:
     ports:
       - "7687:7687"
       - "7444:7444"
-    command: [ "--log-level=TRACE", "--data-recovery-on-startup=true", "--storage-snapshot-interval-sec=300", "--storage-snapshot-on-exit=true", "--storage-wal-enabled=true", "--also-log-to-stderr=true", "--memory-limit=0" ]
+    command: [ "--log-level=WARNING", "--data-recovery-on-startup=true", "--storage-snapshot-interval-sec=300", "--storage-snapshot-on-exit=true", "--storage-wal-enabled=true", "--also-log-to-stderr=true", "--memory-limit=0" ]
     environment:
       - MEMGRAPH_USER=horizontal
       - MEMGRAPH_PASSWORD=password
@@ -206,7 +207,7 @@ services:
     ports:
       - "7688:7687"
       - "7445:7444"
-    command: [ "--log-level=TRACE" ]
+    command: [ "--log-level=WARNING", "--data-recovery-on-startup=true", "--storage-snapshot-interval-sec=300", "--storage-snapshot-on-exit=true", "--storage-wal-enabled=true", "--also-log-to-stderr=true", "--memory-limit=0" ]
     environment:
       - MEMGRAPH_USER=horizontal
       - MEMGRAPH_PASSWORD=password
