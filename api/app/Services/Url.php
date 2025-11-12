@@ -33,10 +33,13 @@ class Url
     {
         $domain = $tenant->domains()->first();
         if (App::isLocal()) {
-            return "http://{$domain->domain}:9996/api/auth/{$provider}/callback?state=" . $request->get('state');
+            $url = "http://{$domain->domain}:9996/api/auth/{$provider}/callback";
         } else {
-            return "https://{$domain->domain}/api/auth/{$provider}/callback?state=" . $request->get('state');
+            $url = "https://{$domain->domain}/api/auth/{$provider}/callback";
         }
+
+        $url .= '?' . http_build_query($request->query());
+        return $url;
     }
 
     public static function createTenantIntegrationCallbackUrl(Tenant $tenant, string $provider): string

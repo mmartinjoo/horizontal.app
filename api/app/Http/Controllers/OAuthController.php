@@ -43,7 +43,6 @@ class OAuthController extends Controller
      */
     public function handleProviderCallback(Request $request, string $provider)
     {
-        dd($request->all());
         $this->validateProvider($provider);
 
         try {
