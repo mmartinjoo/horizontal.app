@@ -17,14 +17,13 @@ class CentralOAuthController
             'state' => ['required']
         ]);
 
-        $tenantId = Str::after($request->get('state'), 'tenant_id=');
+        $tenantId = Url::extractKeyFromState($request->get('state'), 'tenant_id');
         if (!$tenantId) {
             abort(429, "tenant_id is required");
         }
+        
         $tenant = Tenant::findOrFail($tenantId);
-
-        $url = Url::createTenantIntegrationCallbackUrlWithCode($tenant, $provider, $request->get('code'));
-
+        $url = Url::createTenantIntegrationCallbackUrlWithQuery($tenant, $provider, $request);
         return redirect()->away($url);
     }
 }

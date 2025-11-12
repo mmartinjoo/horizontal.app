@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Tenant;
 use Exception;
 use Illuminate\Support\Facades\App;
+use Illuminate\Http\Request;
 
 class Url
 {
@@ -38,11 +39,11 @@ class Url
         }
     }
 
-    public static function createTenantIntegrationCallbackUrlWithCode(Tenant $tenant, string $provider, string $code): string
+    public static function createTenantIntegrationCallbackUrlWithQuery(Tenant $tenant, string $provider, Request $request): string
     {
         $url = self::createTenantIntegrationCallbackUrl($tenant, $provider);
-
-        return sprintf('%s?code=%s', $url, $code);
+        $url .= '?' . http_build_query($request->query());
+        return $url;
     }
 
     public static function createInvitationAcceptanceUrl(Tenant $tenant, string $token): string
