@@ -43,16 +43,17 @@ class OAuthController extends Controller
      */
     public function handleProviderCallback(Request $request, string $provider)
     {
+        dd($request->all());
         $this->validateProvider($provider);
 
         try {
             $socialiteUser = Socialite::driver($provider)
                 ->stateless()
                 ->user();
-        } catch (Exception $exception) {
+        } catch (Exception $ex) {
             return response()->json([
                 'message' => 'Failed to authenticate with '.$provider,
-                'error' => $exception->getMessage(),
+                'error' => $ex->getMessage(),
             ], 401);
         }
 

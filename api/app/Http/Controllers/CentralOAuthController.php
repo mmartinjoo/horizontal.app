@@ -21,9 +21,9 @@ class CentralOAuthController
         if (!$tenantId) {
             abort(429, "tenant_id is required");
         }
-        
+
         $tenant = Tenant::findOrFail($tenantId);
-        $url = Url::createTenantIntegrationCallbackUrlWithQuery($tenant, $provider, $request);
+        $url = Url::createTenantOAuthLoginCallbackUrl($tenant, $provider, $request);
         return redirect()->away($url);
     }
 }

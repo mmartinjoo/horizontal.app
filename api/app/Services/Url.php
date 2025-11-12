@@ -29,6 +29,16 @@ class Url
         }
     }
 
+    public static function createTenantOAuthLoginCallbackUrl(Tenant $tenant, string $provider, Request $request): string
+    {
+        $domain = $tenant->domains()->first();
+        if (App::isLocal()) {
+            return "http://{$domain->domain}:9996/api/auth/{$provider}/callback?state=" . $request->get('state');
+        } else {
+            return "https://{$domain->domain}/api/auth/{$provider}/callback?state=" . $request->get('state');
+        }
+    }
+
     public static function createTenantIntegrationCallbackUrl(Tenant $tenant, string $provider): string
     {
         $domain = $tenant->domains()->first();
