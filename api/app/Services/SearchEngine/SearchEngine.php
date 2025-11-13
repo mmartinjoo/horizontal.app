@@ -79,6 +79,7 @@ class SearchEngine
                     'title' => Arr::get($node->properties, 'title'),
                     'text' => $node->properties['text'],
                     'type' => $node->properties['document_type'],
+                    'status' => $this->getIssueStatus($node),
                 ];
             })
             ->values()
@@ -117,6 +118,27 @@ class SearchEngine
                 - id: the document id
                 - title: the document title
                 - type: the document type
+
+            There's a `status` field for documents that come from task management systems such as Jira or Linear.
+            If the status indiciated that the task is not started yet DO NOT TREAT the content as a \"fact\".
+            At this point, it's only a plan for the future.
+            So DO NOT treat those as facts.
+            Those are only plans for the future.
+            You can include them in your response but make it CLEAR that they are only future plans.
+            Typical statuses that indicates that the task is not done yet are:
+                - Backlog
+                - To Do
+                - Todo
+                - Ready
+                - Ready for Dev
+                - Prioritized
+                - Planned
+                - Duplicate
+                - Won't Do
+                - Won't Fix
+                - Canceled
+                - Cancelled
+                - Deferred
 
             This MUST be your answer:
             ```
@@ -178,6 +200,39 @@ class SearchEngine
         ", ['path']);
 
         return Path::fromArray($paths);
+    }
+
+    private function getIssueStatus(Node $node): ?string
+    {
+        if ($node->properties['document_type'] !== 'document') {
+            return null;
+        }
+
+        $id = Arr::get($node->properties, 'document_chunk_id');
+        if (!$id) {
+            return null;
+        }
+
+        $documentChunk = DocumentChunk::find($id);
+        if (!$documentChunk) {
+            return null;
+        }
+
+        $document = $documentChunk->document;
+        if (!$document) {
+            return null;
+        }
+
+        if ($document->source_type !== 'issue') {
+            return null;
+        }
+
+        $status = Arr::get($document->metadata, 'status');
+        if (!$status || $status === '') {
+            return null;
+        }
+
+        return $status;
     }
 
     /**
