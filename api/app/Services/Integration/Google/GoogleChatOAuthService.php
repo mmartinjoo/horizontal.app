@@ -11,6 +11,7 @@ class GoogleChatOAuthService extends GoogleOAuthService
         $this->client = new Client();
         $this->client->setAuthConfig($config);
         $this->client->setAccessType('offline');
+        $this->client->setPrompt('consent');
         $this->client->addScope('https://www.googleapis.com/auth/chat.spaces.readonly');
         $this->client->addScope('https://www.googleapis.com/auth/chat.memberships.readonly');
         $this->client->addScope('https://www.googleapis.com/auth/chat.messages.readonly');

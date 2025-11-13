@@ -15,13 +15,14 @@ use Google\Service\Drive\DriveFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\LazyCollection;
 use League\Flysystem\DirectoryAttributes;
+use League\Flysystem\FileAttributes;
 use League\Flysystem\Filesystem;
 use Masbug\Flysystem\GoogleDriveAdapter;
-use League\Flysystem\FileAttributes;
 
 class GoogleDrive implements StorageIntegration
 {
     private Filesystem $fs;
+
     private Drive $drive;
 
     private const GOOGLE_NATIVE_TYPES = [
@@ -38,11 +39,13 @@ class GoogleDrive implements StorageIntegration
         'application/vnd.google-apps.form' => 'text/plain',
     ];
 
-    public function __construct(private FilePrioritizer $prioritizer)
-    {
+    public function __construct(
+        private FilePrioritizer $prioritizer,
+        private GoogleDriveTokenManager $tokenManager,
+    ) {
         $integration = $this->getValidIntegration();
-        $client = new Client();
-        $client->setAccessToken($integration->access_token);    
+        $client = new Client;
+        $client->setAccessToken($integration->access_token);
 
         $this->drive = new Drive($client);
         $adapter = new GoogleDriveAdapter($this->drive);
@@ -56,8 +59,8 @@ class GoogleDrive implements StorageIntegration
     {
         return LazyCollection::make(function () use ($root) {
             $listing = $this->fs->listContents($root);
-            foreach ($listing as $listingItem) {                
-                if (!$listingItem instanceof DirectoryAttributes) {
+            foreach ($listing as $listingItem) {
+                if (! $listingItem instanceof DirectoryAttributes) {
                     continue;
                 }
 
@@ -74,7 +77,7 @@ class GoogleDrive implements StorageIntegration
         return LazyCollection::make(function () use ($root) {
             $listing = $this->fs->listContents($root, true);
             foreach ($listing as $listingItem) {
-                if (!$listingItem instanceof FileAttributes) {
+                if (! $listingItem instanceof FileAttributes) {
                     continue;
                 }
 
@@ -91,7 +94,7 @@ class GoogleDrive implements StorageIntegration
 
                 $sharingUser = $data->getSharingUser();
                 if ($sharingUser) {
-                    $file->setSharingUser($sharingUser->displayName);;
+                    $file->setSharingUser($sharingUser->displayName);
                 }
 
                 yield $file;
@@ -110,8 +113,8 @@ class GoogleDrive implements StorageIntegration
                 $result = Storage::writeStream($file->path(), $stream);
             }
 
-            if (!$result) {
-                throw new FileDownloadException("Failed to write file to storage: " . json_encode($file));
+            if (! $result) {
+                throw new FileDownloadException('Failed to write file to storage: '.json_encode($file));
             }
         } catch (Exception $e) {
             throw FileDownloadException::wrap($e);
@@ -128,6 +131,7 @@ class GoogleDrive implements StorageIntegration
         foreach ($revisions as $revision) {
             $authors[$revision->lastModifyingUser->emailAddress] = $revision->lastModifyingUser->displayName;
         }
+
         return $authors;
     }
 
@@ -155,6 +159,7 @@ class GoogleDrive implements StorageIntegration
                 ];
             }
         }
+
         return $result;
     }
 
@@ -165,15 +170,15 @@ class GoogleDrive implements StorageIntegration
 
     private function exportGoogleNativeFile(File $file): string
     {
-        if (!isset(self::EXPORT_FORMATS[$file->mimeType()])) {
+        if (! isset(self::EXPORT_FORMATS[$file->mimeType()])) {
             throw new FileDownloadException("Unsupported Google native file type: {$file->mimeType()}");
         }
 
-        $exportFormat = self::EXPORT_FORMATS[$file->mimeType()];;
+        $exportFormat = self::EXPORT_FORMATS[$file->mimeType()];
 
         try {
             $response = $this->drive->files->export($file->extraMetadata()['id'], $exportFormat, [
-                'alt' => 'media'
+                'alt' => 'media',
             ]);
 
             return $response->getBody()->getContents();
@@ -185,17 +190,22 @@ class GoogleDrive implements StorageIntegration
     private function getMetaData(File $file): DriveFile
     {
         $fields = 'modifiedTime,createdTime,viewedByMeTime,owners,sharingUser';
+
         return $this->drive->files->get($file->extraMetadata()['id'], ['fields' => $fields]);
     }
 
     private function getValidIntegration(): GoogleDriveIntegration
     {
         $integration = GoogleDriveIntegration::first();
-        if (!$integration) {
-            throw new Exception('No Google integration found');
+        if (! $integration) {
+            throw new Exception('No Google Drive integration found');
         }
 
-        // TODO: Ensure token is valid (refresh if needed)
-        return $integration;
+        // Ensure token is valid (refresh if needed)
+        if (! $this->tokenManager->ensureValidToken($integration)) {
+            throw new Exception('Unable to obtain valid Google Drive token');
+        }
+
+        return $integration->fresh(); // Reload in case token was refreshed
     }
 }
