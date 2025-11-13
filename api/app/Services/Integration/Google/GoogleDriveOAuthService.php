@@ -11,6 +11,7 @@ class GoogleDriveOAuthService extends GoogleOAuthService
         $this->client = new Client();
         $this->client->setAuthConfig($config);
         $this->client->setAccessType('offline');
+        $this->client->setPrompt('consent');
         $this->client->addScope('https://www.googleapis.com/auth/drive.readonly');
         $this->client->addScope('https://www.googleapis.com/auth/drive.metadata.readonly');
         $this->client->addScope('https://www.googleapis.com/auth/drive.activity.readonly');
