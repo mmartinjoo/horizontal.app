@@ -9,6 +9,7 @@ use App\Models\LinearIntegration;
 use App\Models\SlackIntegration;
 use App\Models\Tenant;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Stancl\Tenancy\Concerns\HasATenantArgument;
 
 class CheckRefreshTokensCommand extends Command
@@ -103,6 +104,8 @@ class CheckRefreshTokensCommand extends Command
             $this->line('  3. Notify affected users to disconnect and re-connect their integrations');
             $this->newLine();
             $this->info('For more information, see: api/OAUTH_SETUP.md');
+
+            Log::channel('slack')->error('Missing refresh token in ' . $tenant->company);
 
             return Command::FAILURE;
         }
