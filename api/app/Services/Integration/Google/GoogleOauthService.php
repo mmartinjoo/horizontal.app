@@ -10,9 +10,7 @@ abstract class GoogleOAuthService
 {
     protected Client $client;
 
-    public function __construct(protected array $config) 
-    {
-    }
+    public function __construct(protected array $config) {}
 
     public function generateAuthorizationUrl(): array
     {
@@ -25,6 +23,7 @@ abstract class GoogleOAuthService
                 'state' => $state,
             ],
         );
+
         return [
             'authorization_url' => $url,
             'random_str' => $randomStr,
@@ -56,5 +55,19 @@ abstract class GoogleOAuthService
             'name' => $userInfo->getName(),
             'email' => $userInfo->getEmail(),
         ];
+    }
+
+    public function refreshAccessToken(string $refreshToken): array
+    {
+        $this->client->setAuthConfig($this->config);
+        $token = $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
+
+        return $token;
+    }
+
+    public function revokeToken(string $accessToken): void
+    {
+        $this->client->setAuthConfig($this->config);
+        $this->client->revokeToken($accessToken);
     }
 }

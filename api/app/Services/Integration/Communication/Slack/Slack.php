@@ -14,10 +14,10 @@ use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
+use Illuminate\Support\Str;
 use Throwable;
 
 class Slack implements Communication
@@ -27,11 +27,12 @@ class Slack implements Communication
 
     public function __construct(
         private string $baseUrl,
-    ) {
-    }
+        private SlackTokenManager $tokenManager,
+    ) {}
 
     /**
      * @return LazyCollection<Channel>
+     *
      * @throws FailedToLoadChannelsException
      * @throws ConnectionException
      * @throws RequestException
@@ -39,6 +40,7 @@ class Slack implements Communication
     public function channels(): LazyCollection
     {
         $cursor = null;
+
         return LazyCollection::make(function () use ($cursor) {
             while (true) {
                 $data = [
@@ -48,14 +50,14 @@ class Slack implements Communication
                     $data['cursor'] = $cursor;
                 }
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $this->getAccessToken(),
+                    'Authorization' => 'Bearer '.$this->getAccessToken(),
                 ])
-                    ->get($this->baseUrl . '/conversations.list', $data)
+                    ->get($this->baseUrl.'/conversations.list', $data)
                     ->throw()
                     ->json();
 
-                if (!$response['ok']) {
-                    throw new FailedToLoadChannelsException('Failed to load channels. Response: ' . json_encode($response));
+                if (! $response['ok']) {
+                    throw new FailedToLoadChannelsException('Failed to load channels. Response: '.json_encode($response));
                 }
 
                 foreach ($response['channels'] as $channel) {
@@ -63,7 +65,7 @@ class Slack implements Communication
                 }
 
                 $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
-                if (!$nextCursor) {
+                if (! $nextCursor) {
                     break;
                 }
                 $cursor = $nextCursor;
@@ -72,8 +74,8 @@ class Slack implements Communication
     }
 
     /**
-     * @param Channel $channel
      * @return LazyCollection<Message>
+     *
      * @throws ConnectionException
      * @throws FailedToLoadMessagesException
      * @throws RequestException
@@ -87,24 +89,24 @@ class Slack implements Communication
                     'channel' => $channel->externalId,
                     'oldest' => now()->subMonths(3)->timestamp,
                     'limit' => 100,
-                    "inclusive" => true,
-                ];            
+                    'inclusive' => true,
+                ];
                 if ($cursor) {
                     $data['cursor'] = $cursor;
                 }
 
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $this->getAccessToken(),
+                    'Authorization' => 'Bearer '.$this->getAccessToken(),
                 ])
-                    ->get($this->baseUrl . '/conversations.history', $data)
+                    ->get($this->baseUrl.'/conversations.history', $data)
                     ->throw()
                     ->json();
 
-                if (!$response['ok']) {
+                if (! $response['ok']) {
                     if ($response['error'] === 'not_in_channel') {
                         break;
                     }
-                    throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
+                    throw new FailedToLoadMessagesException('Failed to load messages. Response: '.json_encode($response));
                 }
 
                 foreach ($response['messages'] as $message) {
@@ -118,17 +120,17 @@ class Slack implements Communication
                     if (Arr::get($message, 'thread_ts') === $message['ts']) {
                         // this is a thread. it's processed in a dedicated function
                         continue;
-                    }            
+                    }
 
                     yield $this->makeMessageWithMentions($channel, $message);
                 }
 
                 $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
-                if (!$nextCursor) {
+                if (! $nextCursor) {
                     break;
                 }
-                $cursor = $nextCursor;    
-                
+                $cursor = $nextCursor;
+
                 // 50ms delay to avoid rate limits
                 usleep(50_000);
             }
@@ -136,8 +138,8 @@ class Slack implements Communication
     }
 
     /**
-     * @param Channel $channel
      * @return LazyCollection<Message>
+     *
      * @throws ConnectionException
      * @throws FailedToLoadMessagesException
      * @throws RequestException
@@ -158,17 +160,17 @@ class Slack implements Communication
                 }
 
                 $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $this->getAccessToken(),
+                    'Authorization' => 'Bearer '.$this->getAccessToken(),
                 ])
-                    ->get($this->baseUrl . '/conversations.history', $data)
+                    ->get($this->baseUrl.'/conversations.history', $data)
                     ->throw()
                     ->json();
 
-                if (!$response['ok']) {
+                if (! $response['ok']) {
                     if ($response['error'] === 'not_in_channel') {
                         break;
                     }
-                    throw new FailedToLoadMessagesException('Failed to load messages. Response: ' . json_encode($response));
+                    throw new FailedToLoadMessagesException('Failed to load messages. Response: '.json_encode($response));
                 }
 
                 foreach ($response['messages'] as $message) {
@@ -183,18 +185,18 @@ class Slack implements Communication
                         // this is an individual message without replies. it's processed in a dedicated function
                         continue;
                     }
-                    
+
                     $thread = $this->makeMessageWithMentions($channel, $message);
                     $thread->replies = $this->replies($channel, $thread);
                     yield $thread;
                 }
 
                 $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
-                if (!$nextCursor) {
+                if (! $nextCursor) {
                     break;
                 }
-                $cursor = $nextCursor;    
-                
+                $cursor = $nextCursor;
+
                 // 50ms delay to avoid rate limits
                 usleep(50_000);
             }
@@ -203,8 +205,8 @@ class Slack implements Communication
 
     /**
      * No need for LazyCollection since it returns only the replies for a given message (a few dozens)
-     * 
-     * @return Collection<Message> 
+     *
+     * @return Collection<Message>
      */
     private function replies(Channel $channel, Message $thread): Collection
     {
@@ -223,14 +225,14 @@ class Slack implements Communication
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->getAccessToken(),
+                'Authorization' => 'Bearer '.$this->getAccessToken(),
             ])
-                ->get($this->baseUrl . '/conversations.replies', $data)
+                ->get($this->baseUrl.'/conversations.replies', $data)
                 ->throw()
                 ->json();
 
-            if (!$response['ok']) {
-                throw new FailedToLoadMessagesException('Failed to load replies. Response: ' . json_encode($response));
+            if (! $response['ok']) {
+                throw new FailedToLoadMessagesException('Failed to load replies. Response: '.json_encode($response));
             }
 
             foreach ($response['messages'] as $message) {
@@ -241,32 +243,34 @@ class Slack implements Communication
             }
 
             $nextCursor = Arr::get($response, 'response_metadata.next_cursor');
-            if (!$nextCursor) {
+            if (! $nextCursor) {
                 break;
             }
             $cursor = $nextCursor;
-            
+
             // 50ms delay to avoid rate limits
             usleep(50_000);
         }
+
         return collect($replies);
     }
 
     public function permalink(string $channelID, string $messageID): string
     {
         $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->getAccessToken(),
-            ])
-            ->get($this->baseUrl . '/chat.getPermalink', [
+            'Authorization' => 'Bearer '.$this->getAccessToken(),
+        ])
+            ->get($this->baseUrl.'/chat.getPermalink', [
                 'channel' => $channelID,
                 'message_ts' => $messageID,
             ])
             ->throw()
             ->json();
 
-        if (!$response['ok']) {
-            throw new FailedToLoadMessagesException('Failed to fetch permalink. Response: ' . json_encode($response));
+        if (! $response['ok']) {
+            throw new FailedToLoadMessagesException('Failed to fetch permalink. Response: '.json_encode($response));
         }
+
         return $response['permalink'];
     }
 
@@ -275,21 +279,21 @@ class Slack implements Communication
      */
     public function users(): Collection
     {
-        if (!empty(self::$userCache)) {
+        if (! empty(self::$userCache)) {
             return collect(self::$userCache);
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->getAccessToken(),
+            'Authorization' => 'Bearer '.$this->getAccessToken(),
         ])
-            ->get($this->baseUrl . '/users.list', [
+            ->get($this->baseUrl.'/users.list', [
                 'limit' => 500,
             ])
             ->throw()
             ->json();
 
-        if (!$response['ok']) {
-            throw new FailedToLoadMessagesException('Failed to load replies. Response: ' . json_encode($response));
+        if (! $response['ok']) {
+            throw new FailedToLoadMessagesException('Failed to load replies. Response: '.json_encode($response));
         }
 
         $users = collect();
@@ -300,6 +304,7 @@ class Slack implements Communication
             $users[] = User::fromSlack($member);
         }
         self::$userCache = $users->toArray();
+
         return $users;
     }
 
@@ -309,7 +314,7 @@ class Slack implements Communication
             ->filter(fn (User $user) => $user->externalId === $id)
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             throw new UserNotFoundException("User not found with ID: $id");
         }
 
@@ -327,18 +332,19 @@ class Slack implements Communication
                 realName: 'Unknown',
             );
         }
-        
+
         $message = Message::fromSlack($channel, $data, $author);
+
         return $this->swapMentions($message);
     }
 
     /**
      * In the Slack message, mentions are represented like this:
      *  "hey <@U3RB7BE81AW> what's up?"
-     * 
+     *
      * This function swaps these IDs with the real names:
      *  "hey John Doe what's up?"
-     * 
+     *
      * It also sets the `mentions` property.
      */
     private function swapMentions(Message $message): Message
@@ -356,6 +362,7 @@ class Slack implements Communication
                 }
             }
             $message->mentions = collect($users);
+
             return $message;
         } catch (Throwable) {
             return $message;
@@ -380,6 +387,7 @@ class Slack implements Communication
             $id = Str::replaceLast('>', '', $id);
             $ids[] = $id;
         }
+
         return collect($ids);
     }
 
@@ -387,10 +395,16 @@ class Slack implements Communication
     {
         $integration = SlackIntegration::first();
 
-        if (!$integration) {
+        if (! $integration) {
             throw new Exception('No Slack integration found');
         }
 
-        return $integration->access_token;
+        // Ensure token is valid (refresh if needed)
+        if (! $this->tokenManager->ensureValidToken($integration)) {
+            throw new Exception('Unable to obtain valid Slack token');
+        }
+
+        // Reload in case token was refreshed
+        return $integration->fresh()->access_token;
     }
 }

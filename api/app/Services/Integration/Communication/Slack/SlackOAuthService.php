@@ -40,7 +40,7 @@ class SlackOAuthService
         ]);
 
         return [
-            'authorization_url' => 'https://slack.com/oauth/v2/authorize?' . $queryParams,
+            'authorization_url' => 'https://slack.com/oauth/v2/authorize?'.$queryParams,
             'random_str' => $str,
         ];
     }
@@ -55,8 +55,8 @@ class SlackOAuthService
             'redirect_uri' => $this->config['redirect_uri'],
         ]);
 
-        if (!$response->successful()) {
-            throw new Exception('Failed to exchange authorization code for token: ' . $response->body());
+        if (! $response->successful()) {
+            throw new Exception('Failed to exchange authorization code for token: '.$response->body());
         }
 
         return $response->json();
@@ -74,10 +74,37 @@ class SlackOAuthService
                 'user' => $userId,
             ]);
 
-        if (!$response->successful() || !$response->json('ok')) {
-            throw new Exception('Failed to get user info: ' . $response->body());
+        if (! $response->successful() || ! $response->json('ok')) {
+            throw new Exception('Failed to get user info: '.$response->body());
         }
 
         return $response->json('user');
+    }
+
+    public function refreshAccessToken(string $refreshToken): array
+    {
+        $response = Http::asForm()->post('https://slack.com/api/oauth.v2.access', [
+            'grant_type' => 'refresh_token',
+            'client_id' => $this->config['client_id'],
+            'client_secret' => $this->config['client_secret'],
+            'refresh_token' => $refreshToken,
+        ]);
+
+        if (! $response->successful() || ! $response->json('ok')) {
+            throw new Exception('Failed to refresh access token: '.$response->body());
+        }
+
+        return $response->json();
+    }
+
+    public function revokeToken(string $accessToken): void
+    {
+        $response = Http::asForm()->post('https://slack.com/api/auth.revoke', [
+            'token' => $accessToken,
+        ]);
+
+        if (! $response->successful() || ! $response->json('ok')) {
+            throw new Exception('Failed to revoke token: '.$response->body());
+        }
     }
 }

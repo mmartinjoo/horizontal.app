@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
  *  - Identifying threads vs stand-alone messages
  *  - Hanlding mentions in messages
  *  - Retrieving sender information
- * 
+ *
  * Google Chat is not that popular and the API is not that great.
  * These features aren't worth it.
  */
@@ -26,11 +26,12 @@ class GoogleChat implements Communication
 {
     private HangoutsChat $chat;
 
-    public function __construct()
-    {
+    public function __construct(
+        private GoogleChatTokenManager $tokenManager,
+    ) {
         $integration = $this->getValidIntegration();
-        $client = new Client();
-        $client->setAccessToken($integration->access_token);    
+        $client = new Client;
+        $client->setAccessToken($integration->access_token);
         $this->chat = new HangoutsChat($client);
     }
 
@@ -47,17 +48,17 @@ class GoogleChat implements Communication
                     'pageToken' => $pageToken,
                 ]);
 
-                $pageToken = $data->nextPageToken;                
+                $pageToken = $data->nextPageToken;
 
                 /** @var Space $space */
                 foreach ($data->getSpaces() as $space) {
                     if ($space->spaceType !== 'SPACE') {
                         continue;
                     }
-                    yield Channel::fromGoogleChat((array)$space);
+                    yield Channel::fromGoogleChat((array) $space);
                 }
 
-                if (!$pageToken) {
+                if (! $pageToken) {
                     break;
                 }
 
@@ -82,12 +83,12 @@ class GoogleChat implements Communication
 
                 $pageToken = $data->nextPageToken;
                 foreach ($data->messages as $googleMessage) {
-                    $message = Message::fromGoogleChat($channel, (array)$googleMessage);
+                    $message = Message::fromGoogleChat($channel, (array) $googleMessage);
                     $message->url = $this->messageLink($channel, $message);
                     yield $message;
                 }
 
-                if (!$pageToken) {
+                if (! $pageToken) {
                     break;
                 }
 
@@ -108,18 +109,23 @@ class GoogleChat implements Communication
     private function getValidIntegration(): GoogleChatIntegration
     {
         $integration = GoogleChatIntegration::first();
-        if (!$integration) {
-            throw new Exception('No Google integration found');
+        if (! $integration) {
+            throw new Exception('No Google Chat integration found');
         }
 
-        // TODO: Ensure token is valid (refresh if needed)
-        return $integration;
+        // Ensure token is valid (refresh if needed)
+        if (! $this->tokenManager->ensureValidToken($integration)) {
+            throw new Exception('Unable to obtain valid Google Chat token');
+        }
+
+        return $integration->fresh(); // Reload in case token was refreshed
     }
 
     private function messageLink(Channel $channel, Message $message): string
     {
-        $channelID = Str::after($channel->externalId, "spaces/");
-        $messageID = Str::after($message->externalId, "messages/");
+        $channelID = Str::after($channel->externalId, 'spaces/');
+        $messageID = Str::after($message->externalId, 'messages/');
+
         return "https://mail.google.com/chat/u/0/#chat/space/{$channelID}/message/{$messageID}";
     }
 }
