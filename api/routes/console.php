@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\CheckRefreshTokensCommand;
 use App\Jobs\Indexing\Communication\GoogleChat\RefreshGoogleChatTokensJob;
 use App\Jobs\Indexing\Communication\Slack\RefreshSlackTokensJob;
 use App\Jobs\Indexing\Communication\Slack\UpdateSlackMessageLinks;
@@ -15,6 +16,7 @@ Schedule::job(new RefreshLinearTokensJob)->everyThirtyMinutes();
 Schedule::job(new RefreshSlackTokensJob)->everyThirtyMinutes();
 Schedule::job(new RefreshGoogleDriveTokensJob)->everyThirtyMinutes();
 Schedule::job(new RefreshGoogleChatTokensJob)->everyThirtyMinutes();
+Schedule::command(new CheckRefreshTokensCommand)->hourly();
 
 Schedule::job(new UpdateSlackMessageLinks)->everyFiveMinutes();
 
