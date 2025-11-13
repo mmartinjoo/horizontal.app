@@ -40,7 +40,6 @@ class GoogleDrive implements StorageIntegration
     ];
 
     public function __construct(
-        private FilePrioritizer $prioritizer,
         private GoogleDriveTokenManager $tokenManager,
     ) {
         $integration = $this->getValidIntegration();

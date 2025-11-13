@@ -110,22 +110,15 @@ class SearchEngine
             DO NOT include the document's ID in your response.
 
             ALWAYS INCLUDE a listacle in your anwser when it fits the content.
-            Organize your response into paragprahs and subtitle when it makes sense.
-
-            You MUST respond with a JSON object with the following keys:
-            - answer: the answer to the question as string
-            - relevant_documents: an array of document titles that are relevant to the question with the following keys:
-                - id: the document id
-                - title: the document title
-                - type: the document type
+            Organize your response into paragprahs and subtitle when it makes sense.            
 
             There's a `status` field for documents that come from task management systems such as Jira or Linear.
-            If the status indiciated that the task is not started yet DO NOT TREAT the content as a \"fact\".
+            If the status indiciates that the task is not started yet DO NOT TREAT the content as a \"fact\".
             At this point, it's only a plan for the future.
             So DO NOT treat those as facts.
             Those are only plans for the future.
             You can include them in your response but make it CLEAR that they are only future plans.
-            Typical statuses that indicates that the task is not done yet are:
+            Typical statuses that indicate that the task is not done yet are:
                 - Backlog
                 - To Do
                 - Todo
@@ -139,6 +132,13 @@ class SearchEngine
                 - Canceled
                 - Cancelled
                 - Deferred
+
+            You MUST respond with a JSON object with the following keys:
+            - answer: the answer to the question as string
+            - relevant_documents: an array of document titles that are relevant to the question with the following keys:
+                - id: the document id
+                - title: the document title
+                - type: the document type
 
             This MUST be your answer:
             ```
