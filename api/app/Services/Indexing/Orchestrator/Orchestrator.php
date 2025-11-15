@@ -15,8 +15,14 @@ use App\Jobs\Indexing\Supervisor\SuperviseStuckBuckets;
 use App\Jobs\Indexing\Supervisor\SuperviseWorkflow;
 use App\Jobs\Indexing\TaskManagement\Jira\IndexJira;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
+use App\Models\GithubIntegration;
+use App\Models\GoogleChatIntegration;
+use App\Models\GoogleDriveIntegration;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
+use App\Models\JiraIntegration;
+use App\Models\LinearIntegration;
+use App\Models\SlackIntegration;
 use App\Services\GraphDB\GraphDB;
 use App\Services\Indexing\Orchestrator\Supervisor\StuckBucketSupervisor;
 use App\Services\Indexing\Orchestrator\Supervisor\WorkflowSupervisor;
@@ -25,8 +31,7 @@ use Exception;
 class Orchestrator
 {
     public function __construct(private GraphDB $graphDB)
-    {
-        $this->graphDB->query('MATCH (n) DETACH DELETE n');
+    {        
     }
 
     public function schedule()
@@ -37,7 +42,7 @@ class Orchestrator
         ]);
 
         // This will be merged into one `integrations` table
-        $integrations = ['slack', 'github', 'linear', 'google_drive'];
+        $integrations = $this->getEnabledIntegrations();
         $jobs = [];
 
         foreach ($integrations as $integration) {
@@ -55,6 +60,8 @@ class Orchestrator
 
             $jobs[] = $job;
         }
+
+        $this->graphDB->query('MATCH (n) DETACH DELETE n');
     
         foreach ($jobs as $job) {
             dispatch($job);
@@ -98,5 +105,32 @@ class Orchestrator
             $workflow->id,
             new StuckBucketSupervisor(),
         );
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getEnabledIntegrations(): array
+    {
+        $integrations = [];
+        if (GithubIntegration::count() > 0) {
+            $integrations[] = 'github';
+        }
+        if (GoogleChatIntegration::count() > 0) {
+            $integrations[] = 'google_chat';
+        }
+        if (GoogleDriveIntegration::count() > 0) {
+            $integrations[] = 'google_drive';
+        }
+        if (JiraIntegration::count() > 0) {
+            $integrations[] = 'jira';
+        }
+        if (LinearIntegration::count() > 0) {
+            $integrations[] = 'linear';
+        }
+        if (SlackIntegration::count() > 0) {
+            $integrations[] = 'slack';
+        }
+        return $integrations;
     }
 }
