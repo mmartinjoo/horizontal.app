@@ -40,6 +40,8 @@ Route::middleware([
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/questions/ask', [QuestionController::class, 'ask']);
+        Route::get('/questions/{question}', [QuestionController::class, 'show']);
+
         Route::get('/integrations', [IntegrationController::class, 'index']);
         Route::get('/indexing-workflow/status', [IndexingWorkflowController::class, 'status']);
         Route::get('/indexing-workflow/completed', [IndexingWorkflowController::class, 'completed']);

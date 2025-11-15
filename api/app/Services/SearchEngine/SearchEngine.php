@@ -2,6 +2,7 @@
 
 namespace App\Services\SearchEngine;
 
+use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentComment;
 use App\Models\Question;
@@ -211,7 +212,6 @@ class SearchEngine
                     ->document;
             }
             
-
             if ($relevantDocuments->contains('id', $document->id)) {
                 continue;
             }
@@ -220,11 +220,13 @@ class SearchEngine
         }
 
         $question->update([
-            'relevant_documents' => $potentiallyRelevantDocuments->map(function (Model $doc) {
+            'relevant_documents' => $potentiallyRelevantDocuments->map(function (Document $doc) {
                 return [
                     'id' => $doc->id,
                     'title' => $doc->title,
                     'source_url' => $doc->source_url,
+                    'source' => $doc->source,
+                    'preview' => $doc->preview ? $doc->preview : $doc->body,
                 ];
             }),
             'answer' => $answerData['answer'],

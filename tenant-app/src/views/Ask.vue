@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { useAuth } from '../composables/useAuth'
 
 const question = ref('')
@@ -7,12 +7,60 @@ const answer = ref(null)
 const relevantDocuments = ref([])
 const isLoading = ref(false)
 const error = ref(null)
+const pollingInterval = ref(null)
 
 const API_BASE_URL = '/api'
 const { getAuthHeaders, logout } = useAuth()
 
+const stopPolling = () => {
+  if (pollingInterval.value) {
+    clearInterval(pollingInterval.value)
+    pollingInterval.value = null
+  }
+}
+
+const pollQuestionStatus = async (questionId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/questions/${questionId}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+      credentials: 'include'
+    })
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        error.value = 'Your session has expired. Please log in again.'
+        stopPolling()
+        setTimeout(() => {
+          logout()
+        }, 2000)
+        return
+      }
+      throw new Error(`Error: ${response.status} ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    // Check if answer is available
+    if (data.answer) {
+      answer.value = data.answer
+      relevantDocuments.value = data.relevant_documents || []
+      isLoading.value = false
+      stopPolling()
+    }
+  } catch (err) {
+    console.error('Error polling question:', err)
+    error.value = err.message || 'Failed to get an answer. Please try again.'
+    isLoading.value = false
+    stopPolling()
+  }
+}
+
 const askQuestion = async () => {
   if (!question.value.trim()) return
+
+  // Stop any existing polling
+  stopPolling()
 
   isLoading.value = true
   error.value = null
@@ -42,15 +90,26 @@ const askQuestion = async () => {
     }
 
     const data = await response.json()
-    answer.value = data.answer
-    relevantDocuments.value = data.relevant_documents || []
+
+    // Start polling for the answer
+    if (data.question.id) {
+      pollingInterval.value = setInterval(() => {
+        pollQuestionStatus(data.question.id)
+      }, 1000)
+    } else {
+      throw new Error('No question ID returned from server')
+    }
   } catch (err) {
     console.error('Error asking question:', err)
     error.value = err.message || 'Failed to get an answer. Please try again.'
-  } finally {
     isLoading.value = false
   }
 }
+
+// Cleanup polling on component unmount
+onUnmounted(() => {
+  stopPolling()
+})
 
 const handleSubmit = (e) => {
   e.preventDefault()
