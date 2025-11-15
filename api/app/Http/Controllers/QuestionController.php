@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SearchEngine\AnswerQuestion;
 use App\Models\Question;
 use App\Services\GraphDB\GraphDB;
-use App\Services\LLM\Embedder;
-use App\Services\SearchEngine\SearchEngine;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class QuestionController
 {
-    public function ask(Request $request, SearchEngine $searchEngine, GraphDB $graphDB)
+    public function ask(Request $request, GraphDB $graphDB)
     {
         $count = $graphDB->run("match (n:Community) return count(n) as count;")[0]['count'];
         if ($count === 0) {
@@ -21,8 +20,25 @@ class QuestionController
         $question = Question::create([
             'user_id' => $request->user()->id,
             'question' => $request->input('question'),
+            'llm_model' => config('llm.model'),
         ]);
 
-        return $searchEngine->graphRAG($question);
+        AnswerQuestion::dispatch($question->id)
+            ->onQueue('question');
+
+        return response()->json([
+            'question' => $question,
+        ], Response::HTTP_ACCEPTED);
+    }
+
+    public function show(Question $question)
+    {
+        return [
+            'id' => $question->id,
+            'question' => $question->question,
+            'answer' => $question->answer,
+            'relevant_documents' => $question->relevant_documents,
+            'answered_at' => $question->answered_at,
+        ];
     }
 }

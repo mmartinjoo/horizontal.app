@@ -37,6 +37,11 @@ class OpenAI extends LLM implements Embedder
         return $this->sanitizeJSON($result->choices[0]->message->content);
     }
 
+    public function stream(string $prompt, StreamWriter $writer, int $maxTokens = 10_000): void
+    {
+        throw new Exception('not implemented');
+    }
+
     protected function createEmbeddingWithoutCache(string $text): array
     {
         $response = $this->client->embeddings()->create([
