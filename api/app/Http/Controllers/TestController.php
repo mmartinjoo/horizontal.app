@@ -21,11 +21,18 @@ use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use App\Services\Integration\TaskManagement\Jira\Jira;
 use App\Services\Integration\TaskManagement\Linear\Linear;
+use App\Services\LLM\Fireworks;
+use App\Services\LLM\LLM;
 use App\Services\Url;
 use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
+    public function index(LLM $llm)
+    {
+        $llm->stream('write me a 100-words poem');
+    }
+
     public function token()
     {
         $user = \App\Models\User::updateOrCreate(

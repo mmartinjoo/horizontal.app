@@ -37,6 +37,7 @@ class QuestionController
             'question' => $question->question,
             'answer' => $question->answer,
             'relevant_documents' => $question->relevant_documents,
+            'answered_at' => $question->answered_at,
         ];
     }
 }

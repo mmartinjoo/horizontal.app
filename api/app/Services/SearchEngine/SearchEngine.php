@@ -28,7 +28,7 @@ class SearchEngine
     ) {
     }
 
-    public function graphRAG(Question $question): array
+    public function graphRAG(Question $question)
     {
         $this->graphDB->run('STORAGE MODE IN_MEMORY_ANALYTICAL');
 
@@ -117,16 +117,18 @@ class SearchEngine
         }
 
         $question->update([
-            'potentially_relevant_documents' => $potentiallyRelevantDocuments->map(function (Model $doc) {
+            'relevant_documents' => $potentiallyRelevantDocuments->map(function (Model $doc) {
                 return [
                     'id' => $doc->id,
                     'title' => $doc->title,
                     'source_url' => $doc->source_url,
+                    'source' => $doc->source,
+                    'preview' => $doc->preview ? $doc->preview : $doc->body,
                 ];
             }),
         ]);
 
-        $answer = $this->llm->completion("
+        $answer = $this->llm->stream("
             You are a search engine.
 
             There's a graph database with communities and documents. It contains information from documents and issues.
@@ -172,52 +174,32 @@ class SearchEngine
                 - Cancelled
                 - Deferred
 
-            You MUST respond with a JSON object with the following keys:
-            - answer: the answer to the question as string
-            - relevant_documents: an array of document titles that are relevant to the question with the following keys:
-                - id: the document id
-                - title: the document title
-                - type: the document type
-
-            This MUST be your answer:
-            ```
-            {
-                \"answer\": \"your textual answer to the questions including paragprahs, listicles\",
-                \"relevant_documents\": {
-                    \"id\": 123,
-                    \"title\": \"document title\",
-                    \"type\": \"document_chunk\"
-                }
-            }
-            ```
-
-            ALWAYS respond with this structure.
-            ...ALWAYS
-        ");
+            You MUST respond with text formatted in markdown
+        ", $question);
 
         $answerData = json_decode($answer, true);        
         if (!$answerData) {
             throw new Exception('Unable to answer your question. Answer: ' . $answerData);
         }
 
-        $relevantDocuments = collect();
-        foreach ($answerData['relevant_documents'] as $relevantDocument) {
-            if ($relevantDocument['type'] === 'document') {
-                $document = DocumentChunk::with('document')
-                    ->find($relevantDocument['id'])
-                    ->document;
-            } else {
-                $document = DocumentComment::with('document')
-                    ->find($relevantDocument['id'])
-                    ->document;
-            }
+        // $relevantDocuments = collect();
+        // foreach ($answerData['relevant_documents'] as $relevantDocument) {
+        //     if ($relevantDocument['type'] === 'document') {
+        //         $document = DocumentChunk::with('document')
+        //             ->find($relevantDocument['id'])
+        //             ->document;
+        //     } else {
+        //         $document = DocumentComment::with('document')
+        //             ->find($relevantDocument['id'])
+        //             ->document;
+        //     }
             
-            if ($relevantDocuments->contains('id', $document->id)) {
-                continue;
-            }
+        //     if ($relevantDocuments->contains('id', $document->id)) {
+        //         continue;
+        //     }
 
-            $relevantDocuments->push($document);
-        }
+        //     $relevantDocuments->push($document);
+        // }
 
         $question->update([
             'relevant_documents' => $potentiallyRelevantDocuments->map(function (Document $doc) {
@@ -229,14 +211,9 @@ class SearchEngine
                     'preview' => $doc->preview ? $doc->preview : $doc->body,
                 ];
             }),
-            'answer' => $answerData['answer'],
-            'answered_at' => now(),
+            // 'answer' => $answerData['answer'],
+            // 'answered_at' => now(),
         ]);
-
-        return [
-            'answer' => $answerData['answer'],
-            'relevant_documents' => $relevantDocuments,
-        ];
     }
 
     /**

@@ -13,6 +13,8 @@ abstract class LLM
 
     abstract public function completion(string $prompt, $maxTokens = 1024): string;
 
+    abstract public function stream(string $prompt, StreamWriter $destination, int $maxTokens = 10_000);
+
     protected function sanitizeJSON(string $message): string
     {
         $sanitizedText = Str::trim($message);
