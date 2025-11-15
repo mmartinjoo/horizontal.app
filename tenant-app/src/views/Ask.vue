@@ -348,4 +348,25 @@ const loadingStatusText = computed(() => {
 .prose p:last-child {
   margin-bottom: 0;
 }
+
+/* Fix list alignment and spacing */
+.prose :deep(ul),
+.prose :deep(ol) {
+  padding-left: 1.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose :deep(li) {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.prose :deep(ul ul),
+.prose :deep(ol ul),
+.prose :deep(ul ol),
+.prose :deep(ol ol) {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
 </style>
