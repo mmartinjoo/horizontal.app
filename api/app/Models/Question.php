@@ -24,6 +24,9 @@ class Question extends Model implements StreamWriter
     public function finished(): void
     {
         $this->answered_at = now();
+        if ($this->created_at) {
+            $this->time_spent = (int) $this->created_at->diffInSeconds(now());
+        }
         $this->save();
     }
 }

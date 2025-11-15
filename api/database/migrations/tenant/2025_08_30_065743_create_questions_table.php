@@ -15,9 +15,11 @@ return new class extends Migration
             $table->string('question');
             $table->jsonb('relevant_documents')->nullable(true)->default(null);
             $table->jsonb('relevant_graph_paths')->nullable(true)->default(null);
-            $table->text('answer')->nullable(true)->default(null);
-            $table->dateTime('answered_at')->nullable();
+            $table->text('answer')->nullable(true)->default(null);            
+            $table->string('llm_model');
+            $table->integer('time_spent')->nullable(true)->default(null);
             $table->timestamps();
+            $table->dateTime('answered_at')->nullable();
         });
     }
 

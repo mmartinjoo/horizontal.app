@@ -20,6 +20,7 @@ class QuestionController
         $question = Question::create([
             'user_id' => $request->user()->id,
             'question' => $request->input('question'),
+            'llm_model' => config('llm.model'),
         ]);
 
         AnswerQuestion::dispatch($question->id)

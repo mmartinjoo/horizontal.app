@@ -100,6 +100,7 @@ class Fireworks extends LLM implements Embedder
                 }
             }
         }
+        $destination->finished();
     }
 
     protected function createEmbeddingWithoutCache(string $text): array
