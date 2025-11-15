@@ -175,6 +175,7 @@ class SearchEngine
                 - Deferred
 
             You MUST respond with text formatted in markdown
+            DO NOT USE emojis
         ", $question);
 
         $answerData = json_decode($answer, true);        
