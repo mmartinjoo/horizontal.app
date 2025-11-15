@@ -13,6 +13,7 @@ use App\Services\SearchEngine\DataTransferObjects\SearchResult;
 use Bolt\protocol\v1\structures\Path as BoltPath;
 use Bolt\protocol\v5\structures\Node;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
@@ -71,6 +72,9 @@ class SearchEngine
         }
 
         $pathJSON = json_encode($pathStrings);
+        $question->update([
+            'relevant_graph_paths' => $pathJSON,
+        ]);
 
         $chunkContext = collect($chunkContext)
             ->unique('id')
@@ -91,6 +95,35 @@ class SearchEngine
             ->toArray();
 
         $chunkJSON = json_encode($chunkContext);
+        $potentiallyRelevantDocuments = collect();
+        foreach ($chunkContext as $chunk) {
+            if ($chunk['type'] === 'document') {
+                $document = DocumentChunk::with('document')
+                    ->find($chunk['id'])
+                    ->document;
+            } else {
+                $document = DocumentComment::with('document')
+                    ->find($chunk['id'])
+                    ->document;
+            }
+            
+
+            if ($potentiallyRelevantDocuments->contains('id', $document->id)) {
+                continue;
+            }
+
+            $potentiallyRelevantDocuments->push($document);
+        }
+
+        $question->update([
+            'potentially_relevant_documents' => $potentiallyRelevantDocuments->map(function (Model $doc) {
+                return [
+                    'id' => $doc->id,
+                    'title' => $doc->title,
+                    'source_url' => $doc->source_url,
+                ];
+            }),
+        ]);
 
         $answer = $this->llm->completion("
             You are a search engine.
@@ -166,7 +199,7 @@ class SearchEngine
             throw new Exception('Unable to answer your question. Answer: ' . $answerData);
         }
 
-        $documents = collect();
+        $relevantDocuments = collect();
         foreach ($answerData['relevant_documents'] as $relevantDocument) {
             if ($relevantDocument['type'] === 'document') {
                 $document = DocumentChunk::with('document')
@@ -179,16 +212,28 @@ class SearchEngine
             }
             
 
-            if ($documents->contains('id', $document->id)) {
+            if ($relevantDocuments->contains('id', $document->id)) {
                 continue;
             }
 
-            $documents->push($document);
+            $relevantDocuments->push($document);
         }
+
+        $question->update([
+            'relevant_documents' => $potentiallyRelevantDocuments->map(function (Model $doc) {
+                return [
+                    'id' => $doc->id,
+                    'title' => $doc->title,
+                    'source_url' => $doc->source_url,
+                ];
+            }),
+            'answer' => $answerData['answer'],
+            'answered_at' => now(),
+        ]);
 
         return [
             'answer' => $answerData['answer'],
-            'relevant_documents' => $documents,
+            'relevant_documents' => $relevantDocuments,
         ];
     }
 

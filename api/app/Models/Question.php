@@ -9,7 +9,9 @@ class Question extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'entities' => 'array',
         'answer' => 'array',
+        'potentially_relevant_documents' => 'array',
+        'relevant_documents' => 'array',
+        'relevant_graph_paths' => 'array',
     ];
 }

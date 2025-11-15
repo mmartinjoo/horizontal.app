@@ -13,8 +13,10 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();
             $table->string('question');
-            $table->jsonb('entities')->nullable();
-            $table->jsonb('answer')->nullable();
+            $table->jsonb('potentially_relevant_documents')->nullable(true)->default(null);
+            $table->jsonb('relevant_documents')->nullable(true)->default(null);
+            $table->jsonb('relevant_graph_paths')->nullable(true)->default(null);
+            $table->text('answer')->nullable(true)->default(null);
             $table->dateTime('answered_at')->nullable();
             $table->timestamps();
         });
