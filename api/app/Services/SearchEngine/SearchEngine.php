@@ -28,8 +28,13 @@ class SearchEngine
 
     public function graphRAG(Question $question): array
     {
+        $this->graphDB->run('STORAGE MODE IN_MEMORY_ANALYTICAL');
+
         $embedding = $this->embedder->createEmbedding($question->question);
         $results = $this->graphDB->vectorSearch('vector_index_communities', $embedding, 10);
+
+        $this->graphDB->run('STORAGE MODE IN_MEMORY_TRANSACTIONAL');
+
         $chunkContext = [];
         $pivotCommunities = [];
         foreach ($results as $node) {
