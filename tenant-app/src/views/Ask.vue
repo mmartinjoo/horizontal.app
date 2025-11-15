@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onUnmounted, computed } from 'vue'
 import { useAuth } from '../composables/useAuth'
+import { StreamMarkdown } from 'streamdown-vue'
 
 const question = ref('')
 const answer = ref(null)
@@ -15,6 +16,13 @@ const typewriterInterval = ref(null)
 
 const API_BASE_URL = '/api'
 const { getAuthHeaders, logout } = useAuth()
+
+// StreamMarkdown configuration
+const markdownConfig = {
+  shikiTheme: 'github-light',
+  allowedLinkPrefixes: ['https://github.com', 'https://gitlab.com', 'https://stackoverflow.com', window.location.origin],
+  parseIncompleteMarkdown: true
+}
 
 const stopPolling = () => {
   if (pollingInterval.value) {
@@ -184,14 +192,6 @@ const getSourceIcon = (source) => {
   return icons[source] || '📄'
 }
 
-const formatAnswer = (text) => {
-  // Simple markdown-like formatting
-  return text
-    .split('\n\n')
-    .map(para => `<p class="mb-4">${para.replace(/\n/g, '<br>')}</p>`)
-    .join('')
-}
-
 const loadingStatusText = computed(() => {
   if (!isLoading.value) return ''
 
@@ -280,8 +280,15 @@ const loadingStatusText = computed(() => {
             <h2 class="text-sm font-medium text-slate-700">Answer</h2>
           </div>
           <div class="px-5 py-4">
-            <div class="prose prose-sm max-w-none text-slate-700 leading-relaxed" v-html="formatAnswer(displayedAnswer)"></div>
-            <span v-if="isTyping" class="inline-block w-2 h-4 bg-slate-600 ml-1 animate-pulse"></span>
+            <div class="prose prose-sm max-w-none text-slate-700 leading-relaxed">
+              <StreamMarkdown
+                :content="displayedAnswer"
+                :shiki-theme="markdownConfig.shikiTheme"
+                :allowed-link-prefixes="markdownConfig.allowedLinkPrefixes"
+                :parse-incomplete-markdown="markdownConfig.parseIncompleteMarkdown"
+              />
+              <span v-if="isTyping" class="inline-block w-2 h-4 bg-slate-600 ml-1 animate-pulse"></span>
+            </div>
           </div>
         </div>
 
@@ -340,5 +347,26 @@ const loadingStatusText = computed(() => {
 
 .prose p:last-child {
   margin-bottom: 0;
+}
+
+/* Fix list alignment and spacing */
+.prose :deep(ul),
+.prose :deep(ol) {
+  padding-left: 1.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose :deep(li) {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.prose :deep(ul ul),
+.prose :deep(ol ul),
+.prose :deep(ul ol),
+.prose :deep(ol ol) {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 </style>
