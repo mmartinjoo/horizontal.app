@@ -21,6 +21,13 @@ class Question extends Model implements StreamWriter
         $this->save();
     }
 
+    public function recordTokenUsage(int $inputTokens, int $outputTokens): void
+    {
+        $this->input_tokens = $inputTokens;
+        $this->output_tokens = $outputTokens;
+        $this->save();
+    }
+
     public function finished(): void
     {
         $this->answered_at = now();

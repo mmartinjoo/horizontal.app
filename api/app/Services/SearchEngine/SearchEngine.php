@@ -128,7 +128,7 @@ class SearchEngine
             }),
         ]);
 
-        $answer = $this->llm->stream("
+        $this->llm->stream("
             You are Horizontal's search engine, designed for engineering teams who need fast, accurate answers from scattered information.
 
             ## Context Provided
@@ -245,11 +245,6 @@ class SearchEngine
 
             Remember: Engineering teams value **precision, speed, and traceability**. Be direct, cite everything, and make it easy to dive deeper.
         ", $question);
-
-        $answerData = json_decode($answer, true);        
-        if (!$answerData) {
-            throw new Exception('Unable to answer your question. Answer: ' . $answerData);
-        }
 
         $question->update([
             'relevant_documents' => $potentiallyRelevantDocuments->map(function (Document $doc) {
