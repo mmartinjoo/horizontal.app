@@ -90,13 +90,10 @@ const painPoints = [
 
             <!-- Subheadline -->            
             <p class="text-lg lg:text-xl text-slate-600 mb-2 leading-relaxed">
-              "<span class="font-bold">Where to search</span>" and <span class="font-bold">context switching</span> are past problems. Horizontal is the unified search platform for your engineering team.
-            </p>
-            <p class="text-lg lg:text-xl text-slate-600 mb-2 leading-relaxed">
-              
+              "<span class="font-bold">Where to search</span>" and <span class="font-bold">context switching</span> are past problems.
             </p>
             <p class="text-lg lg:text-xl text-slate-600 mb-8 leading-relaxed">
-              Stop switching between 5+ tools to find what you need.
+              Give your engineering team a unified search platform. Stop switching between 5+ tools to find what you need.
             </p>
             
             <!-- CTA Buttons -->
