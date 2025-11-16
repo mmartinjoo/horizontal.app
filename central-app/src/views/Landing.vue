@@ -7,10 +7,19 @@ const handleSignUp = () => {
   router.push('/signup')
 }
 
+const handleBookingDemo = () => {
+  window.open('https://cal.com/martin-joo-horizontal/horizontal-demo', '_blank');
+}
+
 const integrations = [
-  'Slack', 'Jira', 'Drive', 'GitHub',
-  'Linear', 'Google Chat', 
-  'GitHub Projects', 'Confluence',
+  { name: 'Slack', provider: 'slack' },
+  { name: 'Jira', provider: 'jira' },
+  { name: 'Drive', provider: 'google_drive' },
+  { name: 'GitHub', provider: 'github' },
+  { name: 'Linear', provider: 'linear' },
+  { name: 'Google Chat', provider: 'google_chat' },
+  { name: 'GitHub Projects', provider: 'github' },
+  { name: 'Confluence', provider: 'jira' },
 ]
 
 const features = [
@@ -70,10 +79,10 @@ const painPoints = [
           </div>
           <div class="flex items-center space-x-4">
             <button
-              @click="handleSignUp"
+              @click="handleBookingDemo"
               class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
             >
-              Get Started
+              Book a demo
             </button>
           </div>
         </div>
@@ -102,25 +111,19 @@ const painPoints = [
             <!-- CTA Buttons -->
             <div class="flex flex-col sm:flex-row gap-4 mb-8">
               <button
-                @click="handleSignUp"
+                @click="handleBookingDemo"
                 class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3.5 rounded-lg transition-colors text-base"
               >
                 Book a demo
               </button>
-              <a
-                href="#features"
-                class="inline-flex items-center justify-center border-2 border-slate-300 hover:border-slate-400 text-slate-700 hover:text-slate-900 font-semibold px-8 py-3.5 rounded-lg transition-colors text-base"
-              >
-                Get started now
-              </a>
             </div>
 
             <!-- Social Proof / Integrations -->
             <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500">
               <span class="font-medium">Integrates with:</span>
               <div class="flex flex-wrap gap-3">
-                <span v-for="integration in integrations.slice(0, 5)" :key="integration" class="px-3 py-1 bg-slate-100 rounded-md font-medium text-slate-700">
-                  {{ integration }}
+                <span v-for="integration in integrations.slice(0, 5)" :key="integration.name" class="px-3 py-1 bg-slate-100 rounded-md font-medium text-slate-700">
+                  {{ integration.name }}
                 </span>
                 <span class="px-3 py-1 bg-slate-100 rounded-md font-medium text-slate-700">+3 more</span>
               </div>
@@ -353,11 +356,8 @@ const painPoints = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
-            Real scenarios, real solutions
+            Real questions, real answers
           </h2>
-          <p class="text-xl text-slate-600 max-w-3xl mx-auto">
-            See how Horizontal solves everyday engineering challenges
-          </p>
         </div>
 
         <div class="grid lg:grid-cols-3 gap-8">
@@ -424,15 +424,38 @@ const painPoints = [
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
           <div
             v-for="integration in integrations"
-            :key="integration"
+            :key="integration.name"
             class="bg-white border-2 border-slate-200 rounded-xl p-6 text-center hover:border-blue-400 hover:shadow-lg transition-all"
           >
-            <div class="w-12 h-12 mx-auto mb-3 rounded-lg bg-blue-50 flex items-center justify-center">
-              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-lg bg-slate-50 flex items-center justify-center">
+              <!-- Jira Logo -->
+              <svg v-if="integration.provider === 'jira'" fill="none" height="32" viewBox="0 0 32 32" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#3266D4" d="M27.545 24.378 16.96 3.208c-.208-.458-.417-.541-.667-.541-.208 0-.458.083-.708.5-1.5 2.375-2.167 5.125-2.167 8 0 4.001 2.042 7.752 5.042 13.795.334.666.584.791 1.167.791h7.335c.541 0 .833-.208.833-.625 0-.208-.042-.333-.25-.75M12.168 14.377c-.834-1.25-1.084-1.334-1.292-1.334s-.333.083-.708.834L4.875 24.46c-.167.334-.208.459-.208.625 0 .334.291.667.916.667h7.46c.5 0 .875-.416 1.083-1.208.25-1 .334-1.876.334-2.917 0-2.917-1.292-5.751-2.292-7.251"></path>
+              </svg>
+
+              <!-- Linear Logo -->
+              <svg v-else-if="integration.provider === 'linear'" xmlns="http://www.w3.org/2000/svg" fill="none" width="32" height="32" viewBox="0 0 100 100">
+                <path fill="#222326" d="M1.22541 61.5228c-.2225-.9485.90748-1.5459 1.59638-.857L39.3342 97.1782c.6889.6889.0915 1.8189-.857 1.5964C20.0515 94.4522 5.54779 79.9485 1.22541 61.5228ZM.00189135 46.8891c-.01764375.2833.08887215.5599.28957165.7606L52.3503 99.7085c.2007.2007.4773.3075.7606.2896 2.3692-.1476 4.6938-.46 6.9624-.9259.7645-.157 1.0301-1.0963.4782-1.6481L2.57595 39.4485c-.55186-.5519-1.49117-.2863-1.648174.4782-.465915 2.2686-.77832 4.5932-.92588465 6.9624ZM4.21093 29.7054c-.16649.3738-.08169.8106.20765 1.1l64.77602 64.776c.2894.2894.7262.3742 1.1.2077 1.7861-.7956 3.5171-1.6927 5.1855-2.684.5521-.328.6373-1.0867.1832-1.5407L8.43566 24.3367c-.45409-.4541-1.21271-.3689-1.54074.1832-.99132 1.6684-1.88843 3.3994-2.68399 5.1855ZM12.6587 18.074c-.3701-.3701-.393-.9637-.0443-1.3541C21.7795 6.45931 35.1114 0 49.9519 0 77.5927 0 100 22.4073 100 50.0481c0 14.8405-6.4593 28.1724-16.7199 37.3375-.3903.3487-.984.3258-1.3542-.0443L12.6587 18.074Z"/>
+              </svg>
+
+              <!-- Google Drive Logo -->
+              <img v-else-if="integration.provider === 'google_drive'" src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" alt="Drive" class="w-8 h-8" />
+
+              <!-- GitHub Logo -->
+              <img v-else-if="integration.provider === 'github'" src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" alt="GitHub" class="w-8 h-8" />
+
+              <!-- Slack Logo -->
+              <img v-else-if="integration.provider === 'slack'" src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg" alt="Slack" class="w-8 h-8" />
+
+              <!-- Google Chat Logo -->
+              <img v-else-if="integration.provider === 'google_chat'" src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Google_Chat_icon_%282023%29.svg" alt="Google Chat" class="w-8 h-8" />
+
+              <!-- Generic Icon for others -->
+              <svg v-else class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span class="text-sm font-semibold text-slate-700">{{ integration }}</span>
+            <span class="text-sm font-semibold text-slate-700">{{ integration.name }}</span>
           </div>
         </div>
       </div>
@@ -451,11 +474,8 @@ const painPoints = [
           @click="handleSignUp"
           class="bg-white hover:bg-slate-50 text-blue-600 font-bold px-10 py-5 rounded-lg transition-colors shadow-xl text-lg"
         >
-          Get Started Free
+          Get Started Now
         </button>
-        <p class="text-blue-100 text-sm mt-6">
-          No credit card required. Set up in minutes.
-        </p>
       </div>
     </section>
 
