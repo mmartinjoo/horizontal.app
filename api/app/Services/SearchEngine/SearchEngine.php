@@ -151,6 +151,7 @@ class SearchEngine
             - Start with a direct answer (2-3 sentences max)
             - Use clear markdown headings (##, ###) to organize information
             - The first header should be \"Executive summary\"
+            - In the first header, you should use multiple, shorter paragraphs, instead of one that is too lenghty. Include som breathing room for the reader.
             - Use bullet points for lists, not numbered lists unless ranking/sequencing matters
             - Keep paragraphs short (2-4 sentences)
             - NO emojis
