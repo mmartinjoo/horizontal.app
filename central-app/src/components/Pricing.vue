@@ -83,6 +83,7 @@ const dataRetention = {
 const selectedSeats = ref(5)
 const selectedAdditionalQuestions = ref(null)
 const selectedDataRetention = ref(0) // Index: 0 = 3 months (default)
+const selectedHosting = ref('cloud') // 'cloud' or 'on-premise'
 
 // Computed values
 const currentPlan = computed(() => {
@@ -125,6 +126,10 @@ const selectDataRetention = (index) => {
   selectedDataRetention.value = index
 }
 
+const selectHosting = (type) => {
+  selectedHosting.value = type
+}
+
 const formatPrice = (price) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(price)
 }
@@ -140,7 +145,7 @@ const handleBookingCall = () => {
       <!-- Header -->
       <div class="text-center mb-16">
         <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
-          Simple, transparent pricing
+          Customize your plan
         </h2>
         <p class="text-xl text-slate-600 max-w-3xl mx-auto">
           Choose the plan that fits your team size. Scale up or down anytime.
@@ -245,8 +250,56 @@ const handleBookingCall = () => {
           </div>
         </div>
 
+        <!-- Hosting -->
+        <div class="mb-8">
+          <h3 class="text-xl font-bold text-slate-900 mb-4">Hosting</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              @click="selectHosting('cloud')"
+              class="relative cursor-pointer rounded-xl p-6 border-2 transition-all"
+              :class="selectedHosting === 'cloud'
+                ? 'border-blue-600 bg-blue-50'
+                : 'border-slate-200 bg-white hover:border-blue-300'"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <div class="text-2xl font-bold text-slate-900">Cloud</div>
+                <div
+                  v-if="selectedHosting === 'cloud'"
+                  class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center"
+                >
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <div class="text-sm text-slate-600">Hosted and managed by us</div>
+            </div>
+
+            <div
+              @click="selectHosting('on-premise')"
+              class="relative cursor-pointer rounded-xl p-6 border-2 transition-all"
+              :class="selectedHosting === 'on-premise'
+                ? 'border-blue-600 bg-blue-50'
+                : 'border-slate-200 bg-white hover:border-blue-300'"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <div class="text-2xl font-bold text-slate-900">On-premise</div>
+                <div
+                  v-if="selectedHosting === 'on-premise'"
+                  class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center"
+                >
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <div class="text-sm text-slate-600">Self-hosted in your infrastructure</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Pricing Summary -->
-        <div class="bg-slate-900 rounded-2xl p-8 text-white">
+        <div v-if="selectedHosting === 'cloud'" class="bg-slate-900 rounded-2xl p-8 text-white">
           <h3 class="text-2xl font-bold mb-6">Pricing summary</h3>
 
           <div class="space-y-3 mb-6">
@@ -289,8 +342,7 @@ const handleBookingCall = () => {
 
         <!-- Enterprise -->
         <div class="mt-8 text-center p-8 bg-slate-50 rounded-2xl">
-          <h3 class="text-xl font-bold text-slate-900 mb-2">Need more than 50 seats?</h3>
-          <p class="text-slate-600 mb-4">Contact us for enterprise pricing and custom solutions.</p>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">For on-premise hosting or enterprise plans, please contact us</h3>
           <button @click="handleBookingCall" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
             Book a quick call
           </button>
