@@ -182,14 +182,8 @@ const handleSubmit = (e) => {
   askQuestion()
 }
 
-const getSourceIcon = (source) => {
-  const icons = {
-    github: '📦',
-    slack: '💬',
-    linear: '📋',
-    google_drive: '📄',
-  }
-  return icons[source] || '📄'
+const getSourceType = (source) => {
+  return source
 }
 
 const loadingStatusText = computed(() => {
@@ -301,27 +295,82 @@ const loadingStatusText = computed(() => {
             <div
               v-for="doc in relevantDocuments"
               :key="doc.id"
-              class="p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+              class="group relative p-4 bg-white border border-slate-200 rounded-lg hover:border-slate-300 hover:shadow-sm transition-all"
             >
-              <div class="flex items-start justify-between gap-4">
+              <div class="flex items-start gap-4">
+                <!-- Icon -->
+                <div class="flex-shrink-0">
+                  <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 group-hover:bg-slate-50 transition-colors">
+                    <!-- GitHub Icon -->
+                    <img
+                      v-if="doc.source === 'github'"
+                      src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg"
+                      alt="GitHub"
+                      class="h-5 w-5"
+                    />
+                    <!-- Slack Icon -->
+                    <img
+                      v-else-if="doc.source === 'slack'"
+                      src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg"
+                      alt="Slack"
+                      class="h-5 w-5"
+                    />
+                    <!-- Linear Icon -->
+                    <svg
+                      v-else-if="doc.source === 'linear'"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 100 100"
+                    >
+                      <path fill="#222326" d="M1.22541 61.5228c-.2225-.9485.90748-1.5459 1.59638-.857L39.3342 97.1782c.6889.6889.0915 1.8189-.857 1.5964C20.0515 94.4522 5.54779 79.9485 1.22541 61.5228ZM.00189135 46.8891c-.01764375.2833.08887215.5599.28957165.7606L52.3503 99.7085c.2007.2007.4773.3075.7606.2896 2.3692-.1476 4.6938-.46 6.9624-.9259.7645-.157 1.0301-1.0963.4782-1.6481L2.57595 39.4485c-.55186-.5519-1.49117-.2863-1.648174.4782-.465915 2.2686-.77832 4.5932-.92588465 6.9624ZM4.21093 29.7054c-.16649.3738-.08169.8106.20765 1.1l64.77602 64.776c.2894.2894.7262.3742 1.1.2077 1.7861-.7956 3.5171-1.6927 5.1855-2.684.5521-.328.6373-1.0867.1832-1.5407L8.43566 24.3367c-.45409-.4541-1.21271-.3689-1.54074.1832-.99132 1.6684-1.88843 3.3994-2.68399 5.1855ZM12.6587 18.074c-.3701-.3701-.393-.9637-.0443-1.3541C21.7795 6.45931 35.1114 0 49.9519 0 77.5927 0 100 22.4073 100 50.0481c0 14.8405-6.4593 28.1724-16.7199 37.3375-.3903.3487-.984.3258-1.3542-.0443L12.6587 18.074Z"/>
+                    </svg>
+                    <!-- Google Drive Icon -->
+                    <img
+                      v-else-if="doc.source === 'google_drive'"
+                      src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg"
+                      alt="Google Drive"
+                      class="h-5 w-5"
+                    />
+                    <!-- Default Document Icon -->
+                    <svg
+                      v-else
+                      class="h-5 w-5 text-slate-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Content -->
                 <div class="flex-1 min-w-0">
-                  <h3 class="font-medium text-slate-900 text-sm mb-1">{{ doc.title }}</h3>
-                  <p v-if="doc.preview" class="text-slate-600 text-xs mb-2 line-clamp-2">
+                  <h3 class="font-medium text-slate-900 text-sm mb-1 leading-snug">{{ doc.title }}</h3>
+                  <p v-if="doc.preview" class="text-slate-600 text-xs mb-2 line-clamp-2 leading-relaxed">
                     {{ doc.preview }}
                   </p>
                   <div class="flex items-center gap-2 text-xs text-slate-500">
-                    <span class="capitalize">{{ doc.source.replace('_', ' ') }}</span>
-                    <span v-if="doc.source_type">· {{ doc.source_type }}</span>
+                    <span class="capitalize font-medium">{{ doc.source.replace('_', ' ') }}</span>
+                    <span v-if="doc.source_type" class="text-slate-400">·</span>
+                    <span v-if="doc.source_type" class="text-slate-500">{{ doc.source_type }}</span>
                   </div>
                 </div>
+
+                <!-- View Link -->
                 <a
                   v-if="doc.source_url"
                   :href="doc.source_url"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="flex-shrink-0 text-slate-600 hover:text-slate-900 text-xs underline transition-colors"
+                  class="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 rounded-md transition-colors"
                 >
-                  View
+                  <span>View</span>
+                  <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
                 </a>
               </div>
             </div>
