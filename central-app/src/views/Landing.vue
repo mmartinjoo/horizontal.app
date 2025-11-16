@@ -16,21 +16,24 @@ const integrations = [
 const features = [
   {
     icon: 'search',
-    title: 'Universal Search',
-    description: 'Search across 8+ tools using natural language. No more tab switching or wondering where that conversation was.',
-    highlight: 'Search in seconds, not hours'
+    title: 'Unified search across 8+ tools',
+    description: "Search across 8+ tools using natural language. You'll get a summary in seconds.",
+    highlight: 'Search in seconds, not minutes',
+    image: '/images/landing-features-2.png'
   },
   {
     icon: 'graph',
-    title: 'Connected Insights',
-    description: 'See how your GitHub PRs, Slack threads, Linear tickets, and docs connect. Understand the full context instantly.',
-    highlight: 'Visual relationship mapping'
+    title: 'Connected insights',
+    description: "You'll see all the important Slack conversations, Jira/Linear issues, Drive docs in one page",
+    highlight: 'Access everything in one place',
+    image: '/images/landing-features-1.png'
   },
   {
     icon: 'history',
-    title: 'Recall Past Decisions',
-    description: 'Remember why you built that workaround? Horizontal shows you the conversations, docs, and tickets that led to every decision.',
-    highlight: 'Never lose context again'
+    title: 'High quality results',
+    description: 'Thanks to the huge knowledge graph and the graphRAG system, Horizontal understands everything in your team',
+    highlight: 'Never lose context again',
+    image: '/images/landing-features-3.png'
   }
 ]
 
@@ -314,17 +317,8 @@ const painPoints = [
     </section>
 
     <!-- Features Section -->
-    <section id="features" class="py-24 bg-white">
+    <section id="features" class="py-24 bg-slate-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-20">
-          <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
-            Built for developers who value their time
-          </h2>
-          <p class="text-xl text-slate-600 max-w-3xl mx-auto">
-            Horizontal understands your entire codebase, conversations, and documentation
-          </p>
-        </div>
-
         <div class="space-y-24">
           <div
             v-for="(feature, index) in features"
@@ -334,17 +328,7 @@ const painPoints = [
           >
             <!-- Feature Content -->
             <div :class="index % 2 === 1 ? 'lg:order-2' : ''">
-              <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 mb-6">
-                <svg v-if="feature.icon === 'search'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <svg v-else-if="feature.icon === 'graph'" class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <svg v-else class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
+              
 
               <h3 class="text-3xl font-bold text-slate-900 mb-4">{{ feature.title }}</h3>
               <p class="text-lg text-slate-600 mb-6">{{ feature.description }}</p>
@@ -353,24 +337,11 @@ const painPoints = [
               </div>
             </div>
 
-            <!-- Feature Visual Placeholder -->
+            <!-- Feature Visual -->
             <div :class="index % 2 === 1 ? 'lg:order-1' : ''">
-              <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-slate-200 p-8 lg:p-12 h-80 flex items-center justify-center">
-                <div class="text-center">
-                  <div class="w-20 h-20 mx-auto mb-4 rounded-xl bg-blue-600 flex items-center justify-center">
-                    <svg v-if="feature.icon === 'search'" class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <svg v-else-if="feature.icon === 'graph'" class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    <svg v-else class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <p class="text-slate-400 text-sm font-medium">Feature visualization</p>
-                </div>
-              </div>
+              <div v-if="feature.image" class="rounded-2xl border border-slate-200 overflow-hidden shadow-lg">
+                <img :src="feature.image" :alt="feature.title" class="w-full h-auto" />
+              </div>              
             </div>
           </div>
         </div>
@@ -378,7 +349,7 @@ const painPoints = [
     </section>
 
     <!-- Use Cases Section -->
-    <section class="py-24 bg-slate-50">
+    <section class="py-24 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
@@ -393,7 +364,7 @@ const painPoints = [
           <!-- Use Case 1 -->
           <div class="bg-white rounded-xl p-8 border border-slate-200">
             <div class="mb-4">
-              <span class="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-sm font-semibold rounded-lg">
+              <span class="inline-block px-3 py-1 bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg">
                 Bug Investigation
               </span>
             </div>
@@ -403,27 +374,21 @@ const painPoints = [
             <p class="text-slate-600 mb-4">
               Instantly find the related GitHub PR, Slack discussion, and Linear ticket that fixed the issue.
             </p>
-            <div class="text-sm text-slate-500">
-              <span class="font-medium text-emerald-600">Saved:</span> 60+ minutes of investigation
-            </div>
           </div>
 
           <!-- Use Case 2 -->
           <div class="bg-white rounded-xl p-8 border border-slate-200">
             <div class="mb-4">
-              <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-sm font-semibold rounded-lg">
-                Onboarding
+              <span class="inline-block px-3 py-1 bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg">
+                PM questions
               </span>
             </div>
             <h4 class="text-xl font-bold text-slate-900 mb-3">
-              "Why do we have this workaround?"
+              "What was the feedback about the new auth system?"
             </h4>
             <p class="text-slate-600 mb-4">
-              New developers get instant context about architectural decisions and legacy code.
+              Recreate context from your lost Slack threads.
             </p>
-            <div class="text-sm text-slate-500">
-              <span class="font-medium text-emerald-600">Saved:</span> Days of onboarding time
-            </div>
           </div>
 
           <!-- Use Case 3 -->
@@ -434,21 +399,18 @@ const painPoints = [
               </span>
             </div>
             <h4 class="text-xl font-bold text-slate-900 mb-3">
-              "Where's our authentication guide?"
+              "Why don't we have real-time updates on the dashboard?"
             </h4>
             <p class="text-slate-600 mb-4">
-              Search once across Drive, Notion, Confluence, and Slack instead of checking each separately.
+              Get the reasoning behind decisions made 6 months ago.
             </p>
-            <div class="text-sm text-slate-500">
-              <span class="font-medium text-emerald-600">Saved:</span> 20+ minutes daily
-            </div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Integrations Section -->
-    <section class="py-24 bg-white">
+    <section class="py-24 bg-slate-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
