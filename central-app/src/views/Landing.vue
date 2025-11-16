@@ -71,9 +71,9 @@ const painPoints = [
     <!-- Navigation -->
     <nav class="border-b border-slate-800 bg-slate-900">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-22">
+        <div class="flex justify-between items-center h-16">
           <div class="flex items-center">
-            <img src="/images/logo_light.png" alt="Horizontal" class="h-21" />
+            <img src="/images/logo_light.png" alt="Horizontal" class="h-16" />
           </div>
           <div class="flex items-center space-x-4">
             <button
@@ -412,7 +412,7 @@ const painPoints = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
-            Connects to your entire stack
+            Connect your entire stack
           </h2>
           <p class="text-xl text-slate-600 max-w-3xl mx-auto">
             One search bar for 8+ tools. More integrations added every month.

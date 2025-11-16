@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Cabinet Grotesk', 'system-ui', 'sans-serif'],
       },
       borderWidth: {
         '3': '3px',

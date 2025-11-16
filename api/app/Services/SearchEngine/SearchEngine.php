@@ -251,25 +251,6 @@ class SearchEngine
             throw new Exception('Unable to answer your question. Answer: ' . $answerData);
         }
 
-        // $relevantDocuments = collect();
-        // foreach ($answerData['relevant_documents'] as $relevantDocument) {
-        //     if ($relevantDocument['type'] === 'document') {
-        //         $document = DocumentChunk::with('document')
-        //             ->find($relevantDocument['id'])
-        //             ->document;
-        //     } else {
-        //         $document = DocumentComment::with('document')
-        //             ->find($relevantDocument['id'])
-        //             ->document;
-        //     }
-            
-        //     if ($relevantDocuments->contains('id', $document->id)) {
-        //         continue;
-        //     }
-
-        //     $relevantDocuments->push($document);
-        // }
-
         $question->update([
             'relevant_documents' => $potentiallyRelevantDocuments->map(function (Document $doc) {
                 return [
@@ -280,8 +261,6 @@ class SearchEngine
                     'preview' => $doc->preview ? $doc->preview : $doc->body,
                 ];
             }),
-            // 'answer' => $answerData['answer'],
-            // 'answered_at' => now(),
         ]);
     }
 
