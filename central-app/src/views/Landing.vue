@@ -19,7 +19,7 @@ const integrations = [
   { name: 'Linear', provider: 'linear' },
   { name: 'Google Chat', provider: 'google_chat' },
   { name: 'GitHub Projects', provider: 'github' },
-  { name: 'Confluence', provider: 'jira' },
+  { name: 'Confluence', provider: 'confluence' },
 ]
 
 const features = [
@@ -71,16 +71,14 @@ const painPoints = [
     <!-- Navigation -->
     <nav class="border-b border-slate-800 bg-slate-900">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
+        <div class="flex justify-between items-center h-22">
           <div class="flex items-center">
-            <span class="text-2xl font-bold text-white">
-              Horizontal
-            </span>
+            <img src="/images/logo_light.png" alt="Horizontal" class="h-21" />
           </div>
           <div class="flex items-center space-x-4">
             <button
               @click="handleBookingDemo"
-              class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+              class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors cursor-pointer"
             >
               Book a demo
             </button>
@@ -112,7 +110,7 @@ const painPoints = [
             <div class="flex flex-col sm:flex-row gap-4 mb-8">
               <button
                 @click="handleBookingDemo"
-                class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3.5 rounded-lg transition-colors text-base"
+                class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3.5 rounded-lg transition-colors text-base cursor-pointer"
               >
                 Book a demo
               </button>
@@ -450,6 +448,8 @@ const painPoints = [
               <!-- Google Chat Logo -->
               <img v-else-if="integration.provider === 'google_chat'" src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Google_Chat_icon_%282023%29.svg" alt="Google Chat" class="w-8 h-8" />
 
+              <img v-else-if="integration.provider === 'confluence'" src="https://upload.wikimedia.org/wikipedia/commons/0/05/Atlassian_Confluence_2017_logo_%28cropped%29.svg" alt="Confluence" class="w-8 h-8" />
+
               <!-- Generic Icon for others -->
               <svg v-else class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -472,7 +472,7 @@ const painPoints = [
         </p>
         <button
           @click="handleSignUp"
-          class="bg-white hover:bg-slate-50 text-blue-600 font-bold px-10 py-5 rounded-lg transition-colors shadow-xl text-lg"
+          class="bg-white hover:bg-slate-50 text-blue-600 font-bold px-10 py-5 rounded-lg transition-colors shadow-xl text-lg cursor-pointer"
         >
           Get Started Now
         </button>
@@ -483,8 +483,8 @@ const painPoints = [
     <footer class="bg-slate-900 text-slate-400 py-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-          <div class="text-2xl font-bold text-slate-100 mb-4">
-            Horizontal
+          <div class="mb-4 flex justify-center">
+            <img src="/images/logo_light.png" alt="Horizontal" class="h-32" />
           </div>
           <p class="text-sm">
             The search platform for engineering teams
