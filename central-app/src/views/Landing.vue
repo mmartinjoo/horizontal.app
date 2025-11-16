@@ -102,13 +102,13 @@ const painPoints = [
                 @click="handleSignUp"
                 class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3.5 rounded-lg transition-colors text-base"
               >
-                Get Started Free
+                Book a demo
               </button>
               <a
                 href="#features"
                 class="inline-flex items-center justify-center border-2 border-slate-300 hover:border-slate-400 text-slate-700 hover:text-slate-900 font-semibold px-8 py-3.5 rounded-lg transition-colors text-base"
               >
-                Watch Demo
+                Get started now
               </a>
             </div>
 
@@ -220,35 +220,94 @@ const painPoints = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
-            Sound familiar?
+            Not knowing <span class="text-blue-600">where to search</span> is painful
           </h2>
-          <p class="text-xl text-slate-600 max-w-3xl mx-auto">
-            Engineering teams waste hours every week hunting for information scattered across tools
-          </p>
         </div>
 
-        <div class="grid lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
-          <div
-            v-for="(point, index) in painPoints"
-            :key="index"
-            class="bg-white rounded-xl p-6 border border-slate-200 hover:border-blue-300 transition-all hover:shadow-lg"
-          >
-            <div class="flex items-start space-x-4">
-              <div class="flex-shrink-0 mt-1">
-                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-              <div class="flex-1">
-                <p class="text-slate-700 mb-2">{{ point.problem }}</p>
-                <div class="flex items-start space-x-2">
-                  <svg class="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                  <p class="text-emerald-700 font-medium">{{ point.solution }}</p>
-                </div>
-              </div>
-            </div>
+        <div class="grid lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Where to search
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              You don't even know where to start the search
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Keywords suck
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              You don't remember the exact keywords
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Context switching
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              You spend 15 minutes swithing across 5 different tools
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Lost context
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              You completely lost the context of your work
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 15-second product overview -->
+    <section class="py-24">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
+            The <span class="text-blue-600">unified search</span> experience you deserve
+          </h2>          
+        </div>
+
+        <div class="grid lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Unified search
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              Access everything in one place
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Natural language
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              Use natural language to ask questions
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Get instant answers
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              In 5 seconds you get the answer from all your tools
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Browse related docs
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              All your Slack convos and Jira tickets in one place
+            </p>
           </div>
         </div>
       </div>
