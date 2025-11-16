@@ -57,18 +57,18 @@ const painPoints = [
 <template>
   <div class="min-h-screen bg-white">
     <!-- Navigation -->
-    <nav class="border-b border-slate-200">
+    <nav class="border-b border-slate-800 bg-slate-900">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center">
-            <span class="text-2xl font-bold text-slate-900">
+            <span class="text-2xl font-bold text-white">
               Horizontal
             </span>
           </div>
           <div class="flex items-center space-x-4">
             <button
               @click="handleSignUp"
-              class="bg-sky-600 hover:bg-sky-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+              class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors"
             >
               Get Started
             </button>
@@ -78,19 +78,19 @@ const painPoints = [
     </nav>
 
     <!-- Hero Section -->
-    <section class="relative overflow-hidden">
+    <section class="relative overflow-hidden bg-slate-900">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
         <div class="text-center max-w-4xl mx-auto">
           <!-- Main Headline -->
-          <h1 class="text-5xl lg:text-7xl font-bold text-slate-900 mb-6 leading-tight">
-            Search <span class="text-blue-600">all your apps</span>
+          <h1 class="text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+            Search <span class="text-sky-400">all your apps</span>
             <br />
             with one question
           </h1>
 
           <!-- Subheadline -->
-          <p class="text-xl lg:text-2xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-            One search bar for <span class="font-semibold text-slate-900">Slack, GitHub, Jira, Drive</span> and 10+ more tools.
+          <p class="text-xl lg:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
+            One search bar for <span class="font-semibold text-white">Slack, GitHub, Jira, Drive</span> and 10+ more tools.
             <br />
             Find what you need in seconds, not hours.
           </p>
@@ -99,13 +99,13 @@ const painPoints = [
           <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
             <button
               @click="handleSignUp"
-              class="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white font-semibold px-8 py-4 rounded-lg transition-colors shadow-lg text-lg"
+              class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-4 rounded-lg transition-colors shadow-lg text-lg"
             >
               Get Started Free
             </button>
             <a
               href="#features"
-              class="w-full sm:w-auto border-2 border-slate-300 hover:border-slate-400 text-slate-700 font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
+              class="w-full sm:w-auto border-2 border-slate-600 hover:border-slate-500 text-slate-300 hover:text-white font-semibold px-8 py-4 rounded-lg transition-colors text-lg"
             >
               See How It Works
             </a>
@@ -113,12 +113,12 @@ const painPoints = [
 
           <!-- Social Proof / Integrations Preview -->
           <div class="flex flex-wrap justify-center items-center gap-6 text-slate-400 text-sm">
-            <span class="text-slate-600 font-medium">Integrates with:</span>
+            <span class="text-slate-400 font-medium">Integrates with:</span>
             <div class="flex flex-wrap justify-center gap-4">
-              <span v-for="integration in integrations.slice(0, 6)" :key="integration" class="text-slate-500 font-medium">
+              <span v-for="integration in integrations.slice(0, 6)" :key="integration" class="text-slate-400 font-medium">
                 {{ integration }}
               </span>
-              <span class="text-slate-500 font-medium">and more...</span>
+              <span class="text-slate-400 font-medium">and more...</span>
             </div>
           </div>
         </div>
@@ -126,8 +126,8 @@ const painPoints = [
 
       <!-- Gradient Background -->
       <div class="absolute top-0 left-0 right-0 h-full -z-10 overflow-hidden">
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
-        <div class="absolute top-0 right-1/4 w-96 h-96 bg-slate-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10"></div>
+        <div class="absolute top-0 right-1/4 w-96 h-96 bg-slate-700 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
       </div>
     </section>
 
