@@ -1,5 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import Pricing from '../components/Pricing.vue'
 
 const router = useRouter()
 
@@ -460,6 +461,9 @@ const painPoints = [
         </div>
       </div>
     </section>
+
+    <!-- Pricing Section -->
+    <Pricing />
 
     <!-- CTA Section -->
     <section class="py-24 bg-blue-600">
