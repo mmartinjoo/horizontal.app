@@ -8,16 +8,16 @@ const handleSignUp = () => {
 }
 
 const integrations = [
-  'GitHub', 'Slack', 'Linear', 'Jira', 'Gmail',
-  'Google Drive', 'Notion', 'Confluence', 'Dropbox',
-  'Calendar', 'Trello', 'AWS S3'
+  'Slack', 'Jira', 'Drive', 'GitHub',
+  'Linear', 'Google Chat', 
+  'GitHub Projects', 'Confluence',
 ]
 
 const features = [
   {
     icon: 'search',
     title: 'Universal Search',
-    description: 'Search across 10+ tools using natural language. No more tab switching or wondering where that conversation was.',
+    description: 'Search across 8+ tools using natural language. No more tab switching or wondering where that conversation was.',
     highlight: 'Search in seconds, not hours'
   },
   {
@@ -88,11 +88,17 @@ const painPoints = [
               Search <span class="text-blue-600">all your apps</span> with one question
             </h1>
 
-            <!-- Subheadline -->
-            <p class="text-lg lg:text-xl text-slate-600 mb-8 leading-relaxed">
-              Discover security-first enterprise search software with AI. Horizontal unifies company knowledge from across apps to automate information discovery.
+            <!-- Subheadline -->            
+            <p class="text-lg lg:text-xl text-slate-600 mb-2 leading-relaxed">
+              "<span class="font-bold">Where to search</span>" and <span class="font-bold">context switching</span> are past problems. Horizontal is the unified search platform for your engineering team.
             </p>
-
+            <p class="text-lg lg:text-xl text-slate-600 mb-2 leading-relaxed">
+              
+            </p>
+            <p class="text-lg lg:text-xl text-slate-600 mb-8 leading-relaxed">
+              Stop switching between 5+ tools to find what you need.
+            </p>
+            
             <!-- CTA Buttons -->
             <div class="flex flex-col sm:flex-row gap-4 mb-8">
               <button
@@ -116,7 +122,7 @@ const painPoints = [
                 <span v-for="integration in integrations.slice(0, 5)" :key="integration" class="px-3 py-1 bg-slate-100 rounded-md font-medium text-slate-700">
                   {{ integration }}
                 </span>
-                <span class="px-3 py-1 bg-slate-100 rounded-md font-medium text-slate-700">+7 more</span>
+                <span class="px-3 py-1 bg-slate-100 rounded-md font-medium text-slate-700">+3 more</span>
               </div>
             </div>
           </div>
@@ -204,7 +210,7 @@ const painPoints = [
                     <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.5 0L2.5 6v12l10 6 10-6V6l-10-6z"/></svg>
                   </div>
                 </div>
-                <span class="text-xs font-semibold text-slate-700">10+ apps</span>
+                <span class="text-xs font-semibold text-slate-700">8+ apps</span>
               </div>
             </div>
           </div>
@@ -393,7 +399,7 @@ const painPoints = [
             Connects to your entire stack
           </h2>
           <p class="text-xl text-slate-600 max-w-3xl mx-auto">
-            One search bar for 10+ tools. More integrations added every month.
+            One search bar for 8+ tools. More integrations added every month.
           </p>
         </div>
 
