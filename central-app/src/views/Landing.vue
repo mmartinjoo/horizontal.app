@@ -228,12 +228,12 @@ const painPoints = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
-            Not knowing <span class="text-blue-600">where to search</span> is painful
+            Not knowing <span class="text-red-700 decoration-red-600 decoration-2">where to search</span> is painful
           </h2>
         </div>
 
         <div class="grid lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
-          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+          <div class="bg-white rounded-xl p-8 border-l-4 border-l-red-700 border-t border-r border-b border-slate-200 text-center">
             <h3 class="text-xl font-bold text-slate-900 mb-4">
               Where to search
             </h3>
@@ -242,7 +242,7 @@ const painPoints = [
             </p>
           </div>
 
-          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+          <div class="bg-white rounded-xl p-8 border-l-4 border-l-red-700 border-t border-r border-b border-slate-200 text-center">
             <h3 class="text-xl font-bold text-slate-900 mb-4">
               Keywords suck
             </h3>
@@ -251,7 +251,7 @@ const painPoints = [
             </p>
           </div>
 
-          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+          <div class="bg-white rounded-xl p-8 border-l-4 border-l-red-700 border-t border-r border-b border-slate-200 text-center">
             <h3 class="text-xl font-bold text-slate-900 mb-4">
               Context switching
             </h3>
@@ -260,7 +260,7 @@ const painPoints = [
             </p>
           </div>
 
-          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+          <div class="bg-white rounded-xl p-8 border-l-4 border-l-red-700 border-t border-r border-b border-slate-200 text-center">
             <h3 class="text-xl font-bold text-slate-900 mb-4">
               Lost context
             </h3>
@@ -277,12 +277,12 @@ const painPoints = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
-            The <span class="text-blue-600">unified search</span> experience you deserve
-          </h2>          
+            The <span class="text-green-700 decoration-green-600 decoration-2">unified search</span> experience you deserve
+          </h2>
         </div>
 
         <div class="grid lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
-          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+          <div class="bg-white rounded-xl p-8 border-l-4 border-l-green-700 border-t border-r border-b border-slate-200 text-center">
             <h3 class="text-xl font-bold text-slate-900 mb-4">
               Unified search
             </h3>
@@ -291,7 +291,7 @@ const painPoints = [
             </p>
           </div>
 
-          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+          <div class="bg-white rounded-xl p-8 border-l-4 border-l-green-700 border-t border-r border-b border-slate-200 text-center">
             <h3 class="text-xl font-bold text-slate-900 mb-4">
               Natural language
             </h3>
@@ -300,7 +300,7 @@ const painPoints = [
             </p>
           </div>
 
-          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+          <div class="bg-white rounded-xl p-8 border-l-4 border-l-green-700 border-t border-r border-b border-slate-200 text-center">
             <h3 class="text-xl font-bold text-slate-900 mb-4">
               Get instant answers
             </h3>
@@ -309,7 +309,7 @@ const painPoints = [
             </p>
           </div>
 
-          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+          <div class="bg-white rounded-xl p-8 border-l-4 border-l-green-700 border-t border-r border-b border-slate-200 text-center">
             <h3 class="text-xl font-bold text-slate-900 mb-4">
               Browse related docs
             </h3>
