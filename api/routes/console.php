@@ -4,6 +4,7 @@ use App\Console\Commands\CheckRefreshTokensCommand;
 use App\Jobs\Indexing\Communication\GoogleChat\RefreshGoogleChatTokensJob;
 use App\Jobs\Indexing\Communication\Slack\RefreshSlackTokensJob;
 use App\Jobs\Indexing\Communication\Slack\UpdateSlackMessageLinks;
+use App\Jobs\Indexing\StartEmergencyIndexing;
 use App\Jobs\Indexing\StartIndexing;
 use App\Jobs\Indexing\Storage\GoogleDrive\RefreshGoogleDriveTokensJob;
 use App\Jobs\Indexing\TaskManagement\Jira\RefreshJiraTokensJob;
@@ -27,3 +28,4 @@ Schedule::job(new SuperviseAvailableMemgraphInstances)->everyMinute();
 //  - 7PM-11PM (previous day) in the US
 //  - 1AM-4AM in Europe
 Schedule::job(new StartIndexing)->dailyAt('03:00');
+Schedule::job(new StartEmergencyIndexing)->everyThirtyMinutes();
