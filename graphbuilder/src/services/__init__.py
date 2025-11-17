@@ -1,2 +1,2 @@
 from .document import count_comments, count_document_chunks, get_comment_batch, get_document_chunk_batch, get_next_batch
-from .horizontal_api import get_graph_db_connection_info, create_workflow_bucket, add_bucket_items, mark_bucket_items_as_completed, mark_bucket_items_as_processing, mark_bucket_items_as_failed
+from .horizontal_api import get_graph_db_connection_info, create_workflow_bucket, add_bucket_items, mark_bucket_items_as_completed, mark_bucket_items_as_processing, mark_bucket_items_as_failed, get_llm_provider

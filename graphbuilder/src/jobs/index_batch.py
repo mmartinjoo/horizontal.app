@@ -23,7 +23,7 @@ def index_batch(type: str,
             get_batch_fn = get_comment_batch
         
         reader = create_db_reader(tenant_id=tenant_id)
-        llm = create_llm()
+        llm = create_llm(tenant_id=tenant_id)
         embed_model = create_embed_model()
         documents = get_batch_fn(reader=reader, ids=ids)
         

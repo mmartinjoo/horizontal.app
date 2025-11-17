@@ -17,7 +17,6 @@ use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
 use App\Services\KnowledgeGraph\GraphBuilder;
 use App\Services\LLM\Embedder;
-use App\Services\LLM\Fireworks;
 use App\Services\LLM\LLMFactory;
 use App\Services\SearchEngine\SearchEngine;
 use Illuminate\Support\Facades\URL;
@@ -30,16 +29,6 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') === 'production') {
             URL::forceScheme('https');
         }
-
-        $this->app
-            ->when(Fireworks::class)
-            ->needs('$apiKey')
-            ->give(config('services.fireworks.api_key'));
-
-        // $this->app
-        //     ->bind(LLM::class, function () {
-        //         return LLMFactory::create(tenancy()->tenant);
-        //     });
 
         $this->app
             ->bind(Embedder::class, function () {
