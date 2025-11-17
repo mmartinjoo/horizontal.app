@@ -10,7 +10,9 @@ from src.services.horizontal_api import get_graph_db_connection_info
 from llama_index.llms.fireworks import Fireworks
 from llama_index.llms.openai import OpenAI
 from llama_index.core.embeddings import BaseEmbedding
+from llama_index.core.llms import CustomLLM
 from src.fireworks_embedding import FireworksEmbedding
+from src.fireworks_llm import FireworksLLM
 from psycopg2.extensions import cursor as Cursor
 
 def create_db_reader(tenant_id: str) -> DatabaseReader:
@@ -53,13 +55,12 @@ def create_queue() -> Queue:
     redis = Redis(host=os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT"))
     return Queue(connection=redis, name="default", default_timeout="30m")
 
-def create_llm() -> Fireworks:
+def create_llm() -> CustomLLM:    
     if os.getenv("LLM_PROVIDER") == "openai":
         return OpenAI(temperature=0.0, model=os.getenv("LLM_MODEL"))
     else:
-        return Fireworks(api_key=os.getenv("FIREWORKS_API_KEY"),
-                         temperature=0,
-                         model=os.getenv("LLM_MODEL"))
+        return FireworksLLM(api_key=os.getenv("FIREWORKS_API_KEY"),
+                                     model_name=os.getenv("LLM_MODEL"))
     
 def create_embed_model() -> BaseEmbedding:
     return FireworksEmbedding()
