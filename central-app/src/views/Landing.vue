@@ -1,68 +1,505 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import Pricing from '../components/Pricing.vue'
 
 const router = useRouter()
 
 const handleSignUp = () => {
-  router.push('/signup')
+  const pricingSection = document.getElementById('pricing-section')
+  if (pricingSection) {
+    pricingSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 }
+
+const handleBookingDemo = () => {
+  window.open('https://cal.com/martin-joo-horizontal/horizontal-demo', '_blank');
+}
+
+const integrations = [
+  { name: 'Slack', provider: 'slack' },
+  { name: 'Jira', provider: 'jira' },
+  { name: 'Drive', provider: 'google_drive' },
+  { name: 'GitHub', provider: 'github' },
+  { name: 'Linear', provider: 'linear' },
+  { name: 'Google Chat', provider: 'google_chat' },
+  { name: 'GitHub Projects', provider: 'github' },
+  { name: 'Confluence', provider: 'confluence' },
+]
+
+const features = [
+  {
+    icon: 'search',
+    title: 'Unified search across 8+ tools',
+    description: "Search across 8+ tools using natural language. You'll get a summary in seconds.",
+    highlight: 'Search in seconds, not minutes',
+    image: '/images/landing-features-2.png'
+  },
+  {
+    icon: 'graph',
+    title: 'Connected insights',
+    description: "You'll see all the important Slack conversations, Jira/Linear issues, Drive docs in one page",
+    highlight: 'Access everything in one place',
+    image: '/images/landing-features-1.png'
+  },
+  {
+    icon: 'history',
+    title: 'High quality results',
+    description: 'Thanks to the huge knowledge graph and the graphRAG system, Horizontal understands everything in your team',
+    highlight: 'Never lose context again',
+    image: '/images/landing-features-3.png'
+  }
+]
+
+const painPoints = [
+  {
+    problem: 'Switching between 5+ different apps to find information',
+    solution: 'One search bar for everything'
+  },
+  {
+    problem: 'Spending 20+ minutes recreating context for bugs',
+    solution: 'Instant access to related tickets, PRs, and conversations'
+  },
+  {
+    problem: 'Asking "where did we discuss this?" on Slack',
+    solution: 'Smart search that knows where to look'
+  },
+  {
+    problem: 'New developers taking weeks to ramp up',
+    solution: 'AI-powered knowledge base that answers questions'
+  }
+]
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-    <div class="max-w-4xl w-full">
-      <div class="text-center">
-        <!-- Logo/Brand -->
-        <h1 class="text-5xl font-bold text-slate-900 mb-4">
-          Horizontal
-        </h1>
-
-        <!-- Tagline -->
-        <p class="text-xl text-slate-600 mb-12 max-w-2xl mx-auto">
-          Your team's knowledge, searchable in seconds. Connect your tools and find what you need, when you need it.
-        </p>
-
-        <!-- Sign Up Button -->
-        <button
-          @click="handleSignUp"
-          class="inline-flex items-center justify-center bg-sky-600 hover:bg-sky-700 text-white font-semibold px-8 py-3.5 rounded-lg transition-colors shadow-sm text-lg"
-        >
-          Get Started
-        </button>
-
-        <!-- Features Preview (Simple) -->
-        <div class="mt-20 grid gap-8 sm:grid-cols-3">
-          <div class="text-center">
-            <div class="flex h-12 w-12 mx-auto items-center justify-center rounded-lg bg-slate-100 border border-slate-200 mb-4">
-              <svg class="h-6 w-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <h3 class="font-semibold text-slate-900 mb-2">Universal Search</h3>
-            <p class="text-sm text-slate-600">Search across all your tools from one place</p>
+  <div class="min-h-screen bg-white">
+    <!-- Navigation -->
+    <nav class="border-b border-slate-800 bg-slate-900">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center">
+            <img src="/images/logo_light.png" alt="Horizontal" class="h-16" />
           </div>
-
-          <div class="text-center">
-            <div class="flex h-12 w-12 mx-auto items-center justify-center rounded-lg bg-slate-100 border border-slate-200 mb-4">
-              <svg class="h-6 w-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <h3 class="font-semibold text-slate-900 mb-2">Lightning Fast</h3>
-            <p class="text-sm text-slate-600">Get results in milliseconds, not minutes</p>
-          </div>
-
-          <div class="text-center">
-            <div class="flex h-12 w-12 mx-auto items-center justify-center rounded-lg bg-slate-100 border border-slate-200 mb-4">
-              <svg class="h-6 w-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <h3 class="font-semibold text-slate-900 mb-2">Team Collaboration</h3>
-            <p class="text-sm text-slate-600">Keep your team in sync with shared knowledge</p>
+          <div class="flex items-center space-x-4">
+            <button
+              @click="handleBookingDemo"
+              class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors cursor-pointer"
+            >
+              Book a demo
+            </button>
           </div>
         </div>
       </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+          <!-- Left Side - Content -->
+          <div>
+            <!-- Main Headline -->
+            <h1 class="text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
+              Search <span class="text-blue-600">all your apps</span> with one question
+            </h1>
+
+            <!-- Subheadline -->            
+            <p class="text-lg lg:text-xl text-slate-600 mb-2 leading-relaxed">
+              "<span class="font-bold">Where to search</span>" and <span class="font-bold">context switching</span> are past problems.
+            </p>
+            <p class="text-lg lg:text-xl text-slate-600 mb-8 leading-relaxed">
+              Give your engineering team a unified search platform. Stop switching between 5+ tools to find what you need.
+            </p>
+            
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 mb-8">
+              <button
+                @click="handleBookingDemo"
+                class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3.5 rounded-lg transition-colors text-base cursor-pointer"
+              >
+                Book a demo
+              </button>
+            </div>
+
+            <!-- Social Proof / Integrations -->
+            <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+              <span class="font-medium">Integrates with:</span>
+              <div class="flex flex-wrap gap-3">
+                <span v-for="integration in integrations.slice(0, 5)" :key="integration.name" class="px-3 py-1 bg-slate-100 rounded-md font-medium text-slate-700">
+                  {{ integration.name }}
+                </span>
+                <span class="px-3 py-1 bg-slate-100 rounded-md font-medium text-slate-700">+3 more</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Side - Visual -->
+          <div class="relative">
+            <div class="relative bg-gradient-to-br from-blue-50 to-slate-50 rounded-2xl border border-slate-200 p-8 lg:p-12">
+              <!-- Search Interface Mockup -->
+              <div class="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
+                <!-- Search Bar -->
+                <div class="p-6 border-b border-slate-200">
+                  <div class="flex items-center space-x-3 px-4 py-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <span class="text-slate-400 text-sm">What caused the MySQL timeout last month?</span>
+                  </div>
+                </div>
+
+                <!-- Results -->
+                <div class="p-6 space-y-4">
+                  <!-- Result Item 1 -->
+                  <div class="flex items-start space-x-3 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <div class="w-8 h-8 rounded bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center space-x-2 mb-1">
+                        <span class="text-xs font-semibold text-blue-600">GitHub PR #247</span>
+                        <span class="text-xs text-slate-400">• 2 months ago</span>
+                      </div>
+                      <p class="text-sm text-slate-900 font-medium mb-1">Refactor bulk create API</p>
+                      <p class="text-xs text-slate-600">Fixed MySQL max_allowed_packet exceeded error...</p>
+                    </div>
+                  </div>
+
+                  <!-- Result Item 2 -->
+                  <div class="flex items-start space-x-3 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <div class="w-8 h-8 rounded bg-purple-100 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center space-x-2 mb-1">
+                        <span class="text-xs font-semibold text-purple-600">Slack #engineering</span>
+                        <span class="text-xs text-slate-400">• 2 months ago</span>
+                      </div>
+                      <p class="text-sm text-slate-900 font-medium mb-1">Database error discussion</p>
+                      <p class="text-xs text-slate-600">Tom: The max_allowed_packet value needs to be increased...</p>
+                    </div>
+                  </div>
+
+                  <!-- Result Item 3 -->
+                  <div class="flex items-start space-x-3 p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <div class="w-8 h-8 rounded bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12.5 0L2.5 6v12l10 6 10-6V6l-10-6zm6.9 17.5l-6.9 4.2-6.9-4.2V9.3l6.9 4.2 6.9-4.2v8.2z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center space-x-2 mb-1">
+                        <span class="text-xs font-semibold text-blue-600">Linear DEV-238</span>
+                        <span class="text-xs text-slate-400">• 2 months ago</span>
+                      </div>
+                      <p class="text-sm text-slate-900 font-medium mb-1">Refactor bulk creation INSERT query</p>
+                      <p class="text-xs text-slate-600">Closed by Peter • Merged with PR #247</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Floating integration badges -->
+              <div class="absolute -top-4 -right-4 bg-white rounded-lg shadow-lg border border-slate-200 px-4 py-2 flex items-center space-x-2">
+                <div class="flex -space-x-2">
+                  <div class="w-6 h-6 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center">
+                    <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                  </div>
+                  <div class="w-6 h-6 rounded-full bg-purple-100 border-2 border-white flex items-center justify-center">
+                    <svg class="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 24 24"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52z"/></svg>
+                  </div>
+                  <div class="w-6 h-6 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center">
+                    <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.5 0L2.5 6v12l10 6 10-6V6l-10-6z"/></svg>
+                  </div>
+                </div>
+                <span class="text-xs font-semibold text-slate-700">8+ apps</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pain Points Section -->
+    <section class="py-24 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
+            Not knowing <span class="text-blue-600">where to search</span> is painful
+          </h2>
+        </div>
+
+        <div class="grid lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Where to search
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              You don't even know where to start the search
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Keywords suck
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              You don't remember the exact keywords
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Context switching
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              You spend 15 minutes swithing across 5 different tools
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Lost context
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              You completely lost the context of your work
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 15-second product overview -->
+    <section class="py-24">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
+            The <span class="text-blue-600">unified search</span> experience you deserve
+          </h2>          
+        </div>
+
+        <div class="grid lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Unified search
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              Access everything in one place
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Natural language
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              Use natural language to ask questions
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Get instant answers
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              In 5 seconds you get the answer from all your tools
+            </p>
+          </div>
+
+          <div class="bg-white rounded-xl p-8 border border-slate-200 text-center">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">
+              Browse related docs
+            </h3>
+            <p class="text-slate-600 leading-relaxed">
+              All your Slack convos and Jira tickets in one place
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-24 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="space-y-24">
+          <div
+            v-for="(feature, index) in features"
+            :key="index"
+            class="grid lg:grid-cols-2 gap-12 items-center"
+            :class="index % 2 === 1 ? 'lg:flex-row-reverse' : ''"
+          >
+            <!-- Feature Content -->
+            <div :class="index % 2 === 1 ? 'lg:order-2' : ''">
+              
+
+              <h3 class="text-3xl font-bold text-slate-900 mb-4">{{ feature.title }}</h3>
+              <p class="text-lg text-slate-600 mb-6">{{ feature.description }}</p>
+              <div class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-50 border border-blue-200">
+                <span class="text-sm font-semibold text-blue-700">{{ feature.highlight }}</span>
+              </div>
+            </div>
+
+            <!-- Feature Visual -->
+            <div :class="index % 2 === 1 ? 'lg:order-1' : ''">
+              <div v-if="feature.image" class="rounded-2xl border border-slate-200 overflow-hidden shadow-lg">
+                <img :src="feature.image" :alt="feature.title" class="w-full h-auto" />
+              </div>              
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Use Cases Section -->
+    <section class="py-24 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
+            Real questions, real answers
+          </h2>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+          <!-- Use Case 1 -->
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="mb-4">
+              <span class="inline-block px-3 py-1 bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg">
+                Bug Investigation
+              </span>
+            </div>
+            <h4 class="text-xl font-bold text-slate-900 mb-3">
+              "What caused the MySQL timeout last month?"
+            </h4>
+            <p class="text-slate-600 mb-4">
+              Instantly find the related GitHub PR, Slack discussion, and Linear ticket that fixed the issue.
+            </p>
+          </div>
+
+          <!-- Use Case 2 -->
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="mb-4">
+              <span class="inline-block px-3 py-1 bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg">
+                PM questions
+              </span>
+            </div>
+            <h4 class="text-xl font-bold text-slate-900 mb-3">
+              "What was the feedback about the new auth system?"
+            </h4>
+            <p class="text-slate-600 mb-4">
+              Recreate context from your lost Slack threads.
+            </p>
+          </div>
+
+          <!-- Use Case 3 -->
+          <div class="bg-white rounded-xl p-8 border border-slate-200">
+            <div class="mb-4">
+              <span class="inline-block px-3 py-1 bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg">
+                Context Recovery
+              </span>
+            </div>
+            <h4 class="text-xl font-bold text-slate-900 mb-3">
+              "Why don't we have real-time updates on the dashboard?"
+            </h4>
+            <p class="text-slate-600 mb-4">
+              Get the reasoning behind decisions made 6 months ago.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Integrations Section -->
+    <section class="py-24 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
+            Connect your entire stack
+          </h2>
+          <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+            One search bar for 8+ tools. More integrations added every month.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+          <div
+            v-for="integration in integrations"
+            :key="integration.name"
+            class="bg-white border-2 border-slate-200 rounded-xl p-6 text-center hover:border-blue-400 hover:shadow-lg transition-all"
+          >
+            <div class="w-12 h-12 mx-auto mb-3 rounded-lg bg-slate-50 flex items-center justify-center">
+              <!-- Jira Logo -->
+              <svg v-if="integration.provider === 'jira'" fill="none" height="32" viewBox="0 0 32 32" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#3266D4" d="M27.545 24.378 16.96 3.208c-.208-.458-.417-.541-.667-.541-.208 0-.458.083-.708.5-1.5 2.375-2.167 5.125-2.167 8 0 4.001 2.042 7.752 5.042 13.795.334.666.584.791 1.167.791h7.335c.541 0 .833-.208.833-.625 0-.208-.042-.333-.25-.75M12.168 14.377c-.834-1.25-1.084-1.334-1.292-1.334s-.333.083-.708.834L4.875 24.46c-.167.334-.208.459-.208.625 0 .334.291.667.916.667h7.46c.5 0 .875-.416 1.083-1.208.25-1 .334-1.876.334-2.917 0-2.917-1.292-5.751-2.292-7.251"></path>
+              </svg>
+
+              <!-- Linear Logo -->
+              <svg v-else-if="integration.provider === 'linear'" xmlns="http://www.w3.org/2000/svg" fill="none" width="32" height="32" viewBox="0 0 100 100">
+                <path fill="#222326" d="M1.22541 61.5228c-.2225-.9485.90748-1.5459 1.59638-.857L39.3342 97.1782c.6889.6889.0915 1.8189-.857 1.5964C20.0515 94.4522 5.54779 79.9485 1.22541 61.5228ZM.00189135 46.8891c-.01764375.2833.08887215.5599.28957165.7606L52.3503 99.7085c.2007.2007.4773.3075.7606.2896 2.3692-.1476 4.6938-.46 6.9624-.9259.7645-.157 1.0301-1.0963.4782-1.6481L2.57595 39.4485c-.55186-.5519-1.49117-.2863-1.648174.4782-.465915 2.2686-.77832 4.5932-.92588465 6.9624ZM4.21093 29.7054c-.16649.3738-.08169.8106.20765 1.1l64.77602 64.776c.2894.2894.7262.3742 1.1.2077 1.7861-.7956 3.5171-1.6927 5.1855-2.684.5521-.328.6373-1.0867.1832-1.5407L8.43566 24.3367c-.45409-.4541-1.21271-.3689-1.54074.1832-.99132 1.6684-1.88843 3.3994-2.68399 5.1855ZM12.6587 18.074c-.3701-.3701-.393-.9637-.0443-1.3541C21.7795 6.45931 35.1114 0 49.9519 0 77.5927 0 100 22.4073 100 50.0481c0 14.8405-6.4593 28.1724-16.7199 37.3375-.3903.3487-.984.3258-1.3542-.0443L12.6587 18.074Z"/>
+              </svg>
+
+              <!-- Google Drive Logo -->
+              <img v-else-if="integration.provider === 'google_drive'" src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" alt="Drive" class="w-8 h-8" />
+
+              <!-- GitHub Logo -->
+              <img v-else-if="integration.provider === 'github'" src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" alt="GitHub" class="w-8 h-8" />
+
+              <!-- Slack Logo -->
+              <img v-else-if="integration.provider === 'slack'" src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg" alt="Slack" class="w-8 h-8" />
+
+              <!-- Google Chat Logo -->
+              <img v-else-if="integration.provider === 'google_chat'" src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Google_Chat_icon_%282023%29.svg" alt="Google Chat" class="w-8 h-8" />
+
+              <img v-else-if="integration.provider === 'confluence'" src="https://upload.wikimedia.org/wikipedia/commons/0/05/Atlassian_Confluence_2017_logo_%28cropped%29.svg" alt="Confluence" class="w-8 h-8" />
+
+              <!-- Generic Icon for others -->
+              <svg v-else class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <span class="text-sm font-semibold text-slate-700">{{ integration.name }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <div id="pricing-section">
+      <Pricing />
     </div>
+
+    <!-- CTA Section -->
+    <section class="py-24 bg-blue-600">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-4xl lg:text-6xl font-bold text-white mb-6">
+          Stop searching and start understanding
+        </h2>
+        <p class="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
+          Join engineering teams who found their sanity with Horizontal
+        </p>
+        <button
+          @click="handleSignUp"
+          class="bg-white hover:bg-slate-50 text-blue-600 font-bold px-10 py-5 rounded-lg transition-colors shadow-xl text-lg cursor-pointer"
+        >
+          Get Started Now
+        </button>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <div class="mb-4 flex justify-center">
+            <img src="/images/logo_light.png" alt="Horizontal" class="h-32" />
+          </div>
+          <p class="text-sm">
+            The search platform for engineering teams
+          </p>
+        </div>
+      </div>
+    </footer>
   </div>
 </template>

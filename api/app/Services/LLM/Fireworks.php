@@ -5,6 +5,7 @@ namespace App\Services\LLM;
 use Exception;
 use Generator;
 use GuzzleHttp\Client;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 
 class Fireworks extends LLM implements Embedder
@@ -91,11 +92,19 @@ class Fireworks extends LLM implements Embedder
                         break 2;
                     }
                     
-                    $json = json_decode($data, true);
+                    logger($data);
+                    $json = json_decode($data, true);            
                     if ($json && isset($json['choices'][0]['delta']['content'])) {
                         $content = $json['choices'][0]['delta']['content'];
 
                         $destination->write($content);
+
+                        if ($json['usage']) {
+                            $destination->recordTokenUsage(
+                                inputTokens: Arr::get($json, 'usage.prompt_tokens', 0),
+                                outputTokens: Arr::get($json, 'usage.completion_tokens', 0),
+                            );
+                        }
                     }
                 }
             }

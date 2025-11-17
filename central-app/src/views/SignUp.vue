@@ -1,15 +1,14 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
-const router = useRouter()
+const route = useRoute()
 
 // Form fields
 const adminUserName = ref('')
 const adminUserEmail = ref('')
 const companyName = ref('')
 const subdomain = ref('')
-const teamSize = ref('')
 const country = ref('')
 const hasNativeContent = ref(null)
 
@@ -18,15 +17,6 @@ const isLoading = ref(false)
 
 // Error state
 const error = ref('')
-
-// Available team sizes
-const teamSizes = [
-  { value: '1-10', label: '1-10 people' },
-  { value: '11-50', label: '11-50 people' },
-  { value: '51-200', label: '51-200 people' },
-  { value: '201-500', label: '201-500 people' },
-  { value: '500+', label: '500+ people' }
-]
 
 // Popular countries
 const countries = [
@@ -115,7 +105,7 @@ const handleSubmit = async () => {
     return
   }
 
-  if (!teamSize.value) {
+  if (!route.query.number_of_seats) {
     error.value = 'Please select your team size'
     return
   }
@@ -146,9 +136,12 @@ const handleSubmit = async () => {
           admin_user_email: adminUserEmail.value,
           company_name: companyName.value,
           subdomain: subdomain.value,
-          team_size: teamSize.value,
+          team_size: route.query.number_of_seats,
+          questions_per_month: route.query.questions_per_month,
+          data_retention: route.query.data_retention,
+          price: route.query.price,
           country: country.value,
-          has_native_content: hasNativeContent.value
+          has_native_content: hasNativeContent.value ?? false,
         })
       }    
     )
@@ -216,7 +209,7 @@ const handleSubmit = async () => {
               v-model="adminUserEmail"
               type="email"
               required
-              placeholder="john@acme.com"
+              placeholder="john@your-company.com"
               class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors"
               :disabled="isLoading"
             />
@@ -233,7 +226,7 @@ const handleSubmit = async () => {
               @input="handleCompanyNameInput"
               type="text"
               required
-              placeholder="Acme Inc."
+              placeholder="Your Company Inc."
               class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors"
               :disabled="isLoading"
             />
@@ -250,7 +243,7 @@ const handleSubmit = async () => {
                 v-model="subdomain"
                 type="text"
                 required
-                placeholder="acme"
+                placeholder="your-company"
                 class="flex-1 px-4 py-2.5 border border-slate-300 rounded-l-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors"
                 :disabled="isLoading"
                 :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': !isSubdomainValid }"
@@ -265,21 +258,6 @@ const handleSubmit = async () => {
             <p v-else class="mt-2 text-sm text-slate-500">
               Your team will access Horizontal at <span class="font-medium text-slate-700">{{ subdomain || 'your-company' }}.horizontal.app</span>
             </p>
-          </div>
-
-          <!-- Team Size -->
-          <div>
-            <label for="team-size" class="block text-sm font-medium text-slate-700 mb-2">
-              Team Size
-            </label>
-            <input
-              id="team-size"
-              v-model="teamSize"
-              required
-              type="number"
-              class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors"
-              :disabled="isLoading"
-            >            
           </div>
 
           <!-- Country -->
@@ -348,7 +326,7 @@ const handleSubmit = async () => {
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            {{ isLoading ? 'Creating your workspace...' : 'Create Workspace' }}
+            {{ isLoading ? 'Creating your instance...' : 'Create your instance' }}
           </button>
 
           <!-- Back to Landing -->
