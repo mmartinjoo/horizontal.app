@@ -1,15 +1,14 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
-const router = useRouter()
+const route = useRoute()
 
 // Form fields
 const adminUserName = ref('')
 const adminUserEmail = ref('')
 const companyName = ref('')
 const subdomain = ref('')
-const teamSize = ref('')
 const country = ref('')
 const hasNativeContent = ref(null)
 
@@ -18,15 +17,6 @@ const isLoading = ref(false)
 
 // Error state
 const error = ref('')
-
-// Available team sizes
-const teamSizes = [
-  { value: '1-10', label: '1-10 people' },
-  { value: '11-50', label: '11-50 people' },
-  { value: '51-200', label: '51-200 people' },
-  { value: '201-500', label: '201-500 people' },
-  { value: '500+', label: '500+ people' }
-]
 
 // Popular countries
 const countries = [
@@ -115,7 +105,7 @@ const handleSubmit = async () => {
     return
   }
 
-  if (!teamSize.value) {
+  if (!route.query.number_of_seats) {
     error.value = 'Please select your team size'
     return
   }
@@ -146,9 +136,12 @@ const handleSubmit = async () => {
           admin_user_email: adminUserEmail.value,
           company_name: companyName.value,
           subdomain: subdomain.value,
-          team_size: teamSize.value,
+          team_size: route.query.number_of_seats,
+          questions_per_month: route.query.questions_per_month,
+          data_retention: route.query.data_retention,
+          price: route.query.price,
           country: country.value,
-          has_native_content: hasNativeContent.value
+          has_native_content: hasNativeContent.value ?? false,
         })
       }    
     )
@@ -267,21 +260,6 @@ const handleSubmit = async () => {
             </p>
           </div>
 
-          <!-- Team Size -->
-          <div>
-            <label for="team-size" class="block text-sm font-medium text-slate-700 mb-2">
-              Team Size
-            </label>
-            <input
-              id="team-size"
-              v-model="teamSize"
-              required
-              type="number"
-              class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors"
-              :disabled="isLoading"
-            >            
-          </div>
-
           <!-- Country -->
           <div>
             <label for="country" class="block text-sm font-medium text-slate-700 mb-2">
@@ -348,7 +326,7 @@ const handleSubmit = async () => {
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            {{ isLoading ? 'Creating your workspace...' : 'Create Workspace' }}
+            {{ isLoading ? 'Creating your instance...' : 'Create your instance' }}
           </button>
 
           <!-- Back to Landing -->

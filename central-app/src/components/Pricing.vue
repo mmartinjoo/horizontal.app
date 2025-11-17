@@ -136,6 +136,17 @@ const formatPrice = (price) => {
 const handleBookingCall = () => {
   window.open('https://cal.com/martin-joo-horizontal/horizontal-demo', '_blank');
 }
+
+const handleGetStarted = () => {
+  const params = new URLSearchParams({
+    number_of_seats: selectedSeats.value,
+    questions_per_month: availableAdditionalQuestions.value[selectedAdditionalQuestions.value].questions,
+    data_retention: availableDataRetention.value[selectedDataRetention.value].months,
+    price: totalPrice.value
+  })
+
+  window.location.href = `/signup?${params.toString()}`
+}
 </script>
 
 <template>
@@ -332,7 +343,7 @@ const handleBookingCall = () => {
             <div class="text-slate-400 text-sm mt-1 text-right">per month</div>
           </div>
 
-          <button class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg">
+          <button @click="handleGetStarted" class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg">
             Get Started
           </button>
 
