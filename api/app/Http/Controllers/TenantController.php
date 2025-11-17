@@ -16,7 +16,6 @@ class TenantController
         $request->validate([
             'company_name' => ['required', 'string'],
             'subdomain' => ['required', 'string', 'ascii', 'lowercase'],
-            'team_size' => ['required', 'numeric'],
             'country' => ['required', 'string'],
             'has_native_content' => ['sometimes', 'bool'],
             'admin_user_email' => ['required', 'email'],

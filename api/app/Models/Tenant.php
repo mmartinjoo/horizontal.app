@@ -26,6 +26,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'graph_db_scheme',
             'questions_per_month',
             'data_retention',
+            'number_of_seats',
         ];
     }
 }

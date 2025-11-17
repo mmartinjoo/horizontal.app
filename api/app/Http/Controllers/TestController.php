@@ -13,6 +13,7 @@ use App\Jobs\Indexing\Supervisor\SuperviseStuckBuckets;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
+use App\Models\IndexingWorkflowStepItem;
 use App\Services\GraphDB\GraphDB;
 use App\Services\Indexing\Orchestrator\Orchestrator;
 use App\Services\Indexing\Orchestrator\Supervisor\StuckBucketSupervisor;
@@ -28,9 +29,13 @@ use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
-    public function index(LLM $llm)
+    public function index()
     {
-        $llm->stream('write me a 100-words poem');
+        $workflow = IndexingWorkflow::find(12);
+        $stuckItems = IndexingWorkflowStepItem::query()
+            ->whereIn('indexing_workflow_step_bucket_id', $workflow->buckets->pluck('id'))
+            ->get();
+        dd($stuckItems);
     }
 
     public function token()

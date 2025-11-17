@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class IndexingWorkflow extends Model
 {
@@ -17,5 +18,13 @@ class IndexingWorkflow extends Model
     public function steps(): HasMany
     {
         return $this->hasMany(IndexingWorkflowStep::class);
+    }
+
+    public function buckets(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            related: IndexingWorkflowStepBucket::class, 
+            through: IndexingWorkflowStep::class,
+        );
     }
 }
