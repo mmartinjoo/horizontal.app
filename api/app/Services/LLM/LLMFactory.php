@@ -2,14 +2,17 @@
 
 namespace App\Services\LLM;
 
+use Stancl\Tenancy\Contracts\TenantWithDatabase;
+
 class LLMFactory
 {
-    public static function create(): LLM
+    public static function create(TenantWithDatabase $tenant): LLM
     {
-        return match (config('llm.provider')) {
-            'fireworks' => new Fireworks(config('services.fireworks.api_key'), config('llm.model')),
-            'openai' => new OpenAI(config('services.openai.api_key'), config('llm.model')),
-            default => new Anthropic(config('services.anthropic.api_key'), config('llm.model')),
+        return match ($tenant->llm_provider) {
+            'fireworks' => new Fireworks(
+                apiKey: config('llm.connections.fireworks.api_key'), 
+                model: config('llm.connections.fireworks.model'),
+            ),
         };
     }
 

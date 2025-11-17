@@ -8,12 +8,11 @@ use App\Models\DocumentComment;
 use App\Models\Question;
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
-use App\Services\LLM\LLM;
+use App\Services\LLM\LLMFactory;
 use App\Services\SearchEngine\DataTransferObjects\Path;
 use App\Services\SearchEngine\DataTransferObjects\SearchResult;
 use Bolt\protocol\v1\structures\Path as BoltPath;
 use Bolt\protocol\v5\structures\Node;
-use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -23,7 +22,7 @@ class SearchEngine
     public function __construct(
         private Embedder $embedder,
         private GraphDB $graphDB,
-        private LLM $llm,
+        private LLMFactory $llmFactory,
         private string $cosineSimilarityThreshold,
     ) {
     }
@@ -128,7 +127,9 @@ class SearchEngine
             }),
         ]);
 
-        $this->llm->stream("
+        $llm = $this->llmFactory->create(tenancy()->tenant);
+
+        $llm->stream("
             You are Horizontal's search engine, designed for engineering teams who need fast, accurate answers from scattered information.
 
             ## Context Provided

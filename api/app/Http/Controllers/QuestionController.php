@@ -17,10 +17,11 @@ class QuestionController
             return response('Your data is being indexed... Please try again later.', Response::HTTP_SERVICE_UNAVAILABLE);
         }
 
+        $llmProvider = tenancy()->tenant->llm_provider;
         $question = Question::create([
             'user_id' => $request->user()->id,
             'question' => $request->input('question'),
-            'llm_model' => config('llm.model'),
+            'llm_model' => config("llm.connections.{$llmProvider}.model"),
         ]);
 
         AnswerQuestion::dispatch($question->id)
