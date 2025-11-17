@@ -98,13 +98,12 @@ class Fireworks extends LLM implements Embedder
                         $content = $json['choices'][0]['delta']['content'];
 
                         $destination->write($content);
-
-                        if ($json['usage']) {
-                            $destination->recordTokenUsage(
-                                inputTokens: Arr::get($json, 'usage.prompt_tokens', 0),
-                                outputTokens: Arr::get($json, 'usage.completion_tokens', 0),
-                            );
-                        }
+                    }
+                    if ($json['usage']) {
+                        $destination->recordTokenUsage(
+                            inputTokens: Arr::get($json, 'usage.prompt_tokens', 0),
+                            outputTokens: Arr::get($json, 'usage.completion_tokens', 0),
+                        );
                     }
                 }
             }
