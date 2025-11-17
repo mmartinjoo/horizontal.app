@@ -12,6 +12,7 @@ use App\Jobs\Indexing\Orchestrator\ScheduleCommunityBuilding;
 use App\Jobs\Indexing\Orchestrator\ScheduleGraphBuilding;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Jobs\Indexing\Supervisor\SuperviseStuckBuckets;
+use App\Jobs\Indexing\Supervisor\SuperviseStuckItems;
 use App\Jobs\Indexing\Supervisor\SuperviseWorkflow;
 use App\Jobs\Indexing\TaskManagement\Jira\IndexJira;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
@@ -25,6 +26,7 @@ use App\Models\LinearIntegration;
 use App\Models\SlackIntegration;
 use App\Services\GraphDB\GraphDB;
 use App\Services\Indexing\Orchestrator\Supervisor\StuckBucketSupervisor;
+use App\Services\Indexing\Orchestrator\Supervisor\StuckItemSupervisor;
 use App\Services\Indexing\Orchestrator\Supervisor\WorkflowSupervisor;
 use Exception;
 
@@ -73,6 +75,9 @@ class Orchestrator
         $stuckBucketSupervisor = $this->createStuckBucketSupervisor($workflow);
         dispatch($stuckBucketSupervisor);
 
+        $stuckItemSupervisor = $this->createStuckItemSupervisor($workflow);
+        dispatch($stuckItemSupervisor);
+
         dispatch(new ScheduleGraphBuilding($workflow->id));
         dispatch(new ScheduleAdditionalNodeBuilding($workflow->id));
         dispatch(new ScheduleCommunityBuilding($workflow->id));
@@ -104,6 +109,14 @@ class Orchestrator
         return new SuperviseStuckBuckets(
             $workflow->id,
             new StuckBucketSupervisor(),
+        );
+    }
+
+    private function createStuckItemSupervisor(IndexingWorkflow $workflow): SuperviseStuckItems
+    {
+        return new SuperviseStuckItems(
+            $workflow->id,
+            new StuckItemSupervisor(),
         );
     }
 
