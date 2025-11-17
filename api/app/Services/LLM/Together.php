@@ -18,7 +18,7 @@ class Together extends LLM implements Embedder
         ])
             ->timeout(300)
             ->post(config('llm.connections.together.base_url') . '/chat/completions', [
-                    'model' => $this->model,
+                    'model' => $this->chatModel,
                     'max_tokens' => $maxTokens,
                     "top_p" => 1,
                     "top_k" => 40,
@@ -52,7 +52,7 @@ class Together extends LLM implements Embedder
                 'Content-Type' => 'application/json',
             ],
             'json' => [
-                'model' => $this->model,
+                'model' => $this->chatModel,
                 'max_tokens' => $maxTokens,
                 'top_p' => 1,
                 'top_k' => 40,
@@ -117,8 +117,7 @@ class Together extends LLM implements Embedder
         ])
             ->timeout(300)
             ->post(config('llm.connections.together.base_url') . '/embeddings', [
-                'model' => 'nomic-ai/nomic-embed-text-v1.5',
-                'dimensions' => 768,
+                'model' => $this->embeddingModel,
                 'input' => $text,
             ],
             )

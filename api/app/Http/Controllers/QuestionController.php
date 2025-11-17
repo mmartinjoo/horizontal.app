@@ -21,7 +21,7 @@ class QuestionController
         $question = Question::create([
             'user_id' => $request->user()->id,
             'question' => $request->input('question'),
-            'llm_model' => config("llm.connections.{$llmProvider}.model"),
+            'llm_model' => config("llm.connections.{$llmProvider}.chat_model"),
         ]);
 
         AnswerQuestion::dispatch($question->id)

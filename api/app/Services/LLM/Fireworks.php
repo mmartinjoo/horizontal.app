@@ -18,7 +18,7 @@ class Fireworks extends LLM implements Embedder
         ])
             ->timeout(300)
             ->post('https://api.fireworks.ai/inference/v1/chat/completions', [
-                    'model' => $this->model,
+                    'model' => $this->chatModel,
                     'max_tokens' => $maxTokens,
                     "top_p" => 1,
                     "top_k" => 40,
@@ -52,7 +52,7 @@ class Fireworks extends LLM implements Embedder
                 'Content-Type' => 'application/json',
             ],
             'json' => [
-                'model' => $this->model,
+                'model' => $this->chatModel,
                 'max_tokens' => $maxTokens,
                 'top_p' => 1,
                 'top_k' => 40,
@@ -117,7 +117,7 @@ class Fireworks extends LLM implements Embedder
         ])
             ->timeout(300)
             ->post('https://api.fireworks.ai/inference/v1/embeddings', [
-                'model' => 'nomic-ai/nomic-embed-text-v1.5',
+                'model' => $this->embeddingModel,
                 'dimensions' => 768,
                 'input' => $text,
             ],

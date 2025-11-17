@@ -22,7 +22,6 @@ class SearchEngine
     public function __construct(
         private Embedder $embedder,
         private GraphDB $graphDB,
-        private LLMFactory $llmFactory,
         private string $cosineSimilarityThreshold,
     ) {
     }
@@ -127,7 +126,7 @@ class SearchEngine
             }),
         ]);
 
-        $llm = $this->llmFactory->create(tenancy()->tenant);
+        $llm = LLMFactory::create(tenancy()->tenant);
 
         $llm->stream("
             You are Horizontal's search engine, designed for engineering teams who need fast, accurate answers from scattered information.

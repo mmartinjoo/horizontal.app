@@ -31,7 +31,6 @@ class IndexGraphCommunity extends IndexingStepItemJob implements ShouldQueue
     }
 
     public function handle(
-        LLMFactory $llmFactory,
         GraphDB $graphDB,
         Embedder $embedder,
     ) {
