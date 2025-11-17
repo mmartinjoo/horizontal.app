@@ -14,34 +14,34 @@ const plans = [
 // Additional questions pricing per plan
 const additionalQuestions = {
   Solo: [
-    { questions: 100, price: 9 },
-    { questions: 150, price: 12 },
-    { questions: 250, price: 19 },
+    { questions: 150, price: 0 },
+    { questions: 250, price: 10 },
+    { questions: 500, price: 17 },
   ],
   Indie: [
-    { questions: 100, price: 45 },
-    { questions: 150, price: 60 },
-    { questions: 250, price: 95 },
+    { questions: 150, price: 0 },
+    { questions: 250, price: 50 },
+    { questions: 500, price: 85 },
   ],
   Team: [
-    { questions: 100, price: 90 },
-    { questions: 150, price: 120 },
-    { questions: 250, price: 190 },
+    { questions: 150, price: 0 },
+    { questions: 250, price: 100 },
+    { questions: 500, price: 170 },
   ],
   Squad: [
-    { questions: 100, price: 135 },
-    { questions: 150, price: 180 },
-    { questions: 250, price: 285 },
+    { questions: 150, price: 0 },
+    { questions: 250, price: 150 },
+    { questions: 500, price: 255 },
   ],
   Startup: [
-    { questions: 100, price: 225 },
-    { questions: 150, price: 300 },
-    { questions: 250, price: 475 },
+    { questions: 150, price: 0 },
+    { questions: 250, price: 250 },
+    { questions: 500, price: 425 },
   ],
   Business: [
-    { questions: 100, price: 450 },
-    { questions: 150, price: 600 },
-    { questions: 250, price: 950 },
+    { questions: 150, price: 0 },
+    { questions: 250, price: 500 },
+    { questions: 500, price: 850 },
   ],
 }
 
@@ -81,7 +81,7 @@ const dataRetention = {
 
 // State
 const selectedSeats = ref(5)
-const selectedAdditionalQuestions = ref(null)
+const selectedAdditionalQuestions = ref(0) // Index: 0 = 150 questions (default)
 const selectedDataRetention = ref(0) // Index: 0 = 3 months (default)
 const selectedHosting = ref('cloud') // 'cloud' or 'on-premise'
 
@@ -103,7 +103,6 @@ const basePlanPrice = computed(() => {
 })
 
 const additionalQuestionsPrice = computed(() => {
-  if (selectedAdditionalQuestions.value === null) return 0
   const selected = availableAdditionalQuestions.value[selectedAdditionalQuestions.value]
   return selected ? selected.price : 0
 })
@@ -119,7 +118,7 @@ const totalPrice = computed(() => {
 
 // Methods
 const selectAdditionalQuestions = (index) => {
-  selectedAdditionalQuestions.value = selectedAdditionalQuestions.value === index ? null : index
+  selectedAdditionalQuestions.value = index
 }
 
 const selectDataRetention = (index) => {
@@ -188,9 +187,9 @@ const handleBookingCall = () => {
           </div>
         </div>
 
-        <!-- Additional Questions -->
+        <!-- Questions per user/month -->
         <div class="mb-8">
-          <h3 class="text-xl font-bold text-slate-900 mb-4">Additional questions per user/month</h3>
+          <h3 class="text-xl font-bold text-slate-900 mb-4">Questions per user/month</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div
               v-for="(option, index) in availableAdditionalQuestions"
@@ -202,7 +201,7 @@ const handleBookingCall = () => {
                 : 'border-slate-200 bg-white hover:border-blue-300'"
             >
               <div class="flex items-center justify-between mb-2">
-                <div class="text-3xl font-bold text-slate-900">+{{ option.questions }}</div>
+                <div class="text-3xl font-bold text-slate-900">{{ option.questions }}</div>
                 <div
                   v-if="selectedAdditionalQuestions === index"
                   class="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center"
@@ -213,7 +212,9 @@ const handleBookingCall = () => {
                 </div>
               </div>
               <div class="text-sm text-slate-600 mb-3">questions/user/month</div>
-              <div class="text-2xl font-bold text-slate-900">{{ formatPrice(option.price) }}/mo</div>
+              <div class="text-2xl font-bold text-slate-900">
+                {{ option.price === 0 ? 'Included' : `+${formatPrice(option.price)}/mo` }}
+              </div>
             </div>
           </div>
         </div>
@@ -244,7 +245,7 @@ const handleBookingCall = () => {
               </div>
               <div class="text-sm text-slate-600 mb-3">months</div>
               <div class="text-2xl font-bold text-slate-900">
-                {{ option.price === 0 ? 'Included' : `${formatPrice(option.price)}/mo` }}
+                {{ option.price === 0 ? 'Included' : `+${formatPrice(option.price)}/mo` }}
               </div>
             </div>
           </div>
@@ -308,9 +309,9 @@ const handleBookingCall = () => {
               <span class="font-semibold text-xl">{{ formatPrice(basePlanPrice) }}</span>
             </div>
 
-            <div v-if="selectedAdditionalQuestions !== null" class="flex justify-between items-center py-2">
+            <div v-if="additionalQuestionsPrice > 0" class="flex justify-between items-center py-2">
               <span class="text-slate-300">
-                Additional questions (+{{ availableAdditionalQuestions[selectedAdditionalQuestions].questions }}/user/month)
+                Questions ({{ availableAdditionalQuestions[selectedAdditionalQuestions].questions }}/user/month)
               </span>
               <span class="font-semibold text-xl">{{ formatPrice(additionalQuestionsPrice) }}</span>
             </div>
@@ -336,13 +337,13 @@ const handleBookingCall = () => {
           </button>
 
           <p class="text-center text-slate-400 text-sm mt-4">
-            No credit card required • Cancel anytime
+            30-day free trial • Cancel anytime
           </p>
         </div>
 
         <!-- Enterprise -->
         <div class="mt-8 text-center p-8 bg-slate-50 rounded-2xl">
-          <h3 class="text-xl font-bold text-slate-900 mb-2">For on-premise hosting or enterprise plans, please contact us</h3>
+          <h3 class="text-xl font-bold text-slate-900 mb-4">For on-premise hosting or enterprise plans, please contact us</h3>
           <button @click="handleBookingCall" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-8 py-3 rounded-lg transition-colors">
             Book a quick call
           </button>
