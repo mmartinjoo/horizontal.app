@@ -183,9 +183,10 @@ const handleGetStarted = () => {
               v-model.number="selectedSeats"
               min="1"
               max="50"
-              class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              class="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              style="height: 12px;"
             />
-            <div class="flex justify-between text-xs text-slate-500">
+            <div class="flex justify-between text-sm text-slate-500">
               <span>1 seat</span>
               <span>50 seats</span>
             </div>

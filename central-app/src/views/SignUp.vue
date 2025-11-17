@@ -209,7 +209,7 @@ const handleSubmit = async () => {
               v-model="adminUserEmail"
               type="email"
               required
-              placeholder="john@acme.com"
+              placeholder="john@your-company.com"
               class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors"
               :disabled="isLoading"
             />
@@ -226,7 +226,7 @@ const handleSubmit = async () => {
               @input="handleCompanyNameInput"
               type="text"
               required
-              placeholder="Acme Inc."
+              placeholder="Your Company Inc."
               class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors"
               :disabled="isLoading"
             />
@@ -243,7 +243,7 @@ const handleSubmit = async () => {
                 v-model="subdomain"
                 type="text"
                 required
-                placeholder="acme"
+                placeholder="your-company"
                 class="flex-1 px-4 py-2.5 border border-slate-300 rounded-l-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-colors"
                 :disabled="isLoading"
                 :class="{ 'border-red-300 focus:ring-red-500 focus:border-red-500': !isSubdomainValid }"

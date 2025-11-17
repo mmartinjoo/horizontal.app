@@ -5,7 +5,10 @@ import Pricing from '../components/Pricing.vue'
 const router = useRouter()
 
 const handleSignUp = () => {
-  router.push('/signup')
+  const pricingSection = document.getElementById('pricing-section')
+  if (pricingSection) {
+    pricingSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 }
 
 const handleBookingDemo = () => {
@@ -463,13 +466,15 @@ const painPoints = [
     </section>
 
     <!-- Pricing Section -->
-    <Pricing />
+    <div id="pricing-section">
+      <Pricing />
+    </div>
 
     <!-- CTA Section -->
     <section class="py-24 bg-blue-600">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 class="text-4xl lg:text-6xl font-bold text-white mb-6">
-          Ready to stop searching?
+          Stop searching and start understanding
         </h2>
         <p class="text-xl text-blue-100 mb-10 max-w-2xl mx-auto">
           Join engineering teams who found their sanity with Horizontal
