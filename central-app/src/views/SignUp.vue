@@ -136,7 +136,7 @@ const handleSubmit = async () => {
           admin_user_email: adminUserEmail.value,
           company_name: companyName.value,
           subdomain: subdomain.value,
-          team_size: route.query.number_of_seats,
+          number_of_seats: route.query.number_of_seats,
           questions_per_month: route.query.questions_per_month,
           data_retention: route.query.data_retention,
           country: country.value,
