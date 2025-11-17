@@ -27,6 +27,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'questions_per_month',
             'data_retention',
             'number_of_seats',
+            'llm_provider',
         ];
     }
 }

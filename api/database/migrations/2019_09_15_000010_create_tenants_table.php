@@ -26,6 +26,8 @@ class CreateTenantsTable extends Migration
             $table->integer('questions_per_month');
             $table->integer('data_retention');
 
+            $table->string('llm_provider');
+
             $table->json('data')->nullable();
             $table->timestamps();
         });

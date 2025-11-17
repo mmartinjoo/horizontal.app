@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Jobs\Infra\SetupGraphDBInstance;
+use App\Jobs\LLM\SetupLLMProvider;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -27,6 +28,7 @@ class TenancyServiceProvider extends ServiceProvider
             Events\TenantCreated::class => [
                 JobPipeline::make([
                     SetupGraphDBInstance::class,
+                    SetupLLMProvider::class,
                     Jobs\CreateDatabase::class,
                     Jobs\MigrateDatabase::class,
                     // Jobs\SeedDatabase::class,
