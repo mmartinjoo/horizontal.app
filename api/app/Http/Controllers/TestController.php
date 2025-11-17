@@ -23,6 +23,7 @@ use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use App\Services\Integration\TaskManagement\Jira\Jira;
 use App\Services\Integration\TaskManagement\Linear\Linear;
+use App\Services\LLM\LLMFactory;
 use App\Services\Url;
 use Illuminate\Http\Request;
 

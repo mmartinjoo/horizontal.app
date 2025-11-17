@@ -7,7 +7,7 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 
-class Fireworks extends LLM implements Embedder
+class Together extends LLM implements Embedder
 {
     use HasEmbeddingCache;
 
@@ -17,7 +17,7 @@ class Fireworks extends LLM implements Embedder
             'Authorization' => 'Bearer ' . $this->apiKey,
         ])
             ->timeout(300)
-            ->post('https://api.fireworks.ai/inference/v1/chat/completions', [
+            ->post(config('llm.connections.together.base_url') . '/chat/completions', [
                     'model' => $this->model,
                     'max_tokens' => $maxTokens,
                     "top_p" => 1,
@@ -37,7 +37,7 @@ class Fireworks extends LLM implements Embedder
             ->json();
 
         if (empty($res['choices'][0]['message']['content'])) {
-            throw new Exception('Fireworks: No completion found: '.json_encode($res));
+            throw new Exception('Together: No completion found: '.json_encode($res));
         }
 
         return $this->sanitizeJSON($res['choices'][0]['message']['content']);
@@ -46,7 +46,7 @@ class Fireworks extends LLM implements Embedder
     public function stream(string $prompt, StreamWriter $destination, int $maxTokens = 10_000)
     {
         $client = new Client();
-        $response = $client->request('POST', 'https://api.fireworks.ai/inference/v1/chat/completions', [
+        $response = $client->request('POST', config('llm.connections.together.base_url') . '/chat/completions', [
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
@@ -116,7 +116,7 @@ class Fireworks extends LLM implements Embedder
             'Authorization' => 'Bearer '.$this->apiKey,
         ])
             ->timeout(300)
-            ->post('https://api.fireworks.ai/inference/v1/embeddings', [
+            ->post(config('llm.connections.together.base_url') . '/embeddings', [
                 'model' => 'nomic-ai/nomic-embed-text-v1.5',
                 'dimensions' => 768,
                 'input' => $text,
@@ -126,7 +126,7 @@ class Fireworks extends LLM implements Embedder
             ->json();
 
         if (!isset($res['data'][0])) {
-            throw new Exception('Fireworks: No embedding created: '.json_encode($res));
+            throw new Exception('Together: No embedding created: '.json_encode($res));
         }
 
         return $res['data'][0]['embedding'];

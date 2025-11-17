@@ -13,6 +13,10 @@ class LLMFactory
                 apiKey: config('llm.connections.fireworks.api_key'), 
                 model: config('llm.connections.fireworks.model'),
             ),
+            'together' => new Together(
+                apiKey: config('llm.connections.together.api_key'),
+                model: config('llm.connections.together.model'),
+            )
         };
     }
 
