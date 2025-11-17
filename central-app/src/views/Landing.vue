@@ -99,7 +99,7 @@ const painPoints = [
           <div>
             <!-- Main Headline -->
             <h1 class="text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
-              Search <span class="text-blue-600">all your apps</span> with one question
+              Search <span class="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">all your apps</span> with one question
             </h1>
 
             <!-- Subheadline -->            
@@ -228,7 +228,7 @@ const painPoints = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
-            Not knowing <span class="text-red-700 decoration-red-600 decoration-2">where to search</span> is painful
+            Not knowing <span class="bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent">where to search</span> is painful
           </h2>
         </div>
 
@@ -277,7 +277,7 @@ const painPoints = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <h2 class="text-3xl lg:text-5xl font-bold text-slate-900 mb-4">
-            The <span class="text-green-700 decoration-green-600 decoration-2">unified search</span> experience you deserve
+            The <span class="bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">unified search</span> experience you deserve
           </h2>
         </div>
 
