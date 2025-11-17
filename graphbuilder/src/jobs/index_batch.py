@@ -15,6 +15,7 @@ def index_batch(type: str,
 
     try:
         logging.warning(f"Processing {type} batch (ids={ids}) for tenant {tenant_id}")
+
         if type == "document_chunks":
             get_batch_fn = get_document_chunk_batch
             
@@ -38,7 +39,7 @@ def index_batch(type: str,
 
         logging.warning("Running LLM Path Extractor")
         kg_extractor = SimpleLLMPathExtractor(llm=llm,
-                                            max_paths_per_chunk=20,
+                                            max_paths_per_chunk=25,
                                             num_workers=4)
         
         logging.warning("LLM Path Extractor finished...")

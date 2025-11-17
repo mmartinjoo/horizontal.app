@@ -24,6 +24,8 @@ class Tenant extends BaseTenant implements TenantWithDatabase
             'graph_db_user',
             'graph_db_password',
             'graph_db_scheme',
+            'questions_per_month',
+            'data_retention',
         ];
     }
 }

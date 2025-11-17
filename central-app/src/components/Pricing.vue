@@ -142,7 +142,6 @@ const handleGetStarted = () => {
     number_of_seats: selectedSeats.value,
     questions_per_month: availableAdditionalQuestions.value[selectedAdditionalQuestions.value].questions,
     data_retention: availableDataRetention.value[selectedDataRetention.value].months,
-    price: totalPrice.value
   })
 
   window.location.href = `/signup?${params.toString()}`

@@ -139,7 +139,6 @@ const handleSubmit = async () => {
           team_size: route.query.number_of_seats,
           questions_per_month: route.query.questions_per_month,
           data_retention: route.query.data_retention,
-          price: route.query.price,
           country: country.value,
           has_native_content: hasNativeContent.value ?? false,
         })
@@ -150,9 +149,6 @@ const handleSubmit = async () => {
       error.value = 'Something went wrong while creating your instance. Please contact us at hello@horizontal.app'
       return
     }
-
-    // Simulate API call
-    // await new Promise(resolve => setTimeout(resolve, 3000))
 
     if (window.location.href.includes('horizontal.app')) {
       window.location.href = `https://${subdomain.value}.horizontal.app/auth`  

@@ -21,12 +21,19 @@ class TenantController
             'has_native_content' => ['sometimes', 'bool'],
             'admin_user_email' => ['required', 'email'],
             'admin_user_name' => ['required', 'string'],
+            'questions_per_month' => ['required', 'numeric', 'in:150,250,500'],
+            'data_retention' => ['required', 'numeric', 'in:3,6,12'],
+            'number_of_seats' => ['required', 'numeric', 'lte:50'],
         ]);
 
         $tenant = Tenant::create([
             'company' => $request->get('company_name'),
             'country' => $request->get('country'),
+            'questions_per_month' => $request->get('questions_per_month'),
+            'data_retention' => $request->get('data_retention'),
+            'number_of_seats' => $request->get('number_of_seats'),
         ]);
+
         $tenant->createDomain($request->get('subdomain') . '.horizontal.app');
 
         if (App::isLocal()) {

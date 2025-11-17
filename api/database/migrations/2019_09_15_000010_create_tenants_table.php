@@ -22,6 +22,10 @@ class CreateTenantsTable extends Migration
             $table->string('graph_db_password')->nullable();
             $table->string('graph_db_scheme')->nullable();
 
+            $table->integer('number_of_seats');
+            $table->integer('questions_per_month');
+            $table->integer('data_retention');
+
             $table->json('data')->nullable();
             $table->timestamps();
         });
