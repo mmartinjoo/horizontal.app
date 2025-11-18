@@ -10,6 +10,7 @@ use App\Jobs\Indexing\Storage\GoogleDrive\RefreshGoogleDriveTokensJob;
 use App\Jobs\Indexing\TaskManagement\Jira\RefreshJiraTokensJob;
 use App\Jobs\Indexing\TaskManagement\Linear\RefreshLinearTokensJob;
 use App\Jobs\Infra\SuperviseAvailableMemgraphInstances;
+use App\Jobs\LLM\RotateLLMProvider;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::job(new RefreshJiraTokensJob)->everyThirtyMinutes();
@@ -29,3 +30,5 @@ Schedule::job(new SuperviseAvailableMemgraphInstances)->everyMinute();
 //  - 1AM-4AM in Europe
 Schedule::job(new StartIndexing)->dailyAt('03:00');
 Schedule::job(new StartEmergencyIndexing)->everyThirtyMinutes();
+
+Schedule::job(new RotateLLMProvider)->everyThirtyMinutes();
