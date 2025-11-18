@@ -67,6 +67,7 @@ class TenantController
                 'scheme' => $tenant->graph_db_scheme,
             ],
             'domains' => $tenant->domains->pluck('domain'),
+            'llm_provider' => $tenant->llm_provider,
         ];
     }
 }

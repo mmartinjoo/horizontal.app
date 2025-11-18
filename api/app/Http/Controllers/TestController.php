@@ -11,6 +11,7 @@ use App\Jobs\Indexing\KnowledgeGraph\BuildRelatedNodes;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Jobs\Indexing\Supervisor\SuperviseStuckBuckets;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
+use App\Jobs\LLM\RotateLLMProvider;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepItem;
@@ -22,8 +23,7 @@ use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use App\Services\Integration\TaskManagement\Jira\Jira;
 use App\Services\Integration\TaskManagement\Linear\Linear;
-use App\Services\LLM\Fireworks;
-use App\Services\LLM\LLM;
+use App\Services\LLM\LLMFactory;
 use App\Services\Url;
 use Illuminate\Http\Request;
 
@@ -31,11 +31,7 @@ class TestController extends Controller
 {
     public function index()
     {
-        $workflow = IndexingWorkflow::find(12);
-        $stuckItems = IndexingWorkflowStepItem::query()
-            ->whereIn('indexing_workflow_step_bucket_id', $workflow->buckets->pluck('id'))
-            ->get();
-        dd($stuckItems);
+        RotateLLMProvider::dispatch();
     }
 
     public function token()

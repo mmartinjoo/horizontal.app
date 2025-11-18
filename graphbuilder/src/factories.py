@@ -7,13 +7,13 @@ from rq import Queue
 from llama_index.readers.database import DatabaseReader
 from llama_index.graph_stores.memgraph import MemgraphPropertyGraphStore
 from src.services.horizontal_api import get_graph_db_connection_info
-from llama_index.llms.fireworks import Fireworks
-from llama_index.llms.openai import OpenAI
 from llama_index.core.embeddings import BaseEmbedding
 from llama_index.core.llms import CustomLLM
-from src.fireworks_embedding import FireworksEmbedding
+from src.together_embedding import TogetherEmbedding
 from src.fireworks_llm import FireworksLLM
+from src.together_llm import TogetherLLM
 from psycopg2.extensions import cursor as Cursor
+from src.services.horizontal_api import get_llm_provider
 
 def create_db_reader(tenant_id: str) -> DatabaseReader:
     """
@@ -55,15 +55,17 @@ def create_queue() -> Queue:
     redis = Redis(host=os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT"))
     return Queue(connection=redis, name="default", default_timeout="30m")
 
-def create_llm() -> CustomLLM:    
-    if os.getenv("LLM_PROVIDER") == "openai":
-        return OpenAI(temperature=0.0, model=os.getenv("LLM_MODEL"))
-    else:
+def create_llm(tenant_id: str) -> CustomLLM:
+    provider = get_llm_provider(tenant_id=tenant_id) 
+    if provider == 'fireworks':
         return FireworksLLM(api_key=os.getenv("FIREWORKS_API_KEY"),
-                                     model_name=os.getenv("LLM_MODEL"))
-    
+                            model_name=os.getenv("FIREWORKS_CHAT_MODEL"))
+    else:
+        return TogetherLLM(api_key=os.getenv("TOGETHER_API_KEY"),
+                            model_name=os.getenv("TOGETHER_CHAT_MODEL"))
+        
 def create_embed_model() -> BaseEmbedding:
-    return FireworksEmbedding()
+    return TogetherEmbedding()
 
 def build_db_uri(tenant_id: str, protocol: str) -> str:
     host = os.getenv("DB_HOST")

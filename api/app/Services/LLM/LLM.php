@@ -8,7 +8,8 @@ abstract class LLM
 {
     public function __construct(
         protected string $apiKey,
-        protected string $model,
+        protected string $chatModel,
+        protected string $embeddingModel,
     ) {}
 
     abstract public function completion(string $prompt, $maxTokens = 1024): string;

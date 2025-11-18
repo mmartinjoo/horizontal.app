@@ -38,6 +38,19 @@ def get_tenant_domain(tenant_id: str) -> str:
 
     raise RuntimeError("domain cannot be determined")
 
+def get_llm_provider(tenant_id: str) -> str:
+    # Use base API URL for this initial request (no tenant context needed)
+    base_url = _get_base_api_url()
+    resp = requests.get(f"{base_url}/api/tenants/{tenant_id}")
+    if resp.status_code != 200:
+        raise RuntimeError("Failed to get tenant from API")
+
+    data = resp.json()
+    if "llm_provider" not in data:
+        raise RuntimeError("unable to fetch LLM provider")
+    
+    return data["llm_provider"]
+
 def create_workflow_bucket(tenant_id: str, data: Dict) -> Dict:
     url_data = _create_tenant_request_data(tenant_id=tenant_id, path="api/orchestrator/workflows/buckets")
     resp = requests.post(url_data["url"], json=data, headers=url_data["headers"])

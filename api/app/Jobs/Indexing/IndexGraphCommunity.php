@@ -7,7 +7,7 @@ use App\Models\IndexingWorkflowStepBucket;
 use App\Models\IndexingWorkflowStepItem;
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
-use App\Services\LLM\LLM;
+use App\Services\LLM\LLMFactory;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -31,11 +31,11 @@ class IndexGraphCommunity extends IndexingStepItemJob implements ShouldQueue
     }
 
     public function handle(
-        LLM $llm,
         GraphDB $graphDB,
         Embedder $embedder,
     ) {
         try {
+            $llm = LLMFactory::create(tenancy()->tenant);
             $bucket = IndexingWorkflowStepBucket::find($this->indexingWorkflowStepBucketId);
             $indexingWorkflowItem = IndexingWorkflowStepItem::create([
                 'indexing_workflow_step_bucket_id' => $bucket->id,
