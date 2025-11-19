@@ -8,7 +8,8 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('../views/Home.vue')
+      component: () => import('../views/Ask.vue'),
+      meta: { requiresAuth: true, requiresIndexingComplete: true }
     },
     {
       path: '/ask',
