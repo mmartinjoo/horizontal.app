@@ -91,7 +91,6 @@ class Fireworks extends LLM implements Embedder
                         break 2;
                     }
                     
-                    logger($data);
                     $json = json_decode($data, true);            
                     if ($json && isset($json['choices'][0]['delta']['content'])) {
                         $content = $json['choices'][0]['delta']['content'];

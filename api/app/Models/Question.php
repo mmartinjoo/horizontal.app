@@ -17,6 +17,10 @@ class Question extends Model implements StreamWriter
 
     public function write(string $content): void
     {
+        if (empty($this->answer)) {
+            $this->first_token_received_at = now();
+            $this->time_to_first_token = now()->timestamp - $this->created_at->timestamp;
+        }
         $this->answer .= $content;
         $this->save();
     }

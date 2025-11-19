@@ -18,10 +18,12 @@ return new class extends Migration
             $table->text('answer')->nullable(true)->default(null);            
             $table->string('llm_model');
             $table->integer('time_spent')->nullable(true)->default(null);
+            $table->integer('time_to_first_token')->nullable()->default(null);
             $table->integer('input_tokens')->nullable(true)->default(null);
             $table->integer('output_tokens')->nullable(true)->default(null);
             $table->timestamps();
             $table->dateTime('answered_at')->nullable();
+            $table->dateTime('first_token_received_at')->nullable();
         });
     }
 
