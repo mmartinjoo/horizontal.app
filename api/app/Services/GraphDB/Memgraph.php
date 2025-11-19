@@ -9,6 +9,8 @@ use Illuminate\Support\Arr;
 
 class Memgraph extends GraphDB
 {
+    private const BATCH_SIZE = 100;
+
     public function __construct(array $config)
     {
         parent::__construct($config);
@@ -18,6 +20,7 @@ class Memgraph extends GraphDB
     {
         $attributesStr = $this->arrToAttributeStr($attributes);
         $rows = $this->doQuery("merge (n:$label { $attributesStr }) return n;");
+
         return $this->parseNode($rows);
     }
 
@@ -33,11 +36,11 @@ class Memgraph extends GraphDB
         $upsertQuery = "merge (n:$newNodeLabel { id: \"$newNodeId\" })";
         $set = $this->arrToSetStyleStr($newNodeAttributes);
         $upsertQuery .= " $set";
-        $upsertQuery .= " return n";
+        $upsertQuery .= ' return n';
 
         $rows = $this->doQuery($upsertQuery);
         $node = Arr::get($rows, '0.n');
-        if (!$node) {
+        if (! $node) {
             throw new InvalidCypherException('Unable to return node');
         }
 
@@ -49,6 +52,7 @@ class Memgraph extends GraphDB
                 merge (n)-[:$relation]->(r)
                 return n;
             ");
+
             return $this->parseNode($rows);
         } else {
             $relationAttributesStr = $this->arrToAttributeStr($relationAttributes);
@@ -59,6 +63,7 @@ class Memgraph extends GraphDB
                 merge (n)-[:$relation { $relationAttributesStr }]->(r)
                 return n;
             ");
+
             return $this->parseNode($rows);
         }
     }
@@ -67,18 +72,21 @@ class Memgraph extends GraphDB
     {
         $attributesStr = $this->arrToAttributeStr($attributes);
         $rows = $this->doQuery("match (n:$label $attributesStr) return n)");
+
         return $this->parseNode($rows);
     }
 
     public function query(string $query, string $nodeName = 'n'): ?Node
     {
         $rows = $this->doQuery($query);
+
         return $this->parseNode($rows, $nodeName);
     }
 
     public function queryMany(string $query, array $nodeNames = ['n']): array
     {
         $rows = $this->doQuery($query);
+
         return $this->parseNodes($rows, $nodeNames);
     }
 
@@ -90,6 +98,7 @@ class Memgraph extends GraphDB
     public function vectorSearch(string $indexName, array $embedding, int $n): array
     {
         $embeddingStr = json_encode($embedding);
+
         return $this->doQuery("
             CALL vector_search.search('$indexName', $n, $embeddingStr) YIELD * RETURN *;
         ");
@@ -102,8 +111,7 @@ class Memgraph extends GraphDB
         string $toNodeLabel,
         string $toNodeID,
         array $relationAttributes = [],
-    ): void
-    {
+    ): void {
         if (count($relationAttributes) === 0) {
             $this->doQuery("
                 match (n1:$fromNodeLabel { id: \"$fromNodeID\" }), (n2:$toNodeLabel { id: \"$toNodeID\" })
@@ -126,16 +134,32 @@ class Memgraph extends GraphDB
             throw new Exception(implode(' ', $runResponse->content));
         }
         $content = $runResponse->content;
-        foreach ($this->protocol->pull()->getResponses() as $res) {
-            if ($res->signature == \Bolt\enum\Signature::IGNORED || $res->signature == \Bolt\enum\Signature::FAILURE) {
-                throw new Exception("Error while executing query: " . json_encode($res->content));
+
+        // Pull results in batches to handle large result sets
+        while (true) {
+            $hasMore = false;
+            foreach ($this->protocol->pull(['n' => self::BATCH_SIZE])->getResponses() as $res) {
+                if ($res->signature == \Bolt\enum\Signature::SUCCESS) {
+                    // Check if there are more results to pull
+                    $hasMore = $res->content['has_more'] ?? false;
+                    if (! $hasMore) {
+                        break 2; // Exit both loops - we're done
+                    }
+                    break; // Exit inner loop to pull next batch
+                }
+                if ($res->signature == \Bolt\enum\Signature::IGNORED || $res->signature == \Bolt\enum\Signature::FAILURE) {
+                    throw new Exception('Error while executing query: '.json_encode($res->content));
+                }
+                // RECORD signature - add to results
+                $all[] = $res->content;
             }
-            $all[] = $res->content;
+
+            if (! $hasMore) {
+                break;
+            }
         }
 
-        array_pop($all);
-
-        return !empty($all) ? array_map(function ($element) use ($content) {
+        return ! empty($all) ? array_map(function ($element) use ($content) {
             return array_combine($content['fields'], $element);
         }, $all) : [];
     }

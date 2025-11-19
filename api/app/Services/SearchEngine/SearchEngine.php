@@ -2,20 +2,15 @@
 
 namespace App\Services\SearchEngine;
 
-use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentComment;
 use App\Models\Question;
 use App\Services\GraphDB\GraphDB;
 use App\Services\LLM\Embedder;
 use App\Services\LLM\LLMFactory;
-use App\Services\SearchEngine\DataTransferObjects\Path;
-use App\Services\SearchEngine\DataTransferObjects\SearchResult;
-use Bolt\protocol\v1\structures\Path as BoltPath;
 use Bolt\protocol\v5\structures\Node;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 
 class SearchEngine
 {
@@ -42,42 +37,15 @@ class SearchEngine
                 $pivotCommunities[] = $node;
             }
         }
-        foreach ($pivotCommunities as &$pivotCommunity) {
-            $chunks = [];
-            $paths = $this->getRelevantPaths($pivotCommunity);
-            foreach ($paths as $path) {
-                foreach ($path->path->nodes as $node) {
-                    if (!in_array('Chunk', $node->labels)) {
-                        continue;
-                    }
-                    foreach ($chunks as $chunk) {
-                        if ($chunk->id === $node->id) {
-                            continue 2;
-                        }
-                    }
-                    $chunks[] = $node;
-                    $chunkContext[] = $node;
-                }
-            }
-            $pivotCommunity['paths'] = $paths;
-            $pivotCommunity['chunks'] = $chunks;
-        }
-        $pathStrings = [];
-        foreach ($pivotCommunities as $pivotCommunity) {
-            /** @var Path $path */
-            foreach ($pivotCommunity['paths'] as $path) {
-                $pathStrings[] = $path->pathString;
-            }
-        }
 
-        $pathJSON = json_encode($pathStrings);
-        $question->update([
-            'relevant_graph_paths' => $pathJSON,
-        ]);
+        foreach ($pivotCommunities as &$pivotCommunity) {
+            $chunks = $this->getRelevantChunkNodes($pivotCommunity);
+            $chunkContext = [...$chunkContext, ...$chunks];
+        }
 
         $chunkContext = collect($chunkContext)
             ->unique('id')
-            ->map(callback: function (Node $node) {
+            ->map(function (Node $node) {
                 $idCol = $node->properties['document_type'] === 'document'
                     ? 'document_chunk_id'
                     : 'comment_id';
@@ -94,7 +62,7 @@ class SearchEngine
             ->toArray();
 
         $chunkJSON = json_encode($chunkContext);
-        $potentiallyRelevantDocuments = collect();
+        $relevantDocuments = collect();
         foreach ($chunkContext as $chunk) {
             if ($chunk['type'] === 'document') {
                 $document = DocumentChunk::with('document')
@@ -107,15 +75,15 @@ class SearchEngine
             }
             
 
-            if ($potentiallyRelevantDocuments->contains('id', $document->id)) {
+            if ($relevantDocuments->contains('id', $document->id)) {
                 continue;
             }
 
-            $potentiallyRelevantDocuments->push($document);
+            $relevantDocuments->push($document);
         }
 
         $question->update([
-            'relevant_documents' => $potentiallyRelevantDocuments->map(function (Model $doc) {
+            'relevant_documents' => $relevantDocuments->map(function (Model $doc) {
                 return [
                     'id' => $doc->id,
                     'title' => $doc->title,
@@ -127,7 +95,6 @@ class SearchEngine
         ]);
 
         $llm = LLMFactory::create(tenancy()->tenant);
-
         $llm->stream("
             You are Horizontal's search engine, designed for engineering teams who need fast, accurate answers from scattered information.
 
@@ -135,10 +102,7 @@ class SearchEngine
 
             You have two types of context:
 
-            1. **Graph Context**: Shows how information is connected (communities → documents)
-            {$pathJSON}
-
-            2. **Document Context**: The actual content from relevant sources
+            1. **Document Context**: The actual content from relevant sources
             {$chunkJSON}
 
             ## Your Task
@@ -245,33 +209,20 @@ class SearchEngine
 
             Remember: Engineering teams value **precision, speed, and traceability**. Be direct, cite everything, and make it easy to dive deeper.
         ", $question);
-
-        $question->update([
-            'relevant_documents' => $potentiallyRelevantDocuments->map(function (Document $doc) {
-                return [
-                    'id' => $doc->id,
-                    'title' => $doc->title,
-                    'source_url' => $doc->source_url,
-                    'source' => $doc->source,
-                    'preview' => $doc->preview ? $doc->preview : $doc->body,
-                ];
-            }),
-        ]);
     }
 
     /**
-     * @return array<Path>
+     * @return array<Node>
      */
-    private function getRelevantPaths(array $node, int $hops = 2): array
+    private function getRelevantChunkNodes(array $node, int $hops = 2): array
     {
-        /** @var array<BoltPath> $paths */
-        $paths = $this->graphDB->queryMany("
-            match path=(n { id: {$node['node']->properties['id']} })-[r*..{$hops}]-(m)
-            return path
-            limit 500
-        ", ['path']);
-
-        return Path::fromArray($paths);
+        return $this->graphDB->queryMany("
+            match path=(n {id: {$node['node']->properties['id']}})-[r*..{$hops}]-(m)
+            with [node in nodes(path) where 'Chunk' in labels(node)] as chunks
+            unwind chunks as chunk
+            return distinct chunk
+            limit 100;
+        ", ['chunk']);
     }
 
     private function getIssueStatus(Node $node): ?string
@@ -305,99 +256,5 @@ class SearchEngine
         }
 
         return $status;
-    }
-
-    /**
-     * THE FOLLOWING IS NOT USED AT THE MOMENT
-     * might be useful for different question intents such as "who?" type pf questions (a person usually is not part of a community)
-     */
-
-    /**
-     * @return Collection<SearchResult>
-     */
-    private function semanticSearch(string $question): Collection
-    {
-        if (empty($question)) {
-            return collect();
-        }
-
-        $embedding = $this->embedder->createEmbedding($question);
-        $embeddingStr = '[' . implode(',', $embedding) . ']';
-
-        // <=> returns cosine distance
-        // (1 - cosine_distance) returns cosine similarity
-        $chunks = DocumentChunk::query()
-            ->selectRaw('*, 1 - (embedding <=> ?) as semantic_score', [$embeddingStr])
-            ->whereRaw('embedding IS NOT NULL')
-            ->whereRaw('1 - (embedding <=> ?) > 0.5', [$embeddingStr])
-            ->orderByDesc('semantic_score')
-            ->limit(10)
-            ->get();
-
-        return $chunks->map(fn (DocumentChunk $chunk) => new SearchResult(
-            documentChunk: $chunk,
-            semanticScore: $chunk->semantic_score,
-            keywordScore: null,
-        ));
-    }
-
-    /**
-     * @return Collection<SearchResult>
-     */
-    private function keywordSearch(array $keywords): Collection
-    {
-        if (empty($keywords)) {
-            return collect();
-        }
-
-        $query = implode(' | ', $keywords);
-        $chunks = DocumentChunk::query()
-            ->selectRaw("*, ts_rank(search_vector, plainto_tsquery('english', ?)) as keyword_score", [$query])
-            ->whereRaw("search_vector @@ plainto_tsquery('english', ?)", [$query])
-            ->orderByDesc('keyword_score')
-            ->limit(10)
-            ->get();
-
-        return $chunks->map(fn (DocumentChunk $chunk) => new SearchResult(
-            documentChunk: $chunk,
-            semanticScore: null,
-            keywordScore: $chunk->keyword_score,
-        ));
-    }
-
-    /**
-     * @param Collection<SearchResult> $semanticResults
-     * @param Collection<SearchResult> $keywordResults
-     * @return Collection<SearchResult>
-     */
-    private function combineResults(Collection $semanticResults, Collection $keywordResults): Collection
-    {
-        $results = collect();
-        foreach ($semanticResults as $result) {
-            $results->push(new SearchResult(
-                documentChunk: $result->documentChunk,
-                semanticScore: $result->semanticScore,
-                keywordScore: null,
-            ));
-        }
-        foreach ($keywordResults as $result) {
-            /** @var SearchResult $existingItem */
-            $existingItem = $results
-                ->where(fn (SearchResult $searchRes) =>
-                    $searchRes->documentChunk->id === $result->documentChunk->id
-                )
-                ->first();
-
-            if ($existingItem) {
-                $existingItem->keywordScore = $result->keywordScore;
-            } else {
-                $results->push(new SearchResult(
-                    documentChunk: $result->documentChunk,
-                    semanticScore: null,
-                    keywordScore: $result->keywordScore,
-                ));
-            }
-        }
-        return $results;
     }
 }
