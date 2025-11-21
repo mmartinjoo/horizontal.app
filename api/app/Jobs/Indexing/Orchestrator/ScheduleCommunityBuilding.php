@@ -39,6 +39,14 @@ class ScheduleCommunityBuilding implements ShouldQueue
             return;
         }
         
+        $exists = IndexingWorkflowStep::query()
+            ->where('name', 'build_communities')
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+        
         $step = IndexingWorkflowStep::create([
             'indexing_workflow_id' => $this->workflowId,
             'name' => 'build_communities',

@@ -52,6 +52,7 @@ class SuperviseWorkflow implements ShouldQueue
                 return;
             }
 
+            $this->nextTick();
             throw new Exception('supervisor: unknwon state: ' . json_encode($result));
         }
 

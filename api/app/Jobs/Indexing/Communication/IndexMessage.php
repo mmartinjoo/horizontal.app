@@ -85,17 +85,12 @@ class IndexMessage extends IndexingStepItemJob implements ShouldQueue
                 ]);
             }
 
-            $indexingWorkflowItem->update([
-                'status' => WorkflowStatus::Completed->value,
-            ]);
+            $indexingWorkflowItem->completed();
         } catch (Throwable $e) {
             if ($this->createdIndexingWorkflowItemId) {
                 $item = IndexingWorkflowStepItem::findOrFail($this->createdIndexingWorkflowItemId);
-                $item->update(attributes: [
-                    'status' => WorkflowStatus::Failed->value,
-                    'error_message' => $e->getMessage(),
-                ]); 
-            }                       
+                $item->failed($e->getMessage());
+            }
             throw $e;
         }
     }

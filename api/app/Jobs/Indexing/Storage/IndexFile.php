@@ -69,23 +69,17 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
             }
 
             if (strlen($content) === 0) {
-                $indexingWorkflowItem->update([
-                    'status' => WorkflowStatus::Completed->value,
-                ]);
+                $indexingWorkflowItem->completed();
                 throw new NoContentToIndexException('File is empty: '.json_encode($this->file));
             }
 
             $chunks = $textChunker->chunk($content);
             if (count($chunks) === 0) {
-                $indexingWorkflowItem->update([
-                    'status' => WorkflowStatus::Completed->value,
-                ]);
+                $indexingWorkflowItem->completed();
                 throw new NoContentToIndexException('Chunk is empty: '.json_encode($this->file).'; content: '.$content);
             }
             if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
-                $indexingWorkflowItem->update([
-                    'status' => WorkflowStatus::Completed->value,
-                ]);
+                $indexingWorkflowItem->completed();
                 throw new NoContentToIndexException('Chunk contains one empty item: '.json_encode($this->file).'; content: '.$content);
             }
 
@@ -116,15 +110,9 @@ class IndexFile extends IndexingStepItemJob implements ShouldQueue
             // which cannot be saved in the `error_message` column. so instead of saving the message
             // `update` would throw another exception
             try {
-                $item->update(attributes: [
-                    'status' => WorkflowStatus::Failed->value,
-                    'error_message' => $e->getMessage(),
-                ]); 
+                $item->failed($e->getMessage()); 
             } catch (Throwable $e) {
-                $item->update([
-                    'status' => WorkflowStatus::Failed->value,
-                    'error_message' => 'probably "Character not in repertoire". check the related job ID',
-                ]);
+                $item->failed('probably "Character not in repertoire". check the related job ID');
                 throw $e;
             }
             throw $e;

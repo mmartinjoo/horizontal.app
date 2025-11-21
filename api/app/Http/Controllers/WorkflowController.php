@@ -103,6 +103,7 @@ class WorkflowController
             ->update([
                 'status' => WorkflowStatus::Processing->value,
                 'job_id' => $request->get('job_id'),
+                'started_at' => now(),
             ]);
 
         return response('', Response::HTTP_NO_CONTENT);
@@ -119,6 +120,7 @@ class WorkflowController
             ->whereIn('id', $request->get('bucket_item_ids'))
             ->update([
                 'status' => WorkflowStatus::Completed->value,
+                'finished_at' => now(),
             ]);
 
         return response('', Response::HTTP_NO_CONTENT);

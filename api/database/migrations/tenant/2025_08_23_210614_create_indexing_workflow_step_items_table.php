@@ -20,6 +20,8 @@ return new class extends Migration
             $table->jsonb('data')->nullable();
             $table->text('error_message')->nullable();
             $table->string('job_id')->nullable();
+            $table->dateTime('started_at')->nullable();
+            $table->dateTime('finished_at')->nullable();
             $table->timestamps();
         });
     }

@@ -52,15 +52,11 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
             if ($this->issue->body) {
                 $chunks = $textChunker->chunk($this->issue->body);
                 if (count($chunks) === 0) {
-                    $indexingWorkflowItem->update([
-                        'status' => 'warning',
-                    ]);
+                    $indexingWorkflowItem->warning();
                     throw new NoContentToIndexException('Chunk is empty: ' . json_encode($this->issue));
                 }
                 if (count($chunks) === 1 && strlen(trim($chunks->first())) === 0) {
-                    $indexingWorkflowItem->update([
-                        'status' => 'warning',
-                    ]);
+                    $indexingWorkflowItem->warning();
                     throw new NoContentToIndexException('Chunk contains one empty item: ' . json_encode($this->issue));
                 }
                 foreach ($chunks as $i => $chunk) {
@@ -78,14 +74,9 @@ class IndexIssue extends IndexingStepItemJob implements ShouldQueue
             $doc->update([
                 'preview' => $preview,
             ]);
-            $indexingWorkflowItem->update([
-                'status' => 'completed',
-            ]);
+            $indexingWorkflowItem->completed();
         } catch (Throwable $e) {
-            $indexingWorkflowItem->update([
-                'status' => 'failed',
-                'error_message' => $e->getMessage(),
-            ]);
+            $indexingWorkflowItem->failed($e->getMessage());
             throw $e;
         }
         

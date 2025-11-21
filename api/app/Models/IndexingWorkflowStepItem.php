@@ -43,6 +43,32 @@ class IndexingWorkflowStepItem extends Model
             'entity_type' => get_class($document),
             'entity_id' => $document->id,
             'job_id' => $jobId,
+            'started_at' => now(),
+        ]);
+    }
+
+    public function completed(): void
+    {
+        $this->update([
+            'status' => WorkflowStatus::Completed->value,
+            'finished_at' => now(),
+        ]);
+    }
+
+    public function failed(string $errorMessage): void
+    {
+        $this->update(attributes: [
+            'status' => WorkflowStatus::Failed->value,
+            'error_message' => $errorMessage,
+            'finished' => now(),
+        ]);
+    }
+
+    public function warning(): void
+    {
+        $this->update(attributes: [
+            'status' => WorkflowStatus::Failed->value,
+            'finished' => now(),
         ]);
     }
 }
