@@ -7,6 +7,7 @@ from rq import Queue
 from llama_index.readers.database import DatabaseReader
 from llama_index.graph_stores.memgraph import MemgraphPropertyGraphStore
 from src.services.horizontal_api import get_graph_db_connection_info
+from src.graph_store_manager import get_graph_store_for_tenant
 from llama_index.core.embeddings import BaseEmbedding
 from llama_index.core.llms import CustomLLM
 from src.together_embedding import TogetherEmbedding
@@ -33,13 +34,16 @@ def create_db_cursor(tenant_id: str) -> Cursor:
 
 def create_graph_store(tenant_id: str) -> MemgraphPropertyGraphStore:
     """
-    Creates a graph DB connection that is used in LlamaIndex
-    """    
-    connection_info = get_graph_db_connection_info(tenant_id)
-    return MemgraphPropertyGraphStore(url=connection_info["url"],
-                                        username=connection_info["user"],
-                                        password=connection_info["password"],
-                                        database="memgraph")
+    Gets or creates a cached graph DB connection for the given tenant.
+
+    Uses a singleton pattern to ensure only one graph store instance per tenant
+    per worker process, preventing race conditions during initialization and
+    reducing connection overhead.
+
+    Note: Index creation is disabled in the graph store initialization.
+    Indexes must be pre-created using the setup_indexes.py script.
+    """
+    return get_graph_store_for_tenant(tenant_id)
 
 def create_graph_client(tenant_id: str) -> neo4j.Driver:
     """

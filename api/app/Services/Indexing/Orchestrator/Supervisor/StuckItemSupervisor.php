@@ -25,7 +25,7 @@ class StuckItemSupervisor
         $stuckInStarting = IndexingWorkflowStepItem::query()
             ->whereIn('indexing_workflow_step_bucket_id', $workflow->buckets->pluck('id'))
             ->where('status', WorkflowStatus::Starting->value)
-            ->where('created', '<=', now()->subSeconds(120*60))
+            ->where('created_at', '<=', now()->subSeconds(120*60))
             ->get();
 
         foreach ($stuckInProcessing as $item) {

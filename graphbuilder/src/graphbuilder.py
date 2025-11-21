@@ -16,10 +16,9 @@ class GraphBuilder:
         
     def build_graph_for_tenant(self):
         # This makes possible to run queries in parallel without conflicts
-        # Storage mode is set back to IN_MEMORY_TRANSACTIONAL oncxe all jobs have been finished
         graph_client = create_graph_client(tenant_id=self.tenant_id)
         with graph_client.session() as session:
-            session.run("STORAGE MODE IN_MEMORY_ANALYTICAL")
+            session.run("STORAGE MODE IN_MEMORY_TRANSACTIONAL")
             
         cursor = create_db_cursor(tenant_id=self.tenant_id)
         doc_job_ids = self.build_graph(type="document_chunks",
