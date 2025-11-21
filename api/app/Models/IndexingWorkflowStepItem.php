@@ -60,7 +60,7 @@ class IndexingWorkflowStepItem extends Model
         $this->update(attributes: [
             'status' => WorkflowStatus::Failed->value,
             'error_message' => $errorMessage,
-            'finished' => now(),
+            'finished_at' => now(),
         ]);
     }
 
@@ -68,7 +68,7 @@ class IndexingWorkflowStepItem extends Model
     {
         $this->update(attributes: [
             'status' => WorkflowStatus::Failed->value,
-            'finished' => now(),
+            'finished_at' => now(),
         ]);
     }
 }

@@ -31,4 +31,4 @@ Schedule::job(new SuperviseAvailableMemgraphInstances)->everyMinute();
 Schedule::job(new StartIndexing)->dailyAt('03:00');
 Schedule::job(new StartEmergencyIndexing)->everyThirtyMinutes();
 
-Schedule::job(new RotateLLMProvider)->everyThirtyMinutes();
+Schedule::job(new RotateLLMProvider)->everyFifteenMinutes();

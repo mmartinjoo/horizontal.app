@@ -41,6 +41,7 @@ class IndexGraphCommunity extends IndexingStepItemJob implements ShouldQueue
                 'indexing_workflow_step_bucket_id' => $bucket->id,
                 'status' => WorkflowStatus::Processing->value,
                 'job_id' => $this->job->payload()['uuid'],
+                'started_at' => now(),
             ]);
             $this->createdIndexingWorkflowItemId = $indexingWorkflowItem->id;
             
@@ -101,16 +102,11 @@ class IndexGraphCommunity extends IndexingStepItemJob implements ShouldQueue
                     c.embedding = {$embeddingStr};
             ");
 
-            $indexingWorkflowItem->update([
-                'status' => WorkflowStatus::Completed->value,
-            ]);
+            $indexingWorkflowItem->completed();
         } catch (Throwable $e) {
             if ($this->createdIndexingWorkflowItemId) {
                 $item = IndexingWorkflowStepItem::findOrFail($this->createdIndexingWorkflowItemId);
-                $item->update(attributes: [
-                    'status' => WorkflowStatus::Failed->value,
-                    'error_message' => $e->getMessage(),
-                ]); 
+                $item->failed($e->getMessage());
             }                       
             throw $e;
         }
