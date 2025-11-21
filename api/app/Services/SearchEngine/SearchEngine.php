@@ -214,14 +214,14 @@ class SearchEngine
     /**
      * @return array<Node>
      */
-    private function getRelevantChunkNodes(array $node, int $hops = 2): array
+    private function getRelevantChunkNodes(array $node, int $hops = 2, int $limit = 30): array
     {
         return $this->graphDB->queryMany("
             match path=(n {id: {$node['node']->properties['id']}})-[r*..{$hops}]-(m)
             with [node in nodes(path) where 'Chunk' in labels(node)] as chunks
             unwind chunks as chunk
             return distinct chunk
-            limit 100;
+            limit {$limit};
         ", ['chunk']);
     }
 
