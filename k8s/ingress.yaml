@@ -1,0 +1,78 @@
+# Root domain: horizontal.app
+# Routes landing page and tenant-agnostic API
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: horizontal-root
+  annotations:
+    # Disable SSL redirect initially (enable after cert-manager setup)
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: horizontal.app
+    http:
+      paths:
+      # API routes (must come before / to avoid being caught by landing page)
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx
+            port:
+              number: 80
+
+      # Landing page (catch-all for everything else)
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: central-app
+            port:
+              number: 80
+
+---
+# Tenant subdomains: *.horizontal.app
+# Routes tenant-specific apps and APIs
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: horizontal-tenants
+  annotations:
+    # Disable SSL redirect initially
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "*.horizontal.app"
+    http:
+      paths:
+      # Most specific paths first
+
+      # GraphBuilder API
+      - path: /graphbuilder
+        pathType: Prefix
+        backend:
+          service:
+            name: graphbuilder-api
+            port:
+              number: 9998
+
+      # Laravel API (tenant-specific routes)
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx
+            port:
+              number: 80
+
+      # Vue tenant app (catch-all with SPA support)
+      # All non-API routes serve the Vue app, which handles client-side routing
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tenant-app
+            port:
+              number: 80

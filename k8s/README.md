@@ -202,7 +202,261 @@ kubectl apply -f workers-deployment.yaml
 # 7. Deploy GraphBuilder services
 kubectl apply -f graphbuilder-api-deployment.yaml
 kubectl apply -f graphbuilder-worker-deployment.yaml
+
+# 8. Deploy Frontend applications
+kubectl apply -f central-app-deployment.yaml
+kubectl apply -f tenant-app-deployment.yaml
+
+# 9. Install Ingress Controller (one-time setup)
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.1/deploy/static/provider/do/deploy.yaml
+
+# Wait for Load Balancer to be provisioned
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=300s
+
+# 10. Deploy Ingress routing rules
+kubectl apply -f ingress.yaml
+
+# Get Load Balancer IP for DNS configuration
+kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 ```
+
+## Ingress and Load Balancer Setup
+
+This deployment uses **Ingress** for HTTP routing with a single DigitalOcean Load Balancer ($12/month).
+
+### Architecture Overview
+
+```
+Internet
+   ↓
+DigitalOcean Load Balancer (auto-created, $12/month)
+   ↓
+nginx Ingress Controller (pods in cluster)
+   ↓
+Ingress Rules (path-based routing)
+   ↓
+Services → Pods
+```
+
+### Multi-Tenancy Routing
+
+The application uses a sophisticated routing setup:
+
+**Root Domain (`horizontal.app`):**
+- `/api` → Laravel API (tenant-agnostic routes)
+- `/` → Central landing page
+
+**Tenant Subdomains (`*.horizontal.app`):**
+- `tenant1.horizontal.app/graphbuilder` → GraphBuilder API
+- `tenant1.horizontal.app/api` → Laravel API (tenant routes)
+- `tenant1.horizontal.app/` → Vue tenant app (SPA)
+
+### Installing Ingress Controller
+
+**Step 1:** Install nginx Ingress Controller (one-time setup):
+
+```bash
+# Install nginx ingress controller for DigitalOcean
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.11.1/deploy/static/provider/do/deploy.yaml
+
+# Wait for Load Balancer to be provisioned (~2 minutes)
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=300s
+
+# Get Load Balancer IP
+kubectl get svc -n ingress-nginx ingress-nginx-controller
+```
+
+Copy the `EXTERNAL-IP` value - this is your Load Balancer's public IP.
+
+**Step 2:** Deploy Ingress rules:
+
+```bash
+kubectl apply -f ingress.yaml
+```
+
+**Step 3:** Configure DNS (in your domain registrar):
+
+```
+A Record: horizontal.app      → <LOAD-BALANCER-IP>
+A Record: *.horizontal.app    → <LOAD-BALANCER-IP>
+```
+
+The wildcard record handles all tenant subdomains automatically!
+
+**Step 4:** Verify Ingress is working:
+
+```bash
+# Check ingress resources
+kubectl get ingress
+
+# Should show:
+# NAME                  HOSTS                    ADDRESS           PORTS
+# horizontal-root       horizontal.app           157.245.x.x       80
+# horizontal-tenants    *.horizontal.app         157.245.x.x       80
+```
+
+### Traffic Flow Examples
+
+**Root landing page:**
+```
+https://horizontal.app
+  → Load Balancer
+  → Ingress Controller
+  → horizontal-root Ingress (path: /)
+  → central-app Service
+  → central-app Pod
+```
+
+**Root API:**
+```
+https://horizontal.app/api/users
+  → Load Balancer
+  → Ingress Controller
+  → horizontal-root Ingress (path: /api)
+  → nginx Service
+  → nginx Pod → API Pod (Laravel)
+```
+
+**Tenant app:**
+```
+https://tenant1.horizontal.app
+  → Load Balancer
+  → Ingress Controller
+  → horizontal-tenants Ingress (path: /)
+  → tenant-app Service
+  → tenant-app Pod (Vue SPA)
+```
+
+**Tenant API:**
+```
+https://tenant1.horizontal.app/api/projects
+  → Load Balancer
+  → Ingress Controller
+  → horizontal-tenants Ingress (path: /api)
+  → nginx Service
+  → nginx Pod → API Pod (Laravel with subdomain)
+```
+
+**GraphBuilder:**
+```
+https://tenant1.horizontal.app/graphbuilder/api/build
+  → Load Balancer
+  → Ingress Controller
+  → horizontal-tenants Ingress (path: /graphbuilder)
+  → graphbuilder-api Service
+  → graphbuilder-api Pod
+```
+
+### Testing Endpoints
+
+After deployment, test each route:
+
+```bash
+# Get Load Balancer IP
+LB_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+# Test root landing page
+curl -H "Host: horizontal.app" http://$LB_IP/
+
+# Test root API
+curl -H "Host: horizontal.app" http://$LB_IP/api/health
+
+# Test tenant app
+curl -H "Host: tenant1.horizontal.app" http://$LB_IP/
+
+# Test tenant API
+curl -H "Host: tenant1.horizontal.app" http://$LB_IP/api/health
+
+# Test GraphBuilder
+curl -H "Host: tenant1.horizontal.app" http://$LB_IP/graphbuilder/health
+```
+
+Once DNS is configured, test with actual domains:
+
+```bash
+curl https://horizontal.app
+curl https://horizontal.app/api/health
+curl https://tenant1.horizontal.app
+curl https://tenant1.horizontal.app/api/health
+curl https://tenant1.horizontal.app/graphbuilder/health
+```
+
+### Adding SSL/TLS (Recommended for Production)
+
+Install cert-manager for automatic Let's Encrypt SSL certificates:
+
+```bash
+# Install cert-manager
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+
+# Create Let's Encrypt issuer (after cert-manager is ready)
+cat <<EOF | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: your-email@example.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+EOF
+```
+
+Then update ingress.yaml to add SSL:
+
+```yaml
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - horizontal.app
+    secretName: horizontal-app-tls
+  - hosts:
+    - "*.horizontal.app"
+    secretName: horizontal-tenants-tls
+```
+
+Certificates will be automatically provisioned and renewed!
+
+### Path Routing Priority
+
+Ingress matches paths in order of specificity. For tenant subdomains:
+
+1. `/graphbuilder` → GraphBuilder API (most specific)
+2. `/api` → Laravel API
+3. `/` → Vue tenant app (catch-all)
+
+This ensures API and GraphBuilder routes are matched before the Vue SPA catch-all.
+
+### Cost Breakdown
+
+**With Ingress:**
+- 1 Load Balancer: $12/month
+- Total: **$12/month**
+
+**Without Ingress (separate LoadBalancer Services):**
+- nginx: $12/month
+- graphbuilder-api: $12/month
+- central-app: $12/month
+- tenant-app: $12/month
+- Total: **$48/month**
+
+**Savings: $36/month**
 
 ## Quick Deploy (All at Once)
 
@@ -230,6 +484,8 @@ Expected output should show:
 - 1 `worker-default-*` pod
 - 2 `graphbuilder-api-*` pods
 - 4 `graphbuilder-worker-*` pods
+- 2 `central-app-*` pods
+- 2 `tenant-app-*` pods
 
 Check services:
 
@@ -338,6 +594,8 @@ Current resource configuration:
 | Workers | 250m | 1000m | 512Mi | 2Gi |
 | GraphBuilder API | 250m | 1000m | 512Mi | 1Gi |
 | GraphBuilder Workers | 250m | 1000m | 512Mi | 2Gi |
+| Central App (Landing) | 100m | 500m | 128Mi | 256Mi |
+| Tenant App (Vue SPA) | 100m | 500m | 128Mi | 256Mi |
 
 Adjust these in the respective deployment files based on your workload.
 
