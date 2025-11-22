@@ -37,3 +37,13 @@ spec:
             name: app-config
         - secretRef:
             name: app-secrets
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pgrep -f "rq worker" || exit 1
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3

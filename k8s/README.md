@@ -283,6 +283,21 @@ Set in `graphbuilder-worker-deployment.yaml`:
 
 To adjust these values, edit the `env` section in the respective deployment files.
 
+### Health Check Endpoints
+
+The GraphBuilder API provides the following health check endpoints:
+
+- **GET /health**: Basic liveness check - returns 200 if the Flask app is running
+  - Used by Kubernetes liveness and startup probes
+  - Lightweight, no external dependency checks
+
+- **GET /readiness**: Readiness check - verifies external dependencies (Redis)
+  - Used by Kubernetes readiness probe
+  - Returns 200 if ready to accept traffic, 503 if dependencies unavailable
+  - Checks Redis connectivity before marking pod as ready
+
+The GraphBuilder worker uses an exec-based liveness probe that checks if the RQ worker process is running.
+
 ## Troubleshooting
 
 ### Migration job failed
@@ -306,6 +321,31 @@ kubectl apply -f api-migration-job.yaml
 ```bash
 kubectl describe pod <pod-name>
 kubectl logs <pod-name>
+```
+
+### Health check failures
+
+If GraphBuilder API pods are failing health checks:
+
+```bash
+# Check if health endpoint is accessible
+kubectl exec -it <graphbuilder-api-pod> -- curl http://localhost:9998/health
+
+# Check readiness endpoint
+kubectl exec -it <graphbuilder-api-pod> -- curl http://localhost:9998/readiness
+
+# View detailed pod events
+kubectl describe pod <graphbuilder-api-pod>
+```
+
+If GraphBuilder worker pods are restarting:
+
+```bash
+# Check if RQ worker process is running
+kubectl exec -it <graphbuilder-worker-pod> -- pgrep -f "rq worker"
+
+# View worker logs
+kubectl logs <graphbuilder-worker-pod>
 ```
 
 ### Database connection issues
