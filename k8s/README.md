@@ -119,19 +119,28 @@ kubectl apply -f nginx-configmap.yaml
 # 2. Deploy Secrets
 kubectl apply -f secrets.yaml
 
-# 3. Deploy API
+# 3. Run Database Migrations
+kubectl apply -f api-migration-job.yaml
+
+# Wait for migrations to complete
+kubectl wait --for=condition=complete job/api-migrations --timeout=300s
+
+# Check migration logs if needed
+kubectl logs job/api-migrations
+
+# 4. Deploy API
 kubectl apply -f api-deployment.yaml
 
 # Wait for API to be ready
 kubectl wait --for=condition=ready pod -l app=api --timeout=300s
 
-# 4. Deploy Nginx
+# 5. Deploy Nginx
 kubectl apply -f nginx-deployment.yaml
 
-# 5. Deploy Workers
+# 6. Deploy Workers
 kubectl apply -f workers-deployment.yaml
 
-# 6. Deploy GraphBuilder services
+# 7. Deploy GraphBuilder services
 kubectl apply -f graphbuilder-api-deployment.yaml
 kubectl apply -f graphbuilder-worker-deployment.yaml
 ```
@@ -202,10 +211,18 @@ kubectl scale deployment graphbuilder-worker --replicas=6
 To update a deployment with a new image:
 
 ```bash
-# Update API
+# 1. Run migrations for new version (if needed)
+# First, delete the old migration job
+kubectl delete job api-migrations
+
+# Then run migrations with new image version
+kubectl apply -f api-migration-job.yaml
+kubectl wait --for=condition=complete job/api-migrations --timeout=300s
+
+# 2. Update API
 kubectl set image deployment/api api=your-registry/horizontal-api:v2
 
-# Update workers
+# 3. Update workers
 kubectl set image deployment/worker-indexing worker=your-registry/horizontal-api:v2
 kubectl set image deployment/worker-question worker=your-registry/horizontal-api:v2
 kubectl set image deployment/worker-default worker=your-registry/horizontal-api:v2
@@ -267,6 +284,22 @@ Set in `graphbuilder-worker-deployment.yaml`:
 To adjust these values, edit the `env` section in the respective deployment files.
 
 ## Troubleshooting
+
+### Migration job failed
+
+Check the migration job status and logs:
+
+```bash
+# Check job status
+kubectl get job api-migrations
+
+# View migration logs
+kubectl logs job/api-migrations
+
+# Delete failed job to retry
+kubectl delete job api-migrations
+kubectl apply -f api-migration-job.yaml
+```
 
 ### Pods not starting
 

@@ -26,15 +26,6 @@ spec:
       labels:
         app: api
     spec:
-      initContainers:
-      - name: migrations
-        image: your-registry/horizontal-api:latest
-        command: ['sh', '-c', 'php artisan migrate --force']
-        envFrom:
-        - configMapRef:
-            name: app-config
-        - secretRef:
-            name: app-secrets
       containers:
       - name: api
         image: your-registry/horizontal-api:latest
