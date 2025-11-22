@@ -45,15 +45,22 @@ docker push your-registry/horizontal-graphbuilder:latest
 # Build and push GraphBuilder Worker image (production)
 docker build -t your-registry/horizontal-graphbuilder-worker:latest --target worker-prod -f Dockerfile.prod .
 docker push your-registry/horizontal-graphbuilder-worker:latest
+
+# Build and push Tenant App frontend (production)
+cd ../tenant-app
+docker build -t your-registry/horizontal-tenant-app:latest -f Dockerfile.prod .
+docker push your-registry/horizontal-tenant-app:latest
 ```
 
 **Development Builds:**
 - **API**: Use `Dockerfile` - `docker build -t horizontal-api:dev -f Dockerfile .`
 - **GraphBuilder**: Use `Dockerfile` with `--target api` or `--target worker`
+- **Tenant App**: Use `Dockerfile` - runs Vite dev server on port 5173
 
 **Production Builds:**
 - **API**: Use `Dockerfile.prod` with `--target api` (PHP-FPM) or `--target worker` (Queue workers)
 - **GraphBuilder**: Use `Dockerfile.prod` with `--target api` or `--target worker-prod`
+- **Tenant App**: Use `Dockerfile.prod` - builds with Vite and serves with nginx
 
 **Key Production Improvements:**
 - Multi-stage builds for smaller images
