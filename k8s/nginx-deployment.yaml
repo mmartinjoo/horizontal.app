@@ -27,6 +27,20 @@ spec:
       labels:
         app: nginx
     spec:
+      initContainers:
+      - name: copy-public-files
+        image: your-registry/horizontal-api:latest
+        command: ['sh', '-c', 'cp -r /var/www/public/* /public-files/ && ls -la /public-files/']
+        volumeMounts:
+        - name: app-public
+          mountPath: /public-files
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
       containers:
       - name: nginx
         image: nginx:1.27.3-alpine

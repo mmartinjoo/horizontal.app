@@ -7,6 +7,8 @@ This directory contains Kubernetes manifests for deploying the Horizontal applic
 The deployment includes:
 - **API Service**: Laravel PHP-FPM application (2 replicas)
 - **Nginx**: Web server fronting the API (2 replicas)
+  - Uses initContainer to copy Laravel's public files from API image
+  - Shares volume with main nginx container via emptyDir
 - **Workers**: Three types of queue workers
   - `worker-indexing`: 4 replicas for indexing and question queues
   - `worker-question`: 1 replica for question prioritization
@@ -231,6 +233,42 @@ kubectl set image deployment/worker-default worker=your-registry/horizontal-api:
 kubectl rollout restart deployment/api
 ```
 
+## Nginx Deployment Pattern
+
+The nginx deployment uses an **initContainer pattern** to solve the problem of serving Laravel's public files:
+
+### The Challenge
+- **PHP-FPM** (API pods) has Laravel's public directory with `index.php`, `.htaccess`, etc.
+- **Nginx** (separate deployment) needs these files to route requests properly
+- These are separate pods, so they don't share filesystems by default
+
+### The Solution
+The nginx deployment uses:
+1. **emptyDir volume**: A temporary empty directory shared between containers in the pod
+2. **initContainer**: Runs before nginx starts, copies files from the API image to the emptyDir
+3. **nginx container**: Mounts the now-populated emptyDir at `/var/www/public`
+
+### How It Works
+```
+Pod Start
+  ↓
+initContainer (copy-public-files) runs
+  - Uses API image
+  - Copies /var/www/public/* to emptyDir
+  - Completes
+  ↓
+nginx container starts
+  - Mounts emptyDir at /var/www/public
+  - Has access to index.php, .htaccess, etc.
+  - Routes requests properly
+```
+
+### Why This Approach?
+- ✅ Clean separation: API and nginx scale independently
+- ✅ No custom nginx images needed
+- ✅ Works with existing docker images
+- ✅ Files are guaranteed to match API version
+
 ## Resource Limits
 
 Current resource configuration:
@@ -239,6 +277,7 @@ Current resource configuration:
 |---------|-------------|-----------|----------------|--------------|
 | API | 250m | 1000m | 512Mi | 1Gi |
 | Nginx | 100m | 500m | 128Mi | 256Mi |
+| Nginx initContainer | 50m | 200m | 64Mi | 128Mi |
 | Workers | 250m | 1000m | 512Mi | 2Gi |
 | GraphBuilder API | 250m | 1000m | 512Mi | 1Gi |
 | GraphBuilder Workers | 250m | 1000m | 512Mi | 2Gi |
@@ -322,6 +361,26 @@ kubectl apply -f api-migration-job.yaml
 kubectl describe pod <pod-name>
 kubectl logs <pod-name>
 ```
+
+### Nginx initContainer issues
+
+If nginx pods are stuck in `Init:0/1` state:
+
+```bash
+# Check initContainer logs
+kubectl logs <nginx-pod> -c copy-public-files
+
+# Verify files were copied
+kubectl exec -it <nginx-pod> -- ls -la /var/www/public/
+
+# Check initContainer status
+kubectl describe pod <nginx-pod>
+```
+
+Common issues:
+- **Image pull errors**: Ensure API image is accessible from cluster
+- **Permission errors**: Check that files are readable
+- **Empty directory**: Verify source path `/var/www/public/*` exists in API image
 
 ### Health check failures
 
