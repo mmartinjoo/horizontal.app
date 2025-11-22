@@ -27,6 +27,8 @@ spec:
       labels:
         app: graphbuilder-api
     spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: app-pool
       containers:
       - name: graphbuilder-api
         image: your-registry/horizontal-graphbuilder:latest

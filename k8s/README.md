@@ -16,9 +16,66 @@ The deployment includes:
 - **GraphBuilder API**: Python API service (2 replicas)
 - **GraphBuilder Workers**: Python RQ workers (4 replicas)
 
+## Node Pool Architecture
+
+This deployment uses **two separate node pools** to isolate user-facing workloads from background processing:
+
+### **app-pool** (User-Facing Workloads)
+- **Purpose**: Serves user requests with low latency
+- **Workloads**: API, nginx, GraphBuilder API, migrations
+- **Recommended size**: `s-2vcpu-4gb` or `s-4vcpu-8gb`
+- **Recommended replicas**: 2-3 nodes (min: 2, max: 5)
+- **Auto-scaling**: Based on CPU utilization (70% target)
+
+### **worker-pool** (Background Processing)
+- **Purpose**: Handles CPU-intensive background jobs
+- **Workloads**: Laravel queue workers, GraphBuilder workers
+- **Recommended size**: `c-4` (CPU-optimized) or `s-4vcpu-8gb`
+- **Recommended replicas**: 4-6 nodes (min: 2, max: 10)
+- **Auto-scaling**: Based on CPU utilization (80% target)
+
+### Benefits
+- ✅ **Resource isolation**: Heavy worker jobs won't impact API performance
+- ✅ **Independent scaling**: Scale worker nodes during high indexing load
+- ✅ **Cost optimization**: Right-size nodes for different workload types
+- ✅ **Better observability**: Separate metrics per workload type
+
+### Workload Assignment
+
+| Workload | Node Pool | Reason |
+|----------|-----------|--------|
+| API (PHP-FPM) | app-pool | User-facing, needs low latency |
+| Nginx | app-pool | User-facing, serves requests |
+| GraphBuilder API | app-pool | User-facing API endpoints |
+| Migration Job | app-pool | Database access, one-time execution |
+| worker-indexing | worker-pool | CPU-heavy indexing operations |
+| worker-question | worker-pool | Background question processing |
+| worker-default | worker-pool | Background job processing |
+| GraphBuilder workers | worker-pool | CPU-heavy graph operations |
+
+### Creating Node Pools in DigitalOcean
+
+When creating your Kubernetes cluster:
+
+1. **Create app-pool:**
+   - Name: `app-pool`
+   - Node size: `s-2vcpu-4gb` (2 vCPUs, 4GB RAM, $24/month)
+   - Node count: 2-3 nodes
+   - Enable auto-scaling: min 2, max 5
+   - No additional taints needed
+
+2. **Create worker-pool:**
+   - Name: `worker-pool`
+   - Node size: `s-4vcpu-8gb` (4 vCPUs, 8GB RAM, $48/month) or `c-4` (CPU-optimized)
+   - Node count: 4-6 nodes
+   - Enable auto-scaling: min 2, max 10
+   - No additional taints needed
+
+**Note**: All deployments use `nodeSelector` to prefer their designated pool, but can fall back to other pools if needed (e.g., during high load or scaling events). This provides flexibility while maintaining separation.
+
 ## Prerequisites
 
-1. DigitalOcean Kubernetes cluster configured
+1. DigitalOcean Kubernetes cluster configured with **two node pools** (see above)
 2. `kubectl` installed and configured to access your cluster
 3. Docker images built and pushed to a container registry
 4. Managed PostgreSQL instance (external)
@@ -420,6 +477,32 @@ kubectl get secret app-secrets -o yaml
 ```bash
 kubectl exec -it <pod-name> -- env | sort
 ```
+
+### Pod scheduled on wrong node pool
+
+Check which node a pod is running on:
+
+```bash
+# See which nodes pods are running on
+kubectl get pods -o wide
+
+# Check node labels to verify pool
+kubectl get nodes --show-labels
+
+# Verify pod nodeSelector
+kubectl get pod <pod-name> -o yaml | grep -A 2 nodeSelector
+```
+
+If pods are consistently being scheduled on the wrong pool:
+1. **Check node pool exists**: `kubectl get nodes -l doks.digitalocean.com/node-pool=app-pool`
+2. **Check node pool has capacity**: `kubectl describe nodes`
+3. **Check for pending pods**: `kubectl get pods -A | grep Pending`
+4. **Enable cluster autoscaler** in DigitalOcean if not already enabled
+
+**Expected behavior with nodeSelector only:**
+- Pods prefer their designated pool
+- Can fall back to other pools if designated pool is full
+- This is intentional for flexibility
 
 ## Cleanup
 

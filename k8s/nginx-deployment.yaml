@@ -27,6 +27,8 @@ spec:
       labels:
         app: nginx
     spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: app-pool
       initContainers:
       - name: copy-public-files
         image: your-registry/horizontal-api:latest

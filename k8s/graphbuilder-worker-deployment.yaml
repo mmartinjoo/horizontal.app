@@ -12,6 +12,8 @@ spec:
       labels:
         app: graphbuilder-worker
     spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: worker-pool
       containers:
       - name: graphbuilder-worker
         image: your-registry/horizontal-graphbuilder-worker:latest

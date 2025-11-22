@@ -12,6 +12,8 @@ spec:
       labels:
         app: worker-indexing
     spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: worker-pool
       containers:
       - name: worker
         image: your-registry/horizontal-api-worker:latest
@@ -49,6 +51,8 @@ spec:
       labels:
         app: worker-question
     spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: worker-pool
       containers:
       - name: worker
         image: your-registry/horizontal-api-worker:latest
@@ -86,6 +90,8 @@ spec:
       labels:
         app: worker-default
     spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: worker-pool
       containers:
       - name: worker
         image: your-registry/horizontal-api-worker:latest

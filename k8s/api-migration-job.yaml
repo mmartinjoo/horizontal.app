@@ -12,6 +12,8 @@ spec:
         app: api-migrations
     spec:
       restartPolicy: Never
+      nodeSelector:
+        doks.digitalocean.com/node-pool: app-pool
       containers:
       - name: migrations
         image: your-registry/horizontal-api:latest

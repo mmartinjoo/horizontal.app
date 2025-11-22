@@ -26,6 +26,8 @@ spec:
       labels:
         app: api
     spec:
+      nodeSelector:
+        doks.digitalocean.com/node-pool: app-pool
       containers:
       - name: api
         image: your-registry/horizontal-api:latest
