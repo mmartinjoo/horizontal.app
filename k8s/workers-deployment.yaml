@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-indexing
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: worker-indexing
+  template:
+    metadata:
+      labels:
+        app: worker-indexing
+    spec:
+      containers:
+      - name: worker
+        image: your-registry/horizontal-api-worker:latest
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        env:
+        - name: QUEUE_NAMES
+          value: "indexing,question,default"
+        - name: QUEUE_TIMEOUT
+          value: "1800"
+        - name: QUEUE_TRIES
+          value: "3"
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secrets
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-question
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker-question
+  template:
+    metadata:
+      labels:
+        app: worker-question
+    spec:
+      containers:
+      - name: worker
+        image: your-registry/horizontal-api-worker:latest
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        env:
+        - name: QUEUE_NAMES
+          value: "question,indexing,default"
+        - name: QUEUE_TIMEOUT
+          value: "1800"
+        - name: QUEUE_TRIES
+          value: "3"
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secrets
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker-default
+  template:
+    metadata:
+      labels:
+        app: worker-default
+    spec:
+      containers:
+      - name: worker
+        image: your-registry/horizontal-api-worker:latest
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        env:
+        - name: QUEUE_NAMES
+          value: "default,question,indexing"
+        - name: QUEUE_TIMEOUT
+          value: "1800"
+        - name: QUEUE_TRIES
+          value: "3"
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secrets

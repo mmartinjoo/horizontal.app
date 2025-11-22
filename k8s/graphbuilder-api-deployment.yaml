@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphbuilder-api
+  labels:
+    app: graphbuilder-api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9998
+    targetPort: 9998
+    name: http
+  selector:
+    app: graphbuilder-api
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphbuilder-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: graphbuilder-api
+  template:
+    metadata:
+      labels:
+        app: graphbuilder-api
+    spec:
+      containers:
+      - name: graphbuilder-api
+        image: your-registry/horizontal-graphbuilder:latest
+        ports:
+        - containerPort: 9998
+          name: http
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        env:
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: REDIS_URL
+        - name: PORT
+          value: "9998"
+        - name: WEB_CONCURRENCY
+          value: "4"
+        - name: LOG_LEVEL
+          value: "info"
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9998
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9998
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
