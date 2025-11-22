@@ -8,6 +8,7 @@ use App\Services\Indexing\Orchestrator\Supervisor\StuckBucketSupervisor;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Exception;
+use Throwable;
 
 class SuperviseStuckBuckets implements ShouldQueue
 {
@@ -23,20 +24,26 @@ class SuperviseStuckBuckets implements ShouldQueue
 
     public function handle()
     {
-        logger()->info("supervising stuck buckets for workflow #{$this->workflowId}");
-        $workflow = IndexingWorkflow::find($this->workflowId);
+        try {
+            logger()->info("supervising stuck buckets for workflow #{$this->workflowId}");
+            $workflow = IndexingWorkflow::find($this->workflowId);
 
-        if (in_array($workflow->status, [WorkflowStatus::Completed->value, WorkflowStatus::CompletedWithErrors->value, WorkflowStatus::Failed->value, WorkflowStatus::Timeout->value])) {
-            logger()->info("workflow already finished: " . $workflow->status);
-            return;
+            if (in_array($workflow->status, [WorkflowStatus::Completed->value, WorkflowStatus::CompletedWithErrors->value, WorkflowStatus::Failed->value, WorkflowStatus::Timeout->value])) {
+                logger()->info("workflow already finished: " . $workflow->status);
+                return;
+            }
+
+            $stuckBuckets = $this->supervisor->superviseBuckets($workflow);
+            if (!$stuckBuckets->isEmpty()) {
+                logger()->info("{$stuckBuckets->count()} buckets were stauck: " . json_encode($stuckBuckets->pluck('id')));
+            }        
+
+            $this->nextTick();
+        } catch (Throwable $ex) {
+            logger()->error('SuperviseStuckBuckets ERROR: ' . $ex->getMessage());
+            $this->nextTick();
         }
-
-        $stuckBuckets = $this->supervisor->superviseBuckets($workflow);
-        if (!$stuckBuckets->isEmpty()) {
-            logger()->info("{$stuckBuckets->count()} buckets were stauck: " . json_encode($stuckBuckets->pluck('id')));
-        }        
-
-        $this->nextTick();
+        
     }
 
     private function nextTick()
