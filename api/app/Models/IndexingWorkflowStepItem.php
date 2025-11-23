@@ -6,6 +6,7 @@ use App\Enums\Indexing\WorkflowStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Throwable;
 
 class IndexingWorkflowStepItem extends Model
 {
@@ -57,11 +58,21 @@ class IndexingWorkflowStepItem extends Model
 
     public function failed(string $errorMessage): void
     {
-        $this->update(attributes: [
-            'status' => WorkflowStatus::Failed->value,
-            'error_message' => $errorMessage,
-            'finished_at' => now(),
-        ]);
+        try {
+            $this->update(attributes: [
+                'status' => WorkflowStatus::Failed->value,
+                'error_message' => $errorMessage,
+                'finished_at' => now(),
+            ]);
+        } catch (Throwable $ex) {
+            $this->update(attributes: [
+                'status' => WorkflowStatus::Failed->value,
+                'error_message' => 'Saving the error message failed. Probably "Character not in repertoire"',
+                'finished_at' => now(),
+            ]);
+            throw $ex;
+        }
+        
     }
 
     public function warning(): void

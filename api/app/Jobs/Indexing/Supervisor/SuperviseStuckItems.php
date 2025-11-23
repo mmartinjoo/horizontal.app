@@ -7,6 +7,7 @@ use App\Models\IndexingWorkflow;
 use App\Services\Indexing\Orchestrator\Supervisor\StuckItemSupervisor;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Throwable;
 
 class SuperviseStuckItems implements ShouldQueue
 {
@@ -22,20 +23,26 @@ class SuperviseStuckItems implements ShouldQueue
 
     public function handle()
     {
-        logger()->info("supervising stuck items for workflow #{$this->workflowId}");
-        $workflow = IndexingWorkflow::find($this->workflowId);
+        try {
+            logger()->info("supervising stuck items for workflow #{$this->workflowId}");
+            $workflow = IndexingWorkflow::find($this->workflowId);
 
-        if (in_array($workflow->status, [WorkflowStatus::Completed->value, WorkflowStatus::CompletedWithErrors->value, WorkflowStatus::Failed->value, WorkflowStatus::Timeout->value])) {
-            logger()->info("workflow already finished: " . $workflow->status);
-            return;
+            if (in_array($workflow->status, [WorkflowStatus::Completed->value, WorkflowStatus::CompletedWithErrors->value, WorkflowStatus::Failed->value, WorkflowStatus::Timeout->value])) {
+                logger()->info("workflow already finished: " . $workflow->status);
+                return;
+            }
+
+            $stuckItems = $this->supervisor->superviseItems($workflow);
+            if (!$stuckItems->isEmpty()) {
+                logger()->info("{$stuckItems->count()} items were stauck: " . json_encode($stuckItems->pluck('id')));
+            }        
+
+            $this->nextTick();
+        } catch (Throwable $ex) {
+            logger()->error('SuperviseStuckItems ERROR: ' . $ex->getMessage());
+            $this->nextTick();
         }
-
-        $stuckItems = $this->supervisor->superviseItems($workflow);
-        if (!$stuckItems->isEmpty()) {
-            logger()->info("{$stuckItems->count()} items were stauck: " . json_encode($stuckItems->pluck('id')));
-        }        
-
-        $this->nextTick();
+        
     }
 
     private function nextTick()

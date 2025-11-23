@@ -1,11 +1,67 @@
-FROM public.ecr.aws/lambda/python:3.12
+FROM python:3.12.8-slim AS base
 
-RUN microdnf install -y gcc postgresql-devel python3-devel && \
-      microdnf clean all && \
-      rm -rf /var/cache/yum /var/cache/dnf /tmp/*
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-COPY requirements.txt ${LAMBDA_TASK_ROOT}
+WORKDIR /app
+
+# Install system dependencies needed for psycopg2 and other packages
+RUN apt-get clean && apt-get update --allow-releaseinfo-change && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    build-essential \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip first
+RUN pip install --upgrade pip
+
+# Copy and install requirements
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY *.py ${LAMBDA_TASK_ROOT}
-CMD ["lambda_function.handler"]
+FROM base AS api
+COPY . .
+
+# Default environment variables (can be overridden)
+ENV APP_PORT=80
+ENV WEB_CONCURRENCY=4
+ENV GUNICORN_TIMEOUT=600
+ENV LOG_LEVEL=info
+
+EXPOSE ${APP_PORT}
+
+# Production gunicorn configuration
+# - Workers: controlled by WEB_CONCURRENCY env var
+# - Timeout: controlled by GUNICORN_TIMEOUT env var
+# - Max requests: 1000 requests before worker restart (prevents memory leaks)
+# - Max requests jitter: randomize restart to avoid all workers restarting at once
+# - Keepalive: 5 seconds
+# - Graceful timeout: 30 seconds for graceful shutdown
+# - Preload: load application before forking workers
+CMD gunicorn api:app \
+    --bind 0.0.0.0:${APP_PORT} \
+    --workers ${WEB_CONCURRENCY} \
+    --timeout ${GUNICORN_TIMEOUT} \
+    --log-level ${LOG_LEVEL} \
+    --access-logfile - \
+    --error-logfile - \
+    --max-requests 1000 \
+    --max-requests-jitter 100 \
+    --keepalive 5 \
+    --graceful-timeout 30 \
+    --preload
+
+FROM base AS worker
+COPY . .
+
+# Default environment variables (can be overridden)
+ENV QUEUES=high,default,low
+ENV LOG_LEVEL=info
+
+# Production RQ worker configuration
+# - Queues: controlled by QUEUES env var (comma-separated)
+# - Redis URL: must be provided via REDIS_URL env var
+# - Logging: verbose mode for production monitoring
+CMD rq worker --url ${REDIS_URL} --verbose $(echo ${QUEUES} | tr ',' ' ')

@@ -1,27 +1,55 @@
-FROM bref/php-84-fpm:2 AS base
+FROM php:8.4.12-fpm AS builder
 
-COPY --from=bref/extra-pgsql-php-84:1 /opt /opt
-COPY --from=bref/extra-gd-php-84:1 /opt /opt
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    libzip-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip sockets
+RUN pecl install redis && docker-php-ext-enable redis
+RUN docker-php-ext-install opcache
+
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+WORKDIR /var/www
+
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-scripts
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --no-autoloader \
+    --prefer-dist \
+    --no-interaction
 
 COPY . .
 
-RUN composer run-script post-autoload-dump --no-dev || true
-#RUN php artisan config:clear
-#RUN php artisan route:clear
-#RUN php artisan view:clear
+RUN composer dump-autoload --optimize --classmap-authoritative
 
 RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
 
-FROM bref/php-84-fpm:2 AS api
-COPY --from=base /var/task /var/task
-WORKDIR /var/task
-CMD ["public/index.php"]
+COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
-FROM bref/php-84-console:2 AS console
-COPY --from=base /var/task /var/task
-WORKDIR /var/task
-CMD ["artisan"]
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www/storage \
+    && chmod -R 755 /var/www/bootstrap/cache
+
+FROM builder AS api
+COPY docker/zz-php-fpm.ini /usr/local/etc/php-fpm.d/zz-production.conf
+USER www-data
+EXPOSE 9000
+CMD ["php-fpm"]
+
+FROM builder AS worker
+USER www-data
+ENV QUEUE_NAMES=default,question,indexing
+ENV QUEUE_TIMEOUT=1800
+ENV QUEUE_TRIES=3
+ENV QUEUE_SLEEP=1
+CMD ["php", "artisan", "queue:work", "--queue=${QUEUE_NAMES}", "--timeout=${QUEUE_TIMEOUT}", "--tries=${QUEUE_TRIES}", "--sleep=${QUEUE_SLEEP}", "--verbose"]

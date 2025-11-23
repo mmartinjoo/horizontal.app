@@ -1,14 +1,49 @@
 import os
 import logging
+from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from src.graphbuilder import GraphBuilder
 from src.factories import create_graph_client
+import redis
 
 load_dotenv()
 
 app = Flask(__name__)
-    
+
+@app.route("/health", methods=["GET"])
+def health():
+    """Basic health check endpoint for liveness probe"""
+    return jsonify({
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat()
+    }), 200
+
+@app.route("/readiness", methods=["GET"])
+def readiness():
+    """Readiness check that verifies external dependencies"""
+    try:
+        # Check Redis connection
+        redis_url = os.getenv("REDIS_URL")
+        if redis_url:
+            r = redis.from_url(redis_url, socket_connect_timeout=2)
+            r.ping()
+
+        return jsonify({
+            "status": "ready",
+            "timestamp": datetime.utcnow().isoformat(),
+            "checks": {
+                "redis": "ok"
+            }
+        }), 200
+    except Exception as e:
+        logging.error(f"Readiness check failed: {e}")
+        return jsonify({
+            "status": "not ready",
+            "timestamp": datetime.utcnow().isoformat(),
+            "error": str(e)
+        }), 503
+
 @app.route("/api/build", methods=["POST"])
 def api_build_graph():
     try:

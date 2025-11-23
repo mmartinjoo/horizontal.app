@@ -11,7 +11,7 @@ class Fireworks extends LLM implements Embedder
 {
     use HasEmbeddingCache;
 
-    public function completion(string $prompt, $maxTokens = 4999): string
+    public function completion(string $prompt, $maxTokens = 4000): string
     {
         $res = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey,

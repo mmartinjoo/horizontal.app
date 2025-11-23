@@ -28,4 +28,4 @@ CMD [ "gunicorn", "api:app", "--bind", "0.0.0.0:9998", "--log-level", "info", "-
 
 FROM base AS worker
 COPY . .
-CMD [ "rq", "worker", "--url", "redis://redis:6379", "high", "default", "low" ]
+CMD [ "rq", "worker", "high", "default", "low" ]

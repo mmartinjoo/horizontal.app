@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  # Application
+  APP_NAME: "Horizontal"
+  APP_ENV: "production"
+  APP_DEBUG: "false"
+  APP_LOCALE: "en"
+  APP_URL: "horizontal.app"
+  APP_FALLBACK_LOCALE: "en"
+  APP_FAKER_LOCALE: "en_US"
+  APP_MAINTENANCE_DRIVER: "file"
+
+  SANCTUM_STATEFUL_DOMAINS: "horizontal.app,*.horizontal.app"
+
+  # PHP Configuration
+  PHP_CLI_SERVER_WORKERS: "4"
+  BCRYPT_ROUNDS: "12"
+
+  # Logging
+  LOG_CHANNEL: "stack"
+  LOG_STACK: "single,daily,stderr,slack"
+  LOG_DEPRECATIONS_CHANNEL: "null"
+  LOG_LEVEL: "info"
+  LOG_SLACK_LEVEL: "error"
+
+  # Database
+  DB_CONNECTION: "central"
+
+  # Redis
+  REDIS_CLIENT: "phpredis"
+
+  # Session
+  SESSION_DRIVER: "database"
+  SESSION_LIFETIME: "120"
+  SESSION_ENCRYPT: "false"
+  SESSION_PATH: "/"
+
+  # Queue & Cache
+  BROADCAST_CONNECTION: "log"
+  FILESYSTEM_DISK: "local"
+  QUEUE_CONNECTION: "redis"
+  CACHE_STORE: "redis"
+
+  # Mail
+  MAIL_MAILER: "smtp"
+  MAIL_HOST: "smtp.gmail.com"
+  MAIL_PORT: "465"
+  MAIL_USERNAME: "hello@horizontal.app"
+  MAIL_FROM_ADDRESS: "hello@horizontal.app"
+  MAIL_FROM_NAME: "Martin from Horizontal"
+
+  # LLM
+  LLM_PROVIDER: "fireworks"
+  FIREWORKS_CHAT_MODEL: "accounts/fireworks/models/kimi-k2-instruct-0905"
+  FIREWORKS_EMBEDDING_MODEL: "accounts/fireworks/models/qwen3-embedding-8b"
+  FIREWORKS_BASE_URL: "https://api.fireworks.ai/inference/v1"
+  TOGETHER_CHAT_MODEL: "moonshotai/Kimi-K2-Instruct-0905"
+  TOGETHER_EMBEDDING_MODEL: "Alibaba-NLP/gte-modernbert-base"
+  TOGETHER_BASE_URL: "https://api.together.xyz/v1"
+
+  # Graph Database
+  GRAPH_DB_CONNECTION: "memgraph"
+
+  # Google OAuth URLs
+  GOOGLE_AUTH_URI: "https://accounts.google.com/o/oauth2/auth"
+  GOOGLE_TOKEN_URI: "https://oauth2.googleapis.com/token"
+  GOOGLE_AUTH_PROVIDER_X509_CERT_URL: "https://www.googleapis.com/oauth2/v1/certs"
+  GOOGLE_REDIRECT_URI: "/api/integrations/google/oauth/callback"
+
+  GOOGLE_CHAT_AUTH_URI: "https://accounts.google.com/o/oauth2/auth"
+  GOOGLE_CHAT_TOKEN_URI: "https://oauth2.googleapis.com/token"
+  GOOGLE_CHAT_AUTH_PROVIDER_X509_CERT_URL: "https://www.googleapis.com/oauth2/v1/certs"
+  GOOGLE_CHAT_REDIRECT_URI: "https://horizontal.app/api/integrations/google_chat/oauth/callback"
+
+  GOOGLE_DRIVE_AUTH_URI: "https://accounts.google.com/o/oauth2/auth"
+  GOOGLE_DRIVE_TOKEN_URI: "https://oauth2.googleapis.com/token"
+  GOOGLE_DRIVE_AUTH_PROVIDER_X509_CERT_URL: "https://www.googleapis.com/oauth2/v1/certs"
+  GOOGLE_DRIVE_REDIRECT_URI: "https://horizontal.app/api/integrations/google_drive/oauth/callback"
+
+  # Jira
+  JIRA_REDIRECT_URI: "/api/integrations/jira/oauth/callback"
+
+  SLACK_BASE_URL: "https://slack.com/api"
+  SLACK_REDIRECT_URI: "https://horizontal.app/api/integrations/slack/oauth/callback"
+
+  # Linear
+  LINEAR_REDIRECT_URL: "/api/integrations/linear/oauth/callback"
+
+  # GitHub
+  GITHUB_BASE_URL: "https://api.github.com/"
+  GITHUB_APP_NAME: "horizontal-adapter-testing"
+
+  GITHUB_AUTH_REDIRECT_URL: "https://horizontal.app/api/auth/github/callback"
+  GOOGLE_AUTH_REDIRECT_URL: "https://horizontal.app/api/auth/google/callback"
+
+  # Search Configuration
+  SEARCH_ENGINE_COSINE_SIMILARITY_THRESHOLD: "0.45"
+
+  # GraphBuilder
+  GRAPH_BUILDER_BASE_URL: "http://graphbuilder-api"
+  HORIZONTAL_API_URL: "http://nginx"
+
+  # Supervisor
+  SUPERVISOR_TIMEOUT: "14400"
+  SUPERVISOR_INTERVAL: "5"
+  SUPERVISOR_STUCK_BUCKET_INTERVAL: "1800"
+  SUPERVISOR_STUCK_ITEM_INTERVAL: "900"
+
+  LOG_SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/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"
+
+  EMS_MINIMUM_AVAILABLE_INSTANCE_THRESHOLD: "3"

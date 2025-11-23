@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: api-migrations
+  labels:
+    app: api-migrations
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: api-migrations
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        doks.digitalocean.com/node-pool: app-pool
+      containers:
+      - name: migrations
+        image: your-registry/horizontal-api:latest
+        command: ['php', 'artisan', 'migrate', '--force']
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        envFrom:
+        - configMapRef:
+            name: app-config
+        - secretRef:
+            name: app-secrets
