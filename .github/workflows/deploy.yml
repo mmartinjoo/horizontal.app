@@ -36,7 +36,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t registry.digitalocean.com/horizontal/api:latest --target=api -f ./api/Dockerfile.prod .
+          docker build -t registry.digitalocean.com/horizontal/api:latest --target=api -f ./api/Dockerfile.prod api
 
       - name: Push Docker image
         run: |
