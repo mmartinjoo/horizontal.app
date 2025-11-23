@@ -46,53 +46,53 @@ jobs:
         run: |
           cp k8s/app-secrets.yaml.template k8s/app-secrets.yaml
 
-          sed -i 's|\$APP_KEY|${{ secrets.APP_KEY }}|' k8s/app-secrets.yaml
+          sed -i "s|\$APP_KEY|$(echo -n '${{ secrets.APP_KEY }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
 
-          sed -i 's|\$DB_HOST|${{ secrets.DB_HOST }}|' k8s/app-secrets.yaml
-          sed -i 's|\$DB_PORT|${{ secrets.DB_PORT }}|' k8s/app-secrets.yaml
-          sed -i 's|\$DB_DATABASE|${{ secrets.DB_DATABASE }}|' k8s/app-secrets.yaml
-          sed -i 's|\$DB_USERNAME|${{ secrets.DB_USERNAME }}|' k8s/app-secrets.yaml
-          sed -i 's|\$DB_PASSWORD|${{ secrets.DB_PASSWORD }}|' k8s/app-secrets.yaml
+          sed -i "s|\$DB_HOST|$(echo -n '${{ secrets.DB_HOST }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$DB_PORT|$(echo -n '${{ secrets.DB_PORT }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$DB_DATABASE|$(echo -n '${{ secrets.DB_DATABASE }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$DB_USERNAME|$(echo -n '${{ secrets.DB_USERNAME }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$DB_PASSWORD|$(echo -n '${{ secrets.DB_PASSWORD }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
 
-          sed -i 's|\$REDIS_HOST|${{ secrets.REDIS_HOST }}|' k8s/app-secrets.yaml
-          sed -i 's|\$REDIS_PASSWORD|${{ secrets.REDIS_PASSWORD }}|' k8s/app-secrets.yaml
-          sed -i 's|\$REDIS_PORT|${{ secrets.REDIS_PORT }}|' k8s/app-secrets.yaml
-          sed -i 's|\$REDIS_URL|${{ secrets.REDIS_URL }}|' k8s/app-secrets.yaml
+          sed -i "s|\$REDIS_HOST|$(echo -n '${{ secrets.REDIS_HOST }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$REDIS_PASSWORD|$(echo -n '${{ secrets.REDIS_PASSWORD }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$REDIS_PORT|$(echo -n '${{ secrets.REDIS_PORT }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$REDIS_URL|$(echo -n '${{ secrets.REDIS_URL }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
 
-          sed -i 's|\$FIREWORKS_API_KEY|${{ secrets.FIREWORKS_API_KEY }}|' k8s/app-secrets.yaml
-          sed -i 's|\$TOGETHER_API_KEY|${{ secrets.TOGETHER_API_KEY }}|' k8s/app-secrets.yaml
+          sed -i "s|\$FIREWORKS_API_KEY|$(echo -n '${{ secrets.FIREWORKS_API_KEY }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$TOGETHER_API_KEY|$(echo -n '${{ secrets.TOGETHER_API_KEY }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
 
-          sed -i 's|\$GOOGLE_CHAT_CLIENT_ID|${{ secrets.GOOGLE_CHAT_CLIENT_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GOOGLE_CHAT_CLIENT_SECRET|${{ secrets.GOOGLE_CHAT_CLIENT_SECRET }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GOOGLE_CHAT_PROJECT_ID|${{ secrets.GOOGLE_CHAT_PROJECT_ID }}|' k8s/app-secrets.yaml
+          sed -i "s|\$GOOGLE_CHAT_CLIENT_ID|$(echo -n '${{ secrets.GOOGLE_CHAT_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$GOOGLE_CHAT_CLIENT_SECRET|$(echo -n '${{ secrets.GOOGLE_CHAT_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$GOOGLE_CHAT_PROJECT_ID|$(echo -n '${{ secrets.GOOGLE_CHAT_PROJECT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
 
-          sed -i 's|\$GOOGLE_DRIVE_CLIENT_ID|${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GOOGLE_DRIVE_CLIENT_SECRET|${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GOOGLE_DRIVE_PROJECT_ID|${{ secrets.GOOGLE_DRIVE_PROJECT_ID }}|' k8s/app-secrets.yaml
+          sed -i "s|\$GOOGLE_DRIVE_CLIENT_ID|$(echo -n '${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$GOOGLE_DRIVE_CLIENT_SECRET|$(echo -n '${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$GOOGLE_DRIVE_PROJECT_ID|$(echo -n '${{ secrets.GOOGLE_DRIVE_PROJECT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
 
-          sed -i 's|\$GOOGLE_AUTH_CLIENT_ID|${{ secrets.GOOGLE_AUTH_CLIENT_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GOOGLE_AUTH_CLIENT_SECRET|${{ secrets.GOOGLE_AUTH_CLIENT_SECRET }}|' k8s/app-secrets.yaml
+          sed -i "s|\$GOOGLE_AUTH_CLIENT_ID|$(echo -n '${{ secrets.GOOGLE_AUTH_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$GOOGLE_AUTH_CLIENT_SECRET|$(echo -n '${{ secrets.GOOGLE_AUTH_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
 
-          sed -i 's|\$JIRA_APP_ID|${{ secrets.JIRA_APP_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$JIRA_CLIENT_ID|${{ secrets.JIRA_CLIENT_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$JIRA_CLIENT_SECRET|${{ secrets.JIRA_CLIENT_SECRET }}|' k8s/app-secrets.yaml
+          sed -i "s|\$JIRA_APP_ID|$(echo -n '${{ secrets.JIRA_APP_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$JIRA_CLIENT_ID|$(echo -n '${{ secrets.JIRA_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$JIRA_CLIENT_SECRET|$(echo -n '${{ secrets.JIRA_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
 
-          sed -i 's|\$SLACK_APP_ID|${{ secrets.SLACK_APP_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$SLACK_CLIENT_ID|${{ secrets.SLACK_CLIENT_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$SLACK_CLIENT_SECRET|${{ secrets.SLACK_CLIENT_SECRET }}|' k8s/app-secrets.yaml
+          sed -i "s|\$SLACK_APP_ID|$(echo -n '${{ secrets.SLACK_APP_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$SLACK_CLIENT_ID|$(echo -n '${{ secrets.SLACK_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$SLACK_CLIENT_SECRET|$(echo -n '${{ secrets.SLACK_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
 
-          sed -i 's|\$LINEAR_CLIENT_ID|${{ secrets.LINEAR_CLIENT_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$LINEAR_CLIENT_SECRET|${{ secrets.LINEAR_CLIENT_SECRET }}|' k8s/app-secrets.yaml
+          sed -i "s|\$LINEAR_CLIENT_ID|$(echo -n '${{ secrets.LINEAR_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$LINEAR_CLIENT_SECRET|$(echo -n '${{ secrets.LINEAR_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
 
-          sed -i 's|\$GITHUB_APP_ID|${{ secrets.GH_APP_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GITHUB_CLIENT_ID|${{ secrets.GH_CLIENT_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GITHUB_CLIENT_SECRET|${{ secrets.GH_CLIENT_SECRET }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GITHUB_PRIVATE_KEY|${{ secrets.GH_PRIVATE_KEY }}|' k8s/app-secrets.yaml
+          sed -i "s|\$GITHUB_APP_ID|$(echo -n '${{ secrets.GH_APP_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$GITHUB_CLIENT_ID|$(echo -n '${{ secrets.GH_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$GITHUB_CLIENT_SECRET|$(echo -n '${{ secrets.GH_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$GITHUB_PRIVATE_KEY|$(echo -n '${{ secrets.GH_PRIVATE_KEY }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
 
-          sed -i 's|\$GITHUB_AUTH_APP_ID|${{ secrets.GH_AUTH_APP_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GITHUB_AUTH_CLIENT_ID|${{ secrets.GH_AUTH_CLIENT_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GITHUB_AUTH_CLIENT_SECRET|${{ secrets.GH_AUTH_CLIENT_SECRET }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GITHUB_AUTH_PRIVATE_KEY|${{ secrets.GH_AUTH_PRIVATE_KEY }}|' k8s/app-secrets.yaml
+          sed -i "s|\$GITHUB_AUTH_APP_ID|$(echo -n '${{ secrets.GH_AUTH_APP_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$GITHUB_AUTH_CLIENT_ID|$(echo -n '${{ secrets.GH_AUTH_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$GITHUB_AUTH_CLIENT_SECRET|$(echo -n '${{ secrets.GH_AUTH_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
+          sed -i "s|\$GITHUB_AUTH_PRIVATE_KEY|$(echo -n '${{ secrets.GH_AUTH_PRIVATE_KEY }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
 
           cat k8s/app-secrets.yaml
 
