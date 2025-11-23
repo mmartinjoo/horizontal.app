@@ -84,10 +84,15 @@ jobs:
           sed -i 's|\$LINEAR_CLIENT_ID|${{ secrets.LINEAR_CLIENT_ID }}|' k8s/app-secrets.yaml
           sed -i 's|\$LINEAR_CLIENT_SECRET|${{ secrets.LINEAR_CLIENT_SECRET }}|' k8s/app-secrets.yaml
 
-          sed -i 's|\$GITHUB_APP_ID|${{ secrets.GITHUB_APP_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GITHUB_CLIENT_ID|${{ secrets.GITHUB_CLIENT_ID }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GITHUB_CLIENT_SECRET|${{ secrets.GITHUB_CLIENT_SECRET }}|' k8s/app-secrets.yaml
-          sed -i 's|\$GITHUB_PRIVATE_KEY|${{ secrets.GITHUB_PRIVATE_KEY }}|' k8s/app-secrets.yaml
+          sed -i 's|\$GITHUB_APP_ID|${{ secrets.GH_APP_ID }}|' k8s/app-secrets.yaml
+          sed -i 's|\$GITHUB_CLIENT_ID|${{ secrets.GH_CLIENT_ID }}|' k8s/app-secrets.yaml
+          sed -i 's|\$GITHUB_CLIENT_SECRET|${{ secrets.GH_CLIENT_SECRET }}|' k8s/app-secrets.yaml
+          sed -i 's|\$GITHUB_PRIVATE_KEY|${{ secrets.GH_PRIVATE_KEY }}|' k8s/app-secrets.yaml
+
+          sed -i 's|\$GITHUB_AUTH_APP_ID|${{ secrets.GH_AUTH_APP_ID }}|' k8s/app-secrets.yaml
+          sed -i 's|\$GITHUB_AUTH_CLIENT_ID|${{ secrets.GH_AUTH_CLIENT_ID }}|' k8s/app-secrets.yaml
+          sed -i 's|\$GITHUB_AUTH_CLIENT_SECRET|${{ secrets.GH_AUTH_CLIENT_SECRET }}|' k8s/app-secrets.yaml
+          sed -i 's|\$GITHUB_AUTH_PRIVATE_KEY|${{ secrets.GH_AUTH_PRIVATE_KEY }}|' k8s/app-secrets.yaml
 
           cat k8s/app-secrets.yaml
 
