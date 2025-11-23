@@ -10,37 +10,37 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install doctl
-        run: |
-          wget https://github.com/digitalocean/doctl/releases/download/v1.94.0/doctl-1.94.0-linux-amd64.tar.gz
-          tar xf ./doctl-1.94.0-linux-amd64.tar.gz
-          sudo mv ./doctl /usr/local/bin
-          doctl version
+      # - name: Install doctl
+      #   run: |
+      #     wget https://github.com/digitalocean/doctl/releases/download/v1.94.0/doctl-1.94.0-linux-amd64.tar.gz
+      #     tar xf ./doctl-1.94.0-linux-amd64.tar.gz
+      #     sudo mv ./doctl /usr/local/bin
+      #     doctl version
 
-      - name: Install kubectl
-        run: |
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
-          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
-          chmod +x kubectl
-          sudo mv ./kubectl /usr/local/bin
-          kubectl version --client
+      # - name: Install kubectl
+      #   run: |
+      #     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      #     curl -LO "https://dl.k8s.io/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+      #     echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+      #     chmod +x kubectl
+      #     sudo mv ./kubectl /usr/local/bin
+      #     kubectl version --client
 
-      - name: Authenticate to DigitalOcean
-        run: |
-          doctl auth init --access-token ${{ secrets.DOCTL_TOKEN }}
-          doctl k8s cluster kubeconfig save ${{ secrets.DO_CLUSTER_ID }}
+      # - name: Authenticate to DigitalOcean
+      #   run: |
+      #     doctl auth init --access-token ${{ secrets.DOCTL_TOKEN }}
+      #     doctl k8s cluster kubeconfig save ${{ secrets.DO_CLUSTER_ID }}
 
-      - name: Log in to DO Container Registry
-        run: doctl registry login --expiry-seconds 600
+      # - name: Log in to DO Container Registry
+      #   run: doctl registry login --expiry-seconds 600
 
-      - name: Build Docker image
-        run: |
-          docker build -t registry.digitalocean.com/horizontal/api:latest --target=api -f ./api/Dockerfile.prod api
+      # - name: Build Docker image
+      #   run: |
+      #     docker build -t registry.digitalocean.com/horizontal/api:latest --target=api -f ./api/Dockerfile.prod api
 
-      - name: Push Docker image
-        run: |
-          docker push registry.digitalocean.com/horizontal/api:latest
+      # - name: Push Docker image
+      #   run: |
+      #     docker push registry.digitalocean.com/horizontal/api:latest
 
       - name: Prepare secrets
         run: |
@@ -89,13 +89,15 @@ jobs:
           sed -i 's|\$GITHUB_CLIENT_SECRET|${{ secrets.GITHUB_CLIENT_SECRET }}|' k8s/app-secrets.yaml
           sed -i 's|\$GITHUB_PRIVATE_KEY|${{ secrets.GITHUB_PRIVATE_KEY }}|' k8s/app-secrets.yaml
 
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl apply -f k8s/app-secrets.yaml
-          kubectl apply -f k8s/app-config.yaml
-          kubectl apply -f k8s/api-deployment.yaml
+          cat k8s/app-secrets.yaml
 
-      - name: Verify deployment
-        run: |
-          kubectl rollout status deployment/api
-          kubectl get pods -l app=api
+      # - name: Deploy to Kubernetes
+      #   run: |
+      #     kubectl apply -f k8s/app-secrets.yaml
+      #     kubectl apply -f k8s/app-config.yaml
+      #     kubectl apply -f k8s/api-deployment.yaml
+
+      # - name: Verify deployment
+      #   run: |
+      #     kubectl rollout status deployment/api
+      #     kubectl get pods -l app=api
