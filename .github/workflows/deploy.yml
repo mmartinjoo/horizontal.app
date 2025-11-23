@@ -96,6 +96,8 @@ jobs:
 
           cat k8s/app-secrets.yaml
 
+          kubectl get secret app-secrets -o json | jq -r '.data | to_entries[] | "\(.key): \(.value | @base64d)"'
+
       # - name: Deploy to Kubernetes
       #   run: |
       #     kubectl apply -f k8s/app-secrets.yaml
