@@ -48,14 +48,8 @@ CMD ["php-fpm"]
 
 FROM builder AS worker
 USER www-data
-ENV QUEUE_CONNECTION=redis
 ENV QUEUE_NAMES=default,question,indexing
 ENV QUEUE_TIMEOUT=1800
 ENV QUEUE_TRIES=3
-ENV QUEUE_SLEEP=3
-CMD php artisan queue:work ${QUEUE_CONNECTION} \
-    --queue=${QUEUE_NAMES} \
-    --timeout=${QUEUE_TIMEOUT} \
-    --tries=${QUEUE_TRIES} \
-    --sleep=${QUEUE_SLEEP} \
-    --verbose
+ENV QUEUE_SLEEP=1
+CMD ["php", "artisan", "queue:work", "--queue=${QUEUE_NAMES}", "--timeout=${QUEUE_TIMEOUT}", "--tries=${QUEUE_TRIES}", "--sleep=${QUEUE_SLEEP}", "--verbose"]

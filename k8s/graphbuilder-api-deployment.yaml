@@ -7,8 +7,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 9998
-    targetPort: 9998
+  - port: 80
+    targetPort: 80
     name: http
   selector:
     app: graphbuilder-api
@@ -33,7 +33,7 @@ spec:
       - name: graphbuilder-api
         image: your-registry/horizontal-graphbuilder:latest
         ports:
-        - containerPort: 9998
+        - containerPort: 80
           name: http
         resources:
           requests:
@@ -48,8 +48,8 @@ spec:
             secretKeyRef:
               name: app-secrets
               key: REDIS_URL
-        - name: PORT
-          value: "9998"
+        - name: APP_PORT
+          value: "80"
         - name: WEB_CONCURRENCY
           value: "4"
         - name: LOG_LEVEL
@@ -62,7 +62,7 @@ spec:
         startupProbe:
           httpGet:
             path: /health
-            port: 9998
+            port: 80
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
@@ -70,14 +70,14 @@ spec:
         livenessProbe:
           httpGet:
             path: /health
-            port: 9998
+            port: 80
           periodSeconds: 30
           timeoutSeconds: 5
           failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /readiness
-            port: 9998
+            port: 80
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
