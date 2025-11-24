@@ -34,7 +34,7 @@ CMD gunicorn api:app \
     --bind 0.0.0.0:${APP_PORT} \
     --workers ${WEB_CONCURRENCY} \
     --log-level ${LOG_LEVEL} \
-    --log-file - \
+    --log-file -
 
 FROM base AS worker
 COPY . .
