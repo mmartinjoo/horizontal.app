@@ -24,34 +24,17 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM base AS api
 COPY . .
 
-# Default environment variables (can be overridden)
 ENV APP_PORT=80
 ENV WEB_CONCURRENCY=4
-ENV GUNICORN_TIMEOUT=600
 ENV LOG_LEVEL=info
 
 EXPOSE ${APP_PORT}
 
-# Production gunicorn configuration
-# - Workers: controlled by WEB_CONCURRENCY env var
-# - Timeout: controlled by GUNICORN_TIMEOUT env var
-# - Max requests: 1000 requests before worker restart (prevents memory leaks)
-# - Max requests jitter: randomize restart to avoid all workers restarting at once
-# - Keepalive: 5 seconds
-# - Graceful timeout: 30 seconds for graceful shutdown
-# - Preload: load application before forking workers
 CMD gunicorn api:app \
     --bind 0.0.0.0:${APP_PORT} \
     --workers ${WEB_CONCURRENCY} \
-    --timeout ${GUNICORN_TIMEOUT} \
     --log-level ${LOG_LEVEL} \
-    --access-logfile - \
-    --error-logfile - \
-    --max-requests 1000 \
-    --max-requests-jitter 100 \
-    --keepalive 5 \
-    --graceful-timeout 30 \
-    --preload
+    --log-file - \
 
 FROM base AS worker
 COPY . .
