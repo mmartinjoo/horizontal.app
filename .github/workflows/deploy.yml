@@ -42,67 +42,27 @@ jobs:
         run: |
           docker push registry.digitalocean.com/horizontal/api:latest
 
-      - name: Prepare secrets
+      - name: Create AWS Credentials Secret
         run: |
-          cp k8s/app-secrets.yaml.template k8s/app-secrets.yaml
+          # this creates a secret YAML configuration on the fly from the GitHub secrets
+          # then it applies it using dry-run | apply which is idempotent
+          kubectl create secret generic aws-credentials \
+            --from-literal=access-key-id='${{ secrets.AWS_SECRETS_MANAGER_ACCESS_KEY_ID }}' \
+            --from-literal=secret-access-key='${{ secrets.AWS_SECRETS_MANAGER_ACCESS_KEY_SECRET }}' \
+            --dry-run=client -o yaml | kubectl apply -f -
 
-          sed -i "s|\$APP_KEY|$(echo -n '${{ secrets.APP_KEY }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-
-          sed -i "s|\$DB_HOST|$(echo -n '${{ secrets.DB_HOST }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$DB_PORT|$(echo -n '${{ secrets.DB_PORT }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$DB_DATABASE|$(echo -n '${{ secrets.DB_DATABASE }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$DB_USERNAME|$(echo -n '${{ secrets.DB_USERNAME }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$DB_PASSWORD|$(echo -n '${{ secrets.DB_PASSWORD }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-
-          sed -i "s|\$REDIS_HOST|$(echo -n '${{ secrets.REDIS_HOST }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$REDIS_PASSWORD|$(echo -n '${{ secrets.REDIS_PASSWORD }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$REDIS_PORT|$(echo -n '${{ secrets.REDIS_PORT }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$REDIS_URL|$(echo -n '${{ secrets.REDIS_URL }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-
-          sed -i "s|\$FIREWORKS_API_KEY|$(echo -n '${{ secrets.FIREWORKS_API_KEY }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$TOGETHER_API_KEY|$(echo -n '${{ secrets.TOGETHER_API_KEY }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-
-          sed -i "s|\$GOOGLE_CHAT_CLIENT_ID|$(echo -n '${{ secrets.GOOGLE_CHAT_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$GOOGLE_CHAT_CLIENT_SECRET|$(echo -n '${{ secrets.GOOGLE_CHAT_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$GOOGLE_CHAT_PROJECT_ID|$(echo -n '${{ secrets.GOOGLE_CHAT_PROJECT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-
-          sed -i "s|\$GOOGLE_DRIVE_CLIENT_ID|$(echo -n '${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$GOOGLE_DRIVE_CLIENT_SECRET|$(echo -n '${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$GOOGLE_DRIVE_PROJECT_ID|$(echo -n '${{ secrets.GOOGLE_DRIVE_PROJECT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-
-          sed -i "s|\$GOOGLE_AUTH_CLIENT_ID|$(echo -n '${{ secrets.GOOGLE_AUTH_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$GOOGLE_AUTH_CLIENT_SECRET|$(echo -n '${{ secrets.GOOGLE_AUTH_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-
-          sed -i "s|\$JIRA_APP_ID|$(echo -n '${{ secrets.JIRA_APP_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$JIRA_CLIENT_ID|$(echo -n '${{ secrets.JIRA_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$JIRA_CLIENT_SECRET|$(echo -n '${{ secrets.JIRA_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-
-          sed -i "s|\$SLACK_APP_ID|$(echo -n '${{ secrets.SLACK_APP_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$SLACK_CLIENT_ID|$(echo -n '${{ secrets.SLACK_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$SLACK_CLIENT_SECRET|$(echo -n '${{ secrets.SLACK_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-
-          sed -i "s|\$LINEAR_CLIENT_ID|$(echo -n '${{ secrets.LINEAR_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$LINEAR_CLIENT_SECRET|$(echo -n '${{ secrets.LINEAR_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-
-          sed -i "s|\$GITHUB_APP_ID|$(echo -n '${{ secrets.GH_APP_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$GITHUB_CLIENT_ID|$(echo -n '${{ secrets.GH_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$GITHUB_CLIENT_SECRET|$(echo -n '${{ secrets.GH_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$GITHUB_PRIVATE_KEY|$(echo -n '${{ secrets.GH_PRIVATE_KEY }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-
-          sed -i "s|\$GITHUB_AUTH_APP_ID|$(echo -n '${{ secrets.GH_AUTH_APP_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$GITHUB_AUTH_CLIENT_ID|$(echo -n '${{ secrets.GH_AUTH_CLIENT_ID }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$GITHUB_AUTH_CLIENT_SECRET|$(echo -n '${{ secrets.GH_AUTH_CLIENT_SECRET }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-          sed -i "s|\$GITHUB_AUTH_PRIVATE_KEY|$(echo -n '${{ secrets.GH_AUTH_PRIVATE_KEY }}' | base64 | tr -d '\n')|" k8s/app-secrets.yaml
-
-          cat k8s/app-secrets.yaml
-
-      - name: Deploy to Kubernetes
+      - name: Deploy External Secrets Operator Resources
         run: |
-          kubectl apply -f k8s/app-secrets.yaml
+          # Deploy SecretStore and ExternalSecret
+          # ESO will automatically sync secrets from AWS Secrets Manager
+          kubectl apply -f k8s/aws-secret-store.yaml
+          kubectl apply -f k8s/app-external-secret.yaml
+
+          # Wait for ExternalSecret to create the app-secrets Secret
+          echo "Waiting for External Secrets to sync from AWS..."
+          kubectl wait --for=condition=Ready externalsecret/app-secrets --timeout=60s || true
+
+      - name: Deploy Application
+        run: |
           kubectl apply -f k8s/app-config.yaml
           kubectl apply -f k8s/api-deployment.yaml
-
-      - name: Verify deployment
-        run: |
-          kubectl rollout status deployment/api
-          kubectl get pods -l app=api

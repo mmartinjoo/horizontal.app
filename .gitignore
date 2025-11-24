@@ -7,3 +7,8 @@ redis_data
 redisdata
 memgraph_tenant1_data
 memgraph_tenant2_data
+
+# Kubernetes secrets (contains sensitive AWS credentials)
+k8s/aws-credentials-secret.yaml
+k8s/app-secrets.yaml
+k8s/tmp_app-secrets.yaml
