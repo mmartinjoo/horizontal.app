@@ -37,10 +37,12 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t registry.digitalocean.com/horizontal/api:latest --target=api -f ./api/Dockerfile.prod api
+          docker build -t registry.digitalocean.com/horizontal/api:worker-latest --target=worker -f ./api/Dockerfile.prod api
 
       - name: Push Docker image
         run: |
           docker push registry.digitalocean.com/horizontal/api:latest
+          docker push registry.digitalocean.com/horizontal/api:worker-latest
 
       - name: Create AWS Credentials Secret
         run: |
@@ -66,3 +68,4 @@ jobs:
         run: |
           kubectl apply -f k8s/app-config.yaml
           kubectl apply -f k8s/api-deployment.yaml
+          kubectl apply -f k8s/workers-deployment.yaml
