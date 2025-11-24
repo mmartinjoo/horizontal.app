@@ -9,6 +9,8 @@
 repositories:
   - name: external-secrets
     url: https://charts.external-secrets.io
+  - name: metrics-server
+    url: https://kubernetes-sigs.github.io/metrics-server/
 
 releases:
   - name: external-secrets
@@ -26,3 +28,19 @@ releases:
           limits:
             cpu: 500m
             memory: 256Mi
+
+  - name: metrics-server
+    namespace: kube-system
+    chart: metrics-server/metrics-server
+    version: 3.12.1
+    values:
+      - args:
+          - --kubelet-preferred-address-types=InternalIP
+          - --kubelet-insecure-tls
+      - resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+          limits:
+            cpu: 200m
+            memory: 400Mi

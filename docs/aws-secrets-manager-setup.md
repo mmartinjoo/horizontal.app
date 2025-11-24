@@ -210,7 +210,17 @@ kubectl get secret aws-credentials
 
 ### 5.2 Install External Secrets Operator
 
-Using Helm (recommended):
+Using Helmfile (recommended):
+
+```bash
+# Install all Helm charts (External Secrets + Metrics Server)
+helmfile sync
+
+# Apply RBAC fix for upstream chart bug
+kubectl apply -f k8s/external-secrets-rbac-fix.yaml
+```
+
+Or using Helm directly:
 
 ```bash
 helm repo add external-secrets https://charts.external-secrets.io
@@ -220,12 +230,9 @@ helm install external-secrets \
   external-secrets/external-secrets \
   -n external-secrets \
   --create-namespace
-```
 
-Or using the manifest:
-
-```bash
-kubectl apply -f k8s/external-secrets-operator.yaml
+# Apply RBAC fix
+kubectl apply -f k8s/external-secrets-rbac-fix.yaml
 ```
 
 Verify installation:

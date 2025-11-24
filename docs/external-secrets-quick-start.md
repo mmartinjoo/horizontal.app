@@ -22,19 +22,16 @@ Follow the complete guide in [aws-secrets-manager-setup.md](./aws-secrets-manage
 ### 2. Install ESO
 
 ```bash
-# Using Helmfile (recommended - declarative, version controlled)
+# Step 1: Install with Helmfile (recommended - declarative, version controlled)
 helmfile sync
 
-# Or using Helm directly
-helm repo add external-secrets https://charts.external-secrets.io
-helm install external-secrets external-secrets/external-secrets \
-  -n external-secrets --create-namespace
-
-# Or using manifest
-kubectl apply -f k8s/external-secrets-operator.yaml
+# Step 2: Apply RBAC fix (required due to upstream chart bug)
+kubectl apply -f k8s/external-secrets-rbac-fix.yaml
 ```
 
-All Helm installations are now tracked in `helmfile.yaml` at the repository root.
+All Helm installations are tracked in `helmfile.yaml` at the repository root.
+
+**Note:** The RBAC fix is needed because the upstream Helm chart (v1.1.0) is missing required permissions. This can be removed once the upstream chart is fixed.
 
 ### 3. Configure GitHub Secrets (One-time)
 
@@ -194,8 +191,8 @@ The updated workflow (`.github/workflows/deploy.yml`) now:
 
 | File | Purpose |
 |------|---------|
-| `helmfile.yaml` | Declarative Helm chart management (recommended) |
-| `k8s/external-secrets-operator.yaml` | ESO manifest (alternative to Helm) |
+| `helmfile.yaml` | Declarative Helm chart management (ESO + metrics-server) |
+| `k8s/external-secrets-rbac-fix.yaml` | RBAC fix for upstream Helm chart bug |
 | `k8s/aws-credentials-secret.yaml.template` | Template for AWS access keys |
 | `k8s/aws-secret-store.yaml` | Configures connection to AWS |
 | `k8s/app-external-secret.yaml` | Defines which secrets to sync |
