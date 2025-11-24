@@ -3,7 +3,6 @@ kind: Deployment
 metadata:
   name: graphbuilder-worker
 spec:
-  replicas: 4
   selector:
     matchLabels:
       app: graphbuilder-worker

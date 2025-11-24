@@ -3,7 +3,6 @@ kind: Deployment
 metadata:
   name: worker-indexing
 spec:
-  replicas: 4
   selector:
     matchLabels:
       app: worker-indexing
@@ -16,7 +15,7 @@ spec:
         doks.digitalocean.com/node-pool: worker-pool
       containers:
       - name: worker
-        image: your-registry/horizontal-api-worker:latest
+        image: registry.digitalocean.com/horizontal/api:worker-latest
         resources:
           requests:
             memory: "512Mi"
@@ -42,7 +41,6 @@ kind: Deployment
 metadata:
   name: worker-question
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: worker-question
@@ -55,7 +53,7 @@ spec:
         doks.digitalocean.com/node-pool: worker-pool
       containers:
       - name: worker
-        image: your-registry/horizontal-api-worker:latest
+        image: registry.digitalocean.com/horizontal/api:worker-latest
         resources:
           requests:
             memory: "512Mi"
@@ -81,7 +79,6 @@ kind: Deployment
 metadata:
   name: worker-default
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: worker-default
@@ -94,7 +91,7 @@ spec:
         doks.digitalocean.com/node-pool: worker-pool
       containers:
       - name: worker
-        image: your-registry/horizontal-api-worker:latest
+        image: registry.digitalocean.com/horizontal/api:worker-latest
         resources:
           requests:
             memory: "512Mi"
