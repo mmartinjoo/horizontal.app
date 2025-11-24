@@ -31,30 +31,34 @@ helm install external-secrets external-secrets/external-secrets \
 kubectl apply -f k8s/external-secrets-operator.yaml
 ```
 
-### 3. Configure AWS Credentials (One-time)
+### 3. Configure GitHub Secrets (One-time)
 
+Add AWS credentials to GitHub repository secrets. See [github-secrets-setup.md](./github-secrets-setup.md) for details.
+
+Required secrets:
+- `AWS_ACCESS_KEY_ID` - Your AWS access key ID
+- `AWS_SECRET_ACCESS_KEY` - Your AWS secret access key
+- `DOCTL_TOKEN` - DigitalOcean API token
+- `DO_CLUSTER_ID` - Your Kubernetes cluster ID
+
+The GitHub Actions workflow will automatically create the AWS credentials secret in your cluster.
+
+### 4. Deploy via GitHub Actions (Fully Automated)
+
+Just push to the `main` branch! The GitHub Actions workflow automatically:
+
+1. Creates AWS credentials secret in cluster
+2. Deploys SecretStore and ExternalSecret
+3. Waits for ESO to sync secrets from AWS
+4. Deploys your application
+
+**No manual kubectl commands needed!**
+
+Or manually trigger:
 ```bash
-# Create the secret with your AWS credentials
-cp k8s/aws-credentials-secret.yaml.template k8s/aws-credentials-secret.yaml
-
-# Edit and add your AWS access keys
-nano k8s/aws-credentials-secret.yaml
-
-# Apply
-kubectl apply -f k8s/aws-credentials-secret.yaml
-```
-
-### 4. Deploy ESO Resources
-
-```bash
-# Deploy SecretStore (tells ESO how to connect to AWS)
+# Manually apply if needed
 kubectl apply -f k8s/aws-secret-store.yaml
-
-# Deploy ExternalSecret (tells ESO which secrets to sync)
 kubectl apply -f k8s/app-external-secret.yaml
-
-# Wait for sync
-kubectl wait --for=condition=Ready externalsecret/app-secrets --timeout=60s
 ```
 
 ### 5. Verify
