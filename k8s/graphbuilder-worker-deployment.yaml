@@ -15,7 +15,7 @@ spec:
         doks.digitalocean.com/node-pool: worker-pool
       containers:
       - name: graphbuilder-worker
-        image: your-registry/horizontal-graphbuilder-worker:latest
+        image: registry.digitalocean.com/horizontal/graphbuilder:worker-latest
         imagePullPolicy: Always
         resources:
           requests:

@@ -39,10 +39,16 @@ jobs:
           docker build -t registry.digitalocean.com/horizontal/api:latest --target=api -f ./api/Dockerfile.prod api
           docker build -t registry.digitalocean.com/horizontal/api:worker-latest --target=worker -f ./api/Dockerfile.prod api
 
+          docker build -t registry.digitalocean.com/horizontal/graphbuilder:api-latest --target=api -f ./graphbuilder/Dockerfile.prod graphbuilder
+          docker build -t registry.digitalocean.com/horizontal/graphbuilder:worker-latest --target=worker -f ./graphbuilder/Dockerfile.prod graphbuilder
+
       - name: Push Docker image
         run: |
           docker push registry.digitalocean.com/horizontal/api:latest
           docker push registry.digitalocean.com/horizontal/api:worker-latest
+
+          docker push registry.digitalocean.com/horizontal/graphbuilder:api-latest
+          docker push registry.digitalocean.com/horizontal/graphbuilder:worker-latest
 
       - name: Create AWS Credentials Secret
         run: |
@@ -69,3 +75,5 @@ jobs:
           kubectl apply -f k8s/app-config.yaml
           kubectl apply -f k8s/api-deployment.yaml
           kubectl apply -f k8s/workers-deployment.yaml
+          kubectl apply -f k8s/graphbuilder-api-deployment.yaml
+          kubectl apply -f k8s/graphbuilder-worker-deployment.yaml
