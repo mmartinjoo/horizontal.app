@@ -19,10 +19,13 @@ Follow the complete guide in [aws-secrets-manager-setup.md](./aws-secrets-manage
 3. Generate access keys
 4. Create all secrets in AWS Secrets Manager
 
-### 2. Install ESO (One-time)
+### 2. Install ESO
 
 ```bash
-# Using Helm (recommended)
+# Using Helmfile (recommended - declarative, version controlled)
+helmfile sync
+
+# Or using Helm directly
 helm repo add external-secrets https://charts.external-secrets.io
 helm install external-secrets external-secrets/external-secrets \
   -n external-secrets --create-namespace
@@ -30,6 +33,8 @@ helm install external-secrets external-secrets/external-secrets \
 # Or using manifest
 kubectl apply -f k8s/external-secrets-operator.yaml
 ```
+
+All Helm installations are now tracked in `helmfile.yaml` at the repository root.
 
 ### 3. Configure GitHub Secrets (One-time)
 
@@ -189,7 +194,8 @@ The updated workflow (`.github/workflows/deploy.yml`) now:
 
 | File | Purpose |
 |------|---------|
-| `k8s/external-secrets-operator.yaml` | Installs ESO (or use Helm) |
+| `helmfile.yaml` | Declarative Helm chart management (recommended) |
+| `k8s/external-secrets-operator.yaml` | ESO manifest (alternative to Helm) |
 | `k8s/aws-credentials-secret.yaml.template` | Template for AWS access keys |
 | `k8s/aws-secret-store.yaml` | Configures connection to AWS |
 | `k8s/app-external-secret.yaml` | Defines which secrets to sync |

@@ -1,0 +1,28 @@
+# Helmfile - Declarative Helm Chart Management
+# Install helmfile: https://github.com/helmfile/helmfile
+#
+# Usage:
+#   helmfile sync    # Install/upgrade all releases
+#   helmfile diff    # Show what would change
+#   helmfile list    # List all releases
+
+repositories:
+  - name: external-secrets
+    url: https://charts.external-secrets.io
+
+releases:
+  - name: external-secrets
+    namespace: external-secrets
+    createNamespace: true
+    chart: external-secrets/external-secrets
+    version: 1.1.0
+    values:
+      - installCRDs: true
+      - replicaCount: 1
+      - resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
