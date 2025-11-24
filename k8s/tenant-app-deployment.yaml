@@ -32,6 +32,7 @@ spec:
       containers:
       - name: tenant-app
         image: your-registry/horizontal-tenant-app:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
           name: http

@@ -32,6 +32,7 @@ spec:
       containers:
       - name: graphbuilder-api
         image: your-registry/horizontal-graphbuilder:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
           name: http

@@ -30,6 +30,7 @@ spec:
       containers:
       - name: api
         image: registry.digitalocean.com/horizontal/api:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 9000
           name: php-fpm

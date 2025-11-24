@@ -32,6 +32,7 @@ spec:
       initContainers:
       - name: copy-public-files
         image: your-registry/horizontal-api:latest
+        imagePullPolicy: Always
         command: ['sh', '-c', 'cp -r /var/www/public/* /public-files/ && ls -la /public-files/']
         volumeMounts:
         - name: app-public

@@ -32,6 +32,7 @@ spec:
       containers:
       - name: central-app
         image: your-registry/horizontal-central-app:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
           name: http

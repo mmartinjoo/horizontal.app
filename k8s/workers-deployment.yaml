@@ -16,6 +16,7 @@ spec:
       containers:
       - name: worker
         image: registry.digitalocean.com/horizontal/api:worker-latest
+        imagePullPolicy: Always
         resources:
           requests:
             memory: "512Mi"
@@ -54,6 +55,7 @@ spec:
       containers:
       - name: worker
         image: registry.digitalocean.com/horizontal/api:worker-latest
+        imagePullPolicy: Always
         resources:
           requests:
             memory: "512Mi"
@@ -92,6 +94,7 @@ spec:
       containers:
       - name: worker
         image: registry.digitalocean.com/horizontal/api:worker-latest
+        imagePullPolicy: Always
         resources:
           requests:
             memory: "512Mi"

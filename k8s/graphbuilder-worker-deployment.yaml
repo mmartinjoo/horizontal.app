@@ -16,6 +16,7 @@ spec:
       containers:
       - name: graphbuilder-worker
         image: your-registry/horizontal-graphbuilder-worker:latest
+        imagePullPolicy: Always
         resources:
           requests:
             memory: "512Mi"
