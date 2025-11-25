@@ -16,7 +16,7 @@ spec:
         doks.digitalocean.com/node-pool: app-pool
       containers:
       - name: migrations
-        image: your-registry/horizontal-api:latest
+        image: registry.digitalocean.com/horizontal/api:latest
         command: ['php', 'artisan', 'migrate', '--force']
         resources:
           requests:

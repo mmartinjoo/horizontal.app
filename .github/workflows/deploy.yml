@@ -77,8 +77,20 @@ jobs:
             --from-literal=secret-access-key='${{ secrets.AWS_SECRETS_MANAGER_ACCESS_KEY_SECRET }}' \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Deploy External Secrets Operator Resources
+      - name: Install External Secrets Operator
         run: |
+          curl -L https://github.com/helmfile/helmfile/releases/download/v0.157.0/helmfile_0.157.0_linux_amd64.tar.gz | tar xz
+          mv helmfile /usr/local/bin/
+
+          helm repo add external-secrets https://charts.external-secrets.io
+          helm repo update
+
+          # Install operator and metrics-server
+          cd k8s
+          helmfile sync
+
+      - name: Deploy External Secrets Operator Resources
+        run: |          
           # Deploy SecretStore and ExternalSecret
           # ESO will automatically sync secrets from AWS Secrets Manager
           kubectl apply -f k8s/aws-secret-store.yaml
@@ -88,9 +100,29 @@ jobs:
           echo "Waiting for External Secrets to sync from AWS..."
           kubectl wait --for=condition=Ready externalsecret/app-secrets --timeout=60s || true
 
+      - name: Run Database Migrations
+        run: |
+          kubectl delete job api-migrations --ignore-not-found=true
+
+          kubectl apply -f k8s/api-migration-job.yaml
+
+          # Wait for migration to complete (5 min timeout)
+          echo "Running database migrations..."
+          if kubectl wait --for=condition=complete job/api-migrations --timeout=180s; then
+            echo "✓ Migrations completed successfully"
+            kubectl logs job/api-migrations
+          else
+            echo "✗ Migration failed or timed out"
+            kubectl logs job/api-migrations
+            exit 1
+          fi
+
       - name: Deploy Application
         run: |
           kubectl apply -f k8s/app-config.yaml
+
+          kubectl apply -f k8s/api-migration-job.yaml
+
           kubectl apply -f k8s/api-deployment.yaml
           kubectl apply -f k8s/workers-deployment.yaml
           kubectl apply -f k8s/graphbuilder-api-deployment.yaml
