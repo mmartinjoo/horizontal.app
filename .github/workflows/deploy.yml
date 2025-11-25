@@ -105,8 +105,8 @@ jobs:
           kubectl set image deployment/worker-indexing worker=registry.digitalocean.com/horizontal/api:worker-$TAG
           kubectl set image deployment/worker-question worker=registry.digitalocean.com/horizontal/api:worker-$TAG
           kubectl set image deployment/worker-default worker=registry.digitalocean.com/horizontal/api:worker-$TAG
-          kubectl set image deployment/graphbuilder-api api=registry.digitalocean.com/horizontal/graphbuilder:api-$TAG
-          kubectl set image deployment/graphbuilder-worker worker=registry.digitalocean.com/horizontal/graphbuilder:worker-$TAG
+          kubectl set image deployment/graphbuilder-api graphbuilder-api=registry.digitalocean.com/horizontal/graphbuilder:api-$TAG
+          kubectl set image deployment/graphbuilder-worker graphbuilder-worker=registry.digitalocean.com/horizontal/graphbuilder:worker-$TAG
 
           # Wait for rollout to complete
           kubectl rollout status deployment/api
