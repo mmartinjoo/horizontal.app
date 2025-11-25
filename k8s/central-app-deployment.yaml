@@ -31,7 +31,7 @@ spec:
         doks.digitalocean.com/node-pool: app-pool
       containers:
       - name: central-app
-        image: your-registry/horizontal-central-app:latest
+        image: registry.digitalocean.com/horizontal/central-app:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80

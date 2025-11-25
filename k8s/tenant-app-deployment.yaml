@@ -31,7 +31,7 @@ spec:
         doks.digitalocean.com/node-pool: app-pool
       containers:
       - name: tenant-app
-        image: your-registry/horizontal-tenant-app:latest
+        image: registry.digitalocean.com/horizontal/tenant-app:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80

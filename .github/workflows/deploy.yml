@@ -34,7 +34,7 @@ jobs:
       - name: Log in to DO Container Registry
         run: doctl registry login --expiry-seconds 600
 
-      - name: Build Docker image
+      - name: Build Docker images
         run: |
           TAG="${GITHUB_SHA:0:7}"
 
@@ -54,6 +54,14 @@ jobs:
                        -t registry.digitalocean.com/horizontal/graphbuilder:worker-latest \
                        --target=worker -f ./graphbuilder/Dockerfile.prod graphbuilder
 
+          docker build -t registry.digitalocean.com/horizontal/central-app:$TAG \
+                       -t registry.digitalocean.com/horizontal/central-app:latest \
+                       -f ./central-app/Dockerfile.prod central-app
+
+          docker build -t registry.digitalocean.com/horizontal/tenant-app:$TAG \
+                       -t registry.digitalocean.com/horizontal/tenant-app:latest \
+                       -f ./tenant-app/Dockerfile.prod tenant-app
+
       - name: Push Docker image
         run: |
           TAG="${GITHUB_SHA:0:7}"
@@ -67,6 +75,11 @@ jobs:
           docker push registry.digitalocean.com/horizontal/graphbuilder:api-latest
           docker push registry.digitalocean.com/horizontal/graphbuilder:worker-$TAG
           docker push registry.digitalocean.com/horizontal/graphbuilder:worker-latest
+
+          docker push registry.digitalocean.com/horizontal/central-app:$TAG
+          docker push registry.digitalocean.com/horizontal/central-app:latest
+          docker push registry.digitalocean.com/horizontal/tenant-app:$TAG
+          docker push registry.digitalocean.com/horizontal/tenant-app:latest
 
       - name: Create AWS Credentials Secret
         run: |
@@ -124,9 +137,15 @@ jobs:
           kubectl apply -f k8s/api-migration-job.yaml
 
           kubectl apply -f k8s/api-deployment.yaml
+          kubectl apply -f k8s/nginx-configmap.yaml
+          kubectl apply -f k8s/nginx-deployment.yaml
           kubectl apply -f k8s/workers-deployment.yaml
+
           kubectl apply -f k8s/graphbuilder-api-deployment.yaml
           kubectl apply -f k8s/graphbuilder-worker-deployment.yaml
+
+          kubectl apply -f k8s/central-app-deployment.yaml
+          kubectl apply -f k8s/tenant-app-deployment.yaml
 
           kubectl apply -f k8s/api-hpa.yaml
           kubectl apply -f k8s/worker-indexing-hpa.yaml
@@ -144,8 +163,12 @@ jobs:
           kubectl set image deployment/worker-indexing worker=registry.digitalocean.com/horizontal/api:worker-$TAG
           kubectl set image deployment/worker-question worker=registry.digitalocean.com/horizontal/api:worker-$TAG
           kubectl set image deployment/worker-default worker=registry.digitalocean.com/horizontal/api:worker-$TAG
+
           kubectl set image deployment/graphbuilder-api graphbuilder-api=registry.digitalocean.com/horizontal/graphbuilder:api-$TAG
           kubectl set image deployment/graphbuilder-worker graphbuilder-worker=registry.digitalocean.com/horizontal/graphbuilder:worker-$TAG
+
+          kubectl set image deployment/central-app central-app=registry.digitalocean.com/horizontal/central-app-$TAG
+          kubectl set image deployment/tenant-app tenant-app=registry.digitalocean.com/horizontal/tenant-app-$TAG
 
           # Wait for rollout to complete
           kubectl rollout status deployment/api
