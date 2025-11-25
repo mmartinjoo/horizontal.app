@@ -36,18 +36,36 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t registry.digitalocean.com/horizontal/api:latest --target=api -f ./api/Dockerfile.prod api
-          docker build -t registry.digitalocean.com/horizontal/api:worker-latest --target=worker -f ./api/Dockerfile.prod api
+          TAG="${GITHUB_SHA:0:7}"
 
-          docker build -t registry.digitalocean.com/horizontal/graphbuilder:api-latest --target=api -f ./graphbuilder/Dockerfile.prod graphbuilder
-          docker build -t registry.digitalocean.com/horizontal/graphbuilder:worker-latest --target=worker -f ./graphbuilder/Dockerfile.prod graphbuilder
+          docker build -t registry.digitalocean.com/horizontal/api:$TAG \
+                       -t registry.digitalocean.com/horizontal/api:latest \
+                       --target=api -f ./api/Dockerfile.prod api
+
+          docker build -t registry.digitalocean.com/horizontal/api:worker-$TAG \
+                       -t registry.digitalocean.com/horizontal/api:worker-latest \
+                       --target=worker -f ./api/Dockerfile.prod api
+
+          docker build -t registry.digitalocean.com/horizontal/graphbuilder:api-$TAG \
+                       -t registry.digitalocean.com/horizontal/graphbuilder:api-latest \
+                       --target=api -f ./graphbuilder/Dockerfile.prod graphbuilder
+
+          docker build -t registry.digitalocean.com/horizontal/graphbuilder:worker-$TAG \
+                       -t registry.digitalocean.com/horizontal/graphbuilder:worker-latest \
+                       --target=worker -f ./graphbuilder/Dockerfile.prod graphbuilder
 
       - name: Push Docker image
         run: |
+          TAG="${GITHUB_SHA:0:7}"
+
+          docker push registry.digitalocean.com/horizontal/api:$TAG
           docker push registry.digitalocean.com/horizontal/api:latest
+          docker push registry.digitalocean.com/horizontal/api:worker-$TAG
           docker push registry.digitalocean.com/horizontal/api:worker-latest
 
+          docker push registry.digitalocean.com/horizontal/graphbuilder:api-$TAG
           docker push registry.digitalocean.com/horizontal/graphbuilder:api-latest
+          docker push registry.digitalocean.com/horizontal/graphbuilder:worker-$TAG
           docker push registry.digitalocean.com/horizontal/graphbuilder:worker-latest
 
       - name: Create AWS Credentials Secret
@@ -77,3 +95,23 @@ jobs:
           kubectl apply -f k8s/workers-deployment.yaml
           kubectl apply -f k8s/graphbuilder-api-deployment.yaml
           kubectl apply -f k8s/graphbuilder-worker-deployment.yaml
+
+      - name: Update Deployment Images
+        run: |
+          TAG="${GITHUB_SHA:0:7}"
+
+          # This forces Kubernetes to pull new images
+          kubectl set image deployment/api api=registry.digitalocean.com/horizontal/api:$TAG
+          kubectl set image deployment/worker-indexing worker=registry.digitalocean.com/horizontal/api:worker-$TAG
+          kubectl set image deployment/worker-question worker=registry.digitalocean.com/horizontal/api:worker-$TAG
+          kubectl set image deployment/worker-default worker=registry.digitalocean.com/horizontal/api:worker-$TAG
+          kubectl set image deployment/graphbuilder-api api=registry.digitalocean.com/horizontal/graphbuilder:api-$TAG
+          kubectl set image deployment/graphbuilder-worker worker=registry.digitalocean.com/horizontal/graphbuilder:worker-$TAG
+
+          # Wait for rollout to complete
+          kubectl rollout status deployment/api
+          kubectl rollout status deployment/worker-indexing
+          kubectl rollout status deployment/worker-question
+          kubectl rollout status deployment/worker-default
+          kubectl rollout status deployment/graphbuilder-api
+          kubectl rollout status deployment/graphbuilder-worker
