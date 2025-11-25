@@ -49,7 +49,7 @@ spec:
             command:
             - /bin/sh
             - -c
-            - pgrep -f "rq worker" || exit 1
+            - rq info || exit 1
           initialDelaySeconds: 30
           periodSeconds: 30
           timeoutSeconds: 5
