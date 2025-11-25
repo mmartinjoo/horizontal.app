@@ -3,6 +3,11 @@ kind: Deployment
 metadata:
   name: graphbuilder-worker
 spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 20%
+      maxSurge: 20%
   selector:
     matchLabels:
       app: graphbuilder-worker

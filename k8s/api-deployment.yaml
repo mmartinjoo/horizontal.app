@@ -17,6 +17,11 @@ kind: Deployment
 metadata:
   name: api
 spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 20%
+      maxSurge: 20%
   selector:
     matchLabels:
       app: api

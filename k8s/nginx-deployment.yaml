@@ -18,7 +18,11 @@ kind: Deployment
 metadata:
   name: nginx
 spec:
-  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 20%
+      maxSurge: 20%
   selector:
     matchLabels:
       app: nginx
@@ -31,7 +35,7 @@ spec:
         doks.digitalocean.com/node-pool: app-pool
       initContainers:
       - name: copy-public-files
-        image: your-registry/horizontal-api:latest
+        image: registry.digitalocean.com/horizontal/api:latest
         imagePullPolicy: Always
         command: ['sh', '-c', 'cp -r /var/www/public/* /public-files/ && ls -la /public-files/']
         volumeMounts:

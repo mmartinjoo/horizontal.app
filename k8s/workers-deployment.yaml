@@ -3,6 +3,11 @@ kind: Deployment
 metadata:
   name: worker-indexing
 spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 20%
+      maxSurge: 20%
   selector:
     matchLabels:
       app: worker-indexing
@@ -42,6 +47,11 @@ kind: Deployment
 metadata:
   name: worker-question
 spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 20%
+      maxSurge: 20%
   selector:
     matchLabels:
       app: worker-question
@@ -81,6 +91,11 @@ kind: Deployment
 metadata:
   name: worker-default
 spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 20%
+      maxSurge: 20%
   selector:
     matchLabels:
       app: worker-default
