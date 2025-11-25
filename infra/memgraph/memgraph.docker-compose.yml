@@ -1,0 +1,42 @@
+services:
+  memgraph-1:
+    image: memgraph/memgraph-mage:latest
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1500M
+        reservations:
+          memory: 512M
+    volumes:
+      - memgraph_1_data:/var/lib/memgraph
+    ports:
+      - "7687:7687"
+      - "7444:7444"
+    command: [ "--log-level=WARNING", "--data-recovery-on-startup=true", "--storage-snapshot-interval-sec=300", "--storage-snapshot-on-exit=true", "--storage-wal-enabled=true", "--also-log-to-stderr=true", "--memory-limit=1500" ]
+    environment:
+      - MEMGRAPH_USER=${MEMGRAPH1_USER}
+      - MEMGRAPH_PASSWORD=${MEMGRAPH1_PASSWORD}
+
+  memgraph-2:
+    image: memgraph/memgraph-mage:latest
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1500M
+        reservations:
+          memory: 512M
+    volumes:
+      - memgraph_2_data:/var/lib/memgraph
+    ports:
+      - "7688:7687"
+      - "7445:7444"
+    command: [ "--log-level=WARNING", "--data-recovery-on-startup=true", "--storage-snapshot-interval-sec=300", "--storage-snapshot-on-exit=true", "--storage-wal-enabled=true", "--also-log-to-stderr=true", "--memory-limit=1500" ]
+    environment:
+      - MEMGRAPH_USER=${MEMGRAPH2_USER}
+      - MEMGRAPH_PASSWORD=${MEMGRAPH2_PASSWORD}
+
+volumes:
+  memgraph_1_data:
+  memgraph_2_data:

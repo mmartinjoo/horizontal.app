@@ -101,8 +101,8 @@ jobs:
         run: |          
           # Deploy SecretStore and ExternalSecret
           # ESO will automatically sync secrets from AWS Secrets Manager
-          kubectl apply -f k8s/aws-secret-store.yaml
-          kubectl apply -f k8s/app-external-secret.yaml
+          kubectl apply -f infra/k8s/aws-secret-store.yaml
+          kubectl apply -f infra/k8s/app-external-secret.yaml
 
           # Wait for ExternalSecret to create the app-secrets Secret
           echo "Waiting for External Secrets to sync from AWS..."
@@ -112,7 +112,7 @@ jobs:
         run: |
           kubectl delete job api-migrations --ignore-not-found=true
 
-          kubectl apply -f k8s/api-migration-job.yaml
+          kubectl apply -f infra/k8s/api-migration-job.yaml
 
           # Wait for migration to complete (5 min timeout)
           echo "Running database migrations..."
@@ -127,31 +127,34 @@ jobs:
 
       - name: Deploy Application
         run: |
-          kubectl apply -f k8s/app-config.yaml
+          kubectl apply -f infra/k8s/app-config.yaml
 
-          kubectl apply -f k8s/api-migration-job.yaml
+          kubectl apply -f infra/k8s/api-migration-job.yaml
 
-          kubectl apply -f k8s/api-deployment.yaml
-          kubectl apply -f k8s/nginx-configmap.yaml
-          kubectl apply -f k8s/nginx-deployment.yaml
-          kubectl apply -f k8s/workers-deployment.yaml
+          kubectl apply -f infra/k8s/api-deployment.yaml
+          kubectl apply -f infra/k8s/nginx-configmap.yaml
+          kubectl apply -f infra/k8s/nginx-deployment.yaml
+          kubectl apply -f infra/k8s/workers-deployment.yaml
 
-          kubectl apply -f k8s/graphbuilder-api-deployment.yaml
-          kubectl apply -f k8s/graphbuilder-worker-deployment.yaml
+          kubectl apply -f infra/k8s/graphbuilder-api-deployment.yaml
+          kubectl apply -f infra/k8s/graphbuilder-worker-deployment.yaml
 
-          kubectl apply -f k8s/central-app-deployment.yaml
-          kubectl apply -f k8s/tenant-app-deployment.yaml
+          kubectl apply -f infra/k8s/central-app-deployment.yaml
+          kubectl apply -f infra/k8s/tenant-app-deployment.yaml
 
-          kubectl apply -f k8s/api-hpa.yaml
-          kubectl apply -f k8s/worker-indexing-hpa.yaml
-          kubectl apply -f k8s/worker-question-hpa.yaml
-          kubectl apply -f k8s/worker-default-hpa.yaml
-          kubectl apply -f k8s/graphbuilder-api-hpa.yaml
-          kubectl apply -f k8s/graphbuilder-worker-hpa.yaml
+          kubectl apply -f infra/k8s/api-hpa.yaml
+          kubectl apply -f infra/k8s/worker-indexing-hpa.yaml
+          kubectl apply -f infra/k8s/worker-question-hpa.yaml
+          kubectl apply -f infra/k8s/worker-default-hpa.yaml
+          kubectl apply -f infra/k8s/graphbuilder-api-hpa.yaml
+          kubectl apply -f infra/k8s/graphbuilder-worker-hpa.yaml
 
       - name: Deploy Ingress Rules
         run: |
-          kubectl apply -f k8s/ingress.yaml
+          kubectl apply -f infra/k8s/letsencrypt-issuer.yaml
+
+          kubectl apply -f infra/k8s/ingress.yaml
+
           echo "Waiting for load balancer IP..."
           kubectl get svc -n ingress-nginx ingress-nginx-controller
 
