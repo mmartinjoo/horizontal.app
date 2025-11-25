@@ -47,17 +47,6 @@ spec:
   - host: "*.horizontal.app"
     http:
       paths:
-      # Most specific paths first
-
-      # GraphBuilder API
-      - path: /graphbuilder
-        pathType: Prefix
-        backend:
-          service:
-            name: graphbuilder-api
-            port:
-              number: 9998
-
       # Laravel API (tenant-specific routes)
       - path: /api
         pathType: Prefix

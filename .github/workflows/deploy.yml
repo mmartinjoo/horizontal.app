@@ -94,11 +94,6 @@ jobs:
         run: |
           curl -L https://github.com/helmfile/helmfile/releases/download/v0.157.0/helmfile_0.157.0_linux_amd64.tar.gz | tar xz
           mv helmfile /usr/local/bin/
-
-          helm repo add external-secrets https://charts.external-secrets.io
-          helm repo update
-
-          # Install operator and metrics-server
           cd k8s
           helmfile sync
 
@@ -153,6 +148,12 @@ jobs:
           kubectl apply -f k8s/worker-default-hpa.yaml
           kubectl apply -f k8s/graphbuilder-api-hpa.yaml
           kubectl apply -f k8s/graphbuilder-worker-hpa.yaml
+
+      - name: Deploy Ingress Rules
+        run: |
+          kubectl apply -f k8s/ingress.yaml
+          echo "Waiting for load balancer IP..."
+          kubectl get svc -n ingress-nginx ingress-nginx-controller
 
       - name: Update Deployment Images
         run: |
