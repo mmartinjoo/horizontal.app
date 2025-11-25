@@ -96,6 +96,13 @@ jobs:
           kubectl apply -f k8s/graphbuilder-api-deployment.yaml
           kubectl apply -f k8s/graphbuilder-worker-deployment.yaml
 
+          kubectl apply -f k8s/api-hpa.yaml
+          kubectl apply -f k8s/worker-indexing-hpa.yaml
+          kubectl apply -f k8s/worker-question-hpa.yaml
+          kubectl apply -f k8s/worker-default-hpa.yaml
+          kubectl apply -f k8s/graphbuilder-api-hpa.yaml
+          kubectl apply -f k8s/graphbuilder-worker-hpa.yaml
+
       - name: Update Deployment Images
         run: |
           TAG="${GITHUB_SHA:0:7}"
