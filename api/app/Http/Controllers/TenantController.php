@@ -22,8 +22,7 @@ class TenantController
             'admin_user_name' => ['required', 'string'],
             'questions_per_month' => ['required', 'numeric', 'in:150,250,500'],
             'data_retention' => ['required', 'numeric', 'in:3,6,12'],
-            'number_of_seats' => ['required', 'numeric', 'lte:50'],
-            'llm_provider' => config('llm.default'),
+            'number_of_seats' => ['required', 'numeric', 'lte:50'],            
         ]);
 
         $tenant = Tenant::create([
@@ -32,6 +31,7 @@ class TenantController
             'questions_per_month' => $request->get('questions_per_month'),
             'data_retention' => $request->get('data_retention'),
             'number_of_seats' => $request->get('number_of_seats'),
+            'llm_provider' => config('llm.default'),
         ]);
 
         $tenant->createDomain($request->get('subdomain') . '.horizontal.app');
