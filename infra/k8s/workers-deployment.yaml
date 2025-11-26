@@ -24,10 +24,10 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            memory: "512Mi"
+            memory: "64Mi"
             cpu: "250m"
           limits:
-            memory: "2Gi"
+            memory: "1Gi"
             cpu: "1000m"
         env:
         - name: QUEUE_NAMES
@@ -68,10 +68,10 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            memory: "512Mi"
+            memory: "64Mi"
             cpu: "250m"
           limits:
-            memory: "2Gi"
+            memory: "1Gi"
             cpu: "1000m"
         env:
         - name: QUEUE_NAMES
@@ -112,10 +112,10 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            memory: "512Mi"
+            memory: "64Mi"
             cpu: "250m"
           limits:
-            memory: "2Gi"
+            memory: "1Gi"
             cpu: "1000m"
         env:
         - name: QUEUE_NAMES
