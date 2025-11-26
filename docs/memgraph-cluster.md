@@ -6,4 +6,4 @@ echo "vm.max_map_count=262144" >> /etc/sysctl.d/99-memgraph.conf
 sudo sysctl -p /etc/sysctl.d/99-memgraph.conf
 ```
 
-that needs to run on every Memgraph node
+that needs to run on every Memgraph node. it's included in the `start.sh` script
