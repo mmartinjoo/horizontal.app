@@ -13,6 +13,8 @@ repositories:
     url: https://kubernetes-sigs.github.io/metrics-server/
   - name: ingress-nginx
     url: https://kubernetes.github.io/ingress-nginx
+  - name: jetstack
+    url: https://charts.jetstack.io
 
 releases:
   - name: external-secrets
@@ -25,8 +27,8 @@ releases:
       - replicaCount: 1
       - resources:
           requests:
-            cpu: 100m
-            memory: 64Mi
+            cpu: 50m
+            memory: 32Mi
           limits:
             cpu: 500m
             memory: 256Mi
@@ -42,7 +44,7 @@ releases:
       - resources:
           requests:
             cpu: 100m
-            memory: 200Mi
+            memory: 48Mi
           limits:
             cpu: 200m
             memory: 400Mi
@@ -70,3 +72,37 @@ releases:
           metrics:
             enabled: true
           replicaCount: 2
+
+  - name: cert-manager
+    namespace: cert-manager
+    createNamespace: true
+    chart: jetstack/cert-manager
+    version: v1.16.2
+    values:
+      - installCRDs: true
+      - global:
+          leaderElection:
+            namespace: cert-manager
+      - resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+      - webhook:
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      - cainjector:
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

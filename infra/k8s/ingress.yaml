@@ -5,10 +5,18 @@ kind: Ingress
 metadata:
   name: horizontal-root
   annotations:
-    # Disable SSL redirect initially (enable after cert-manager setup)
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # Enable SSL redirect to force HTTPS
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Use cert-manager to issue certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Force HTTPS on all requests
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - horizontal.app
+    secretName: horizontal-app-tls
   rules:
   - host: horizontal.app
     http:
@@ -39,10 +47,18 @@ kind: Ingress
 metadata:
   name: horizontal-tenants
   annotations:
-    # Disable SSL redirect initially
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # Enable SSL redirect to force HTTPS
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Use cert-manager to issue certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Force HTTPS on all requests
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - "*.horizontal.app"
+    secretName: horizontal-tenants-tls
   rules:
   - host: "*.horizontal.app"
     http:

@@ -8,7 +8,7 @@ data:
   APP_ENV: "production"
   APP_DEBUG: "false"
   APP_LOCALE: "en"
-  APP_URL: "horizontal.app"
+  APP_URL: "https://horizontal.app"
   APP_FALLBACK_LOCALE: "en"
   APP_FAKER_LOCALE: "en_US"
   APP_MAINTENANCE_DRIVER: "file"

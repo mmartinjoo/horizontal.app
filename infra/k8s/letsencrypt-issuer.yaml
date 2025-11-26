@@ -1,0 +1,28 @@
+# Let's Encrypt Production ClusterIssuer
+# Configures cert-manager to use Let's Encrypt for certificate issuance
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # Let's Encrypt Production server
+    # Rate limits: 50 certificates per domain per week
+    server: https://acme-v02.api.letsencrypt.org/directory
+
+    # Email for certificate expiration notifications
+    email: hello@horizontal.app
+
+    # Secret to store ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+
+    # HTTP-01 challenge solver using nginx ingress
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+          podTemplate:
+            spec:
+              nodeSelector:
+                doks.digitalocean.com/node-pool: app-pool

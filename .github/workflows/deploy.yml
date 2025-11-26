@@ -90,7 +90,7 @@ jobs:
             --from-literal=secret-access-key='${{ secrets.AWS_SECRETS_MANAGER_ACCESS_KEY_SECRET }}' \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Install External Secrets Operator
+      - name: Install Helm Infrastructure
         run: |
           curl -L https://github.com/helmfile/helmfile/releases/download/v0.157.0/helmfile_0.157.0_linux_amd64.tar.gz | tar xz
           mv helmfile /usr/local/bin/
@@ -100,6 +100,24 @@ jobs:
           echo "Waiting for External Secrets Operator webhook to be ready..."
           kubectl wait --for=condition=available deployment/external-secrets-webhook \
             -n external-secrets --timeout=120s
+
+          echo "Waiting for cert-manager webhook to be ready..."
+          kubectl wait --for=condition=available deployment/cert-manager-webhook \
+            -n cert-manager --timeout=120s
+
+      - name: Deploy cert-manager ClusterIssuer
+        run: |
+          # Wait additional 10 seconds for webhook to fully initialize
+          echo "Ensuring cert-manager webhook is fully ready..."
+          sleep 10
+
+          # Deploy ClusterIssuer for Let's Encrypt
+          kubectl apply -f infra/k8s/letsencrypt-issuer.yaml
+
+          # Verify ClusterIssuer was created successfully
+          kubectl get clusterissuer letsencrypt-prod
+
+          echo "ClusterIssuer deployed successfully"
 
       - name: Deploy External Secrets Operator Resources
         run: |          
@@ -153,12 +171,18 @@ jobs:
 
       - name: Deploy Ingress Rules
         run: |
-          #kubectl apply -f infra/k8s/letsencrypt-issuer.yaml
-
           kubectl apply -f infra/k8s/ingress.yaml
 
           echo "Waiting for load balancer IP..."
           kubectl get svc -n ingress-nginx ingress-nginx-controller
+
+          echo "Checking certificate issuance status..."
+          echo "Root domain certificate:"
+          kubectl get certificate horizontal-app-tls || echo "Certificate not yet created"
+          echo "Wildcard certificate:"
+          kubectl get certificate horizontal-tenants-tls || echo "Certificate not yet created"
+
+          echo "Note: Certificates may take 1-5 minutes to be issued by Let's Encrypt"
 
       - name: Update Deployment Images
         run: |
