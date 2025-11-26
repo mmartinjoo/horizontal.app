@@ -173,8 +173,8 @@ jobs:
           kubectl set image deployment/graphbuilder-api graphbuilder-api=registry.digitalocean.com/horizontal/graphbuilder:api-$TAG
           kubectl set image deployment/graphbuilder-worker graphbuilder-worker=registry.digitalocean.com/horizontal/graphbuilder:worker-$TAG
 
-          kubectl set image deployment/central-app central-app=registry.digitalocean.com/horizontal/central-app-$TAG
-          kubectl set image deployment/tenant-app tenant-app=registry.digitalocean.com/horizontal/tenant-app-$TAG
+          kubectl set image deployment/central-app central-app=registry.digitalocean.com/horizontal/central-app:$TAG
+          kubectl set image deployment/tenant-app tenant-app=registry.digitalocean.com/horizontal/tenant-app:$TAG
 
           # Wait for rollout to complete
           kubectl rollout status deployment/api
@@ -183,3 +183,6 @@ jobs:
           kubectl rollout status deployment/worker-default
           kubectl rollout status deployment/graphbuilder-api
           kubectl rollout status deployment/graphbuilder-worker
+          kubectl rollout status deployment/central-app
+          kubectl rollout status deployment/tenant-app
+          kubectl rollout status deployment/nginx
