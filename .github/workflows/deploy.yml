@@ -114,13 +114,15 @@ jobs:
 
       - name: Run Database Migrations
         run: |
+          kubectl apply -f infra/k8s/app-config.yaml
+
           kubectl delete job api-migrations --ignore-not-found=true
 
           kubectl apply -f infra/k8s/api-migration-job.yaml
 
           # Wait for migration to complete (5 min timeout)
           echo "Running database migrations..."
-          if kubectl wait --for=condition=complete job/api-migrations --timeout=180s; then
+          if kubectl wait --for=condition=complete job/api-migrations --timeout=90s; then
             echo "✓ Migrations completed successfully"
             kubectl logs job/api-migrations
           else
@@ -131,10 +133,6 @@ jobs:
 
       - name: Deploy Application
         run: |
-          kubectl apply -f infra/k8s/app-config.yaml
-
-          kubectl apply -f infra/k8s/api-migration-job.yaml
-
           kubectl apply -f infra/k8s/api-deployment.yaml
           kubectl apply -f infra/k8s/nginx-configmap.yaml
           kubectl apply -f infra/k8s/nginx-deployment.yaml
