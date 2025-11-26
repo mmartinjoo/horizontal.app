@@ -123,7 +123,7 @@ jobs:
         run: |
           # Create secret for DNS-01 challenges (wildcard certificates)
           kubectl create secret generic digitalocean-dns \
-            --from-literal=access-token='${{ secrets.DOCTL_TOKEN }}' \
+            --from-literal=access-token='${{ secrets.DO_DNS_ACCESS_TOKEN }}' \
             -n cert-manager \
             --dry-run=client -o yaml | kubectl apply -f -
 
