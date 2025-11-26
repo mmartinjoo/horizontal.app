@@ -31,9 +31,9 @@ spec:
 
     # HTTP-01 solver for non-wildcard domains
     - http01:
-      ingress:
-        class: nginx
-        podTemplate:
-          spec:
-            nodeSelector:
-              doks.digitalocean.com/node-pool: app-pool
+        ingress:
+          class: nginx
+          podTemplate:
+            spec:
+              nodeSelector:
+                doks.digitalocean.com/node-pool: app-pool
