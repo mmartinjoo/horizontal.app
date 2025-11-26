@@ -19,7 +19,7 @@ class CreateTenantsTable extends Migration
             $table->string('graph_db_host')->nullable();
             $table->integer('graph_db_port')->nullable();
             $table->string('graph_db_user')->nullable();
-            $table->string('graph_db_password')->nullable();
+            $table->text('graph_db_password')->nullable();
             $table->string('graph_db_scheme')->nullable();
 
             $table->integer('number_of_seats');

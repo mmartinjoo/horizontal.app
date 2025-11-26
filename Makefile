@@ -6,3 +6,6 @@ sync-secrets:
 	kubectl rollout restart deployment/worker-default
 	kubectl rollout restart deployment/graphbuilder-api
 	kubectl rollout restart deployment/graphbuilder-worker
+
+logs:
+	kubectl logs -l app=api --tail=100 -f

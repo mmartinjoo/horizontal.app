@@ -36,6 +36,7 @@ class SetupGraphDBInstance implements ShouldQueue
             ]);
         });
 
+        tenancy()->initialize($this->tenant);
         try {
             $graphDB = GraphDBFactory::create();
             $graphDB->run('CREATE INDEX ON :__Node__(id);');
