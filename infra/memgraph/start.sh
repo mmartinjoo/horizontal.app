@@ -5,7 +5,7 @@ export MEMGRAPH1_PASSWORD=
 export MEMGRAPH2_USER=
 export MEMGRAPH2_PASSWORD=
 
-echo "vm.max_map_count=262144" >> /etc/sysctl.d/99-memgraph.conf
+echo "vm.max_map_count=262144" > /etc/sysctl.d/99-memgraph.conf
 sudo sysctl -p /etc/sysctl.d/99-memgraph.conf
 
 docker compose down
