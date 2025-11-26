@@ -97,6 +97,10 @@ jobs:
           cd infra/k8s
           helmfile sync
 
+          echo "Waiting for External Secrets Operator webhook to be ready..."
+          kubectl wait --for=condition=available deployment/external-secrets-webhook \
+            -n external-secrets --timeout=120s
+
       - name: Deploy External Secrets Operator Resources
         run: |          
           # Deploy SecretStore and ExternalSecret
