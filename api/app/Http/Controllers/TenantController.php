@@ -23,6 +23,7 @@ class TenantController
             'questions_per_month' => ['required', 'numeric', 'in:150,250,500'],
             'data_retention' => ['required', 'numeric', 'in:3,6,12'],
             'number_of_seats' => ['required', 'numeric', 'lte:50'],
+            'llm_provider' => config('llm.default'),
         ]);
 
         $tenant = Tenant::create([

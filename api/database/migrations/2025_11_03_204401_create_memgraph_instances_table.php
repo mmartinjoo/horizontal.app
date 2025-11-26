@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('host');
             $table->integer('port');
             $table->string('username');
-            $table->string('password_encrypted');            
+            $table->text('password_encrypted');            
             $table->string('db_schema');
             $table->string('status')->default(MemgraphInstanceStatus::Available->value);
             $table->string('tenant_id')->nullable()->constrained('tenants')->nullOnDelete();
