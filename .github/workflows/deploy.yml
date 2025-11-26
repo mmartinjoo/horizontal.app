@@ -151,7 +151,7 @@ jobs:
 
       - name: Deploy Ingress Rules
         run: |
-          kubectl apply -f infra/k8s/letsencrypt-issuer.yaml
+          #kubectl apply -f infra/k8s/letsencrypt-issuer.yaml
 
           kubectl apply -f infra/k8s/ingress.yaml
 

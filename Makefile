@@ -1,8 +1,8 @@
-api:
-	php api/artisan serve --port=9999
-
-frontend:
-	npm --prefix ./frontend run dev
-
-worker:
-	php api/artisan queue:work --timeout=300 --max-jobs=100 max-time=1800
+sync-secrets:
+	kubectl annotate externalsecret app-secrets force-sync=$$(date +%s) --overwrite
+	kubectl rollout restart deployment/api
+	kubectl rollout restart deployment/worker-indexing
+	kubectl rollout restart deployment/worker-question
+	kubectl rollout restart deployment/worker-default
+	kubectl rollout restart deployment/graphbuilder-api
+	kubectl rollout restart deployment/graphbuilder-worker
