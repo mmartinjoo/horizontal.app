@@ -17,12 +17,23 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-prod-account-key
 
-    # HTTP-01 challenge solver using nginx ingress
+    # Certificate challenge solvers
     solvers:
+    # DNS-01 solver for wildcard certificates (*.horizontal.app)
+    - selector:
+        dnsNames:
+        - "*.horizontal.app"
+      dns01:
+        digitalocean:
+          tokenSecretRef:
+            name: digitalocean-dns
+            key: access-token
+
+    # HTTP-01 solver for non-wildcard domains
     - http01:
-        ingress:
-          class: nginx
-          podTemplate:
-            spec:
-              nodeSelector:
-                doks.digitalocean.com/node-pool: app-pool
+      ingress:
+        class: nginx
+        podTemplate:
+          spec:
+            nodeSelector:
+              doks.digitalocean.com/node-pool: app-pool

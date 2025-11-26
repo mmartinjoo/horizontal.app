@@ -119,6 +119,16 @@ jobs:
 
           echo "ClusterIssuer deployed successfully"
 
+      - name: Create DigitalOcean DNS Secret
+        run: |
+          # Create secret for DNS-01 challenges (wildcard certificates)
+          kubectl create secret generic digitalocean-dns \
+            --from-literal=access-token='${{ secrets.DOCTL_TOKEN }}' \
+            -n cert-manager \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          echo "DigitalOcean DNS secret configured"
+
       - name: Deploy External Secrets Operator Resources
         run: |          
           # Deploy SecretStore and ExternalSecret
