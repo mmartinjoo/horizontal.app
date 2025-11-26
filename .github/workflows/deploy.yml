@@ -94,7 +94,7 @@ jobs:
         run: |
           curl -L https://github.com/helmfile/helmfile/releases/download/v0.157.0/helmfile_0.157.0_linux_amd64.tar.gz | tar xz
           mv helmfile /usr/local/bin/
-          cd k8s
+          cd infra/k8s
           helmfile sync
 
       - name: Deploy External Secrets Operator Resources
