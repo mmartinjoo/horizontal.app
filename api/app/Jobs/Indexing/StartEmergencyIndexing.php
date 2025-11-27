@@ -5,6 +5,7 @@ namespace App\Jobs\Indexing;
 use App\Enums\Indexing\WorkflowStatus;
 use App\Models\Document;
 use App\Models\IndexingWorkflow;
+use App\Models\Tenant;
 use App\Services\GraphDB\GraphDB;
 use App\Services\Indexing\Orchestrator\Orchestrator;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -19,8 +20,13 @@ class StartEmergencyIndexing implements ShouldQueue
 {
     use Queueable;
 
+    public function __construct(private Tenant $tenant)
+    {
+    }
+
     public function handle(Orchestrator $orchestrator, GraphDB $graphDB)
     {
+        tenancy()->initialize($this->tenant);
         if (Document::count() === 0) {
             return false;
         }

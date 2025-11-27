@@ -16,20 +16,10 @@ class CheckRefreshTokensCommand extends Command
 {
     use HasATenantArgument;
     
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'integrations:check-refresh-tokens
                             {--integration= : Check specific integration type (jira, linear, slack, google-drive, google-chat)}
                             {--show-details : Show detailed information for each integration}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Check which OAuth integrations are missing refresh tokens';
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Indexing\Communication\GoogleChat;
 
+use App\Models\Tenant;
 use App\Services\Integration\Communication\GoogleChat\GoogleChatTokenManager;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -11,11 +12,17 @@ class RefreshGoogleChatTokensJob implements ShouldQueue
 {
     use Queueable;
 
+    public function __construct(private Tenant $tenant)
+    {
+    }
+
     /**
      * Execute the job.
      */
     public function handle(GoogleChatTokenManager $tokenManager): void
     {
+        tenancy()->initialize($this->tenant);
+        
         Log::info('Starting scheduled Google Chat token refresh job');
 
         try {

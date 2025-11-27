@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Indexing\TaskManagement\Linear;
 
+use App\Models\Tenant;
 use App\Services\Integration\TaskManagement\Linear\LinearTokenManager;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -11,11 +12,17 @@ class RefreshLinearTokensJob implements ShouldQueue
 {
     use Queueable;
 
+    public function __construct(private Tenant $tenant)
+    {
+    }
+
     /**
      * Execute the job.
      */
     public function handle(LinearTokenManager $tokenManager): void
     {
+        tenancy()->initialize($this->tenant);
+        
         Log::info('Starting scheduled Linear token refresh job');
 
         try {

@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Indexing\Storage\GoogleDrive;
 
+use App\Models\Tenant;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDriveTokenManager;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -11,11 +12,17 @@ class RefreshGoogleDriveTokensJob implements ShouldQueue
 {
     use Queueable;
 
+    public function __construct(private Tenant $tenant)
+    {
+    }
+
     /**
      * Execute the job.
      */
     public function handle(GoogleDriveTokenManager $tokenManager): void
     {
+        tenancy()->initialize($this->tenant);
+
         Log::info('Starting scheduled Google Drive token refresh job');
 
         try {

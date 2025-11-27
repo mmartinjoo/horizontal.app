@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Indexing\TaskManagement\Jira;
 
+use App\Models\Tenant;
 use App\Services\Integration\TaskManagement\Jira\JiraTokenManager;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -11,11 +12,17 @@ class RefreshJiraTokensJob implements ShouldQueue
 {
     use Queueable;
 
+    public function __construct(private Tenant $tenant)
+    {
+    }
+
     /**
      * Execute the job.
      */
     public function handle(JiraTokenManager $tokenManager): void
     {
+        tenancy()->initialize($this->tenant);
+
         Log::info('Starting scheduled Jira token refresh job');
 
         try {

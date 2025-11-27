@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Indexing\Communication\Slack;
 
+use App\Models\Tenant;
 use App\Services\Integration\Communication\Slack\SlackTokenManager;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -11,11 +12,17 @@ class RefreshSlackTokensJob implements ShouldQueue
 {
     use Queueable;
 
+    public function __construct(private Tenant $tenant)
+    {
+    }
+
     /**
      * Execute the job.
      */
     public function handle(SlackTokenManager $tokenManager): void
     {
+        tenancy()->initialize($this->tenant);
+        
         Log::info('Starting scheduled Slack token refresh job');
 
         try {
