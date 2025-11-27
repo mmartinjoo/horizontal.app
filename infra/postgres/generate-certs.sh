@@ -9,5 +9,6 @@ openssl req -new -x509 -days 3650 -key server.key -out server.crt \
 
 chmod 600 server.key
 chmod 644 server.crt
+chown 999:999 server.key server.crt
 
 echo "SSL certificates generated successfully in certs/"

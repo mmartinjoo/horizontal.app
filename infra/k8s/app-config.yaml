@@ -28,7 +28,7 @@ data:
 
   # Database
   DB_CONNECTION: "central"
-  DB_SSLMODE=require
+  DB_SSLMODE: "require"
 
   # Redis
   REDIS_CLIENT: "phpredis"
