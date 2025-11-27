@@ -16,6 +16,7 @@ spec:
       labels:
         app: worker-indexing
     spec:
+      terminationGracePeriodSeconds: 300 # to avoid killing jobs while running
       nodeSelector:
         doks.digitalocean.com/node-pool: worker-pool
       containers:
@@ -60,6 +61,7 @@ spec:
       labels:
         app: worker-question
     spec:
+      terminationGracePeriodSeconds: 300 # to avoid killing jobs while running
       nodeSelector:
         doks.digitalocean.com/node-pool: worker-pool
       containers:
@@ -104,6 +106,7 @@ spec:
       labels:
         app: worker-default
     spec:
+      terminationGracePeriodSeconds: 300 # to avoid killing jobs while running
       nodeSelector:
         doks.digitalocean.com/node-pool: worker-pool
       containers:

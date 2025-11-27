@@ -16,6 +16,7 @@ spec:
       labels:
         app: graphbuilder-worker
     spec:
+      terminationGracePeriodSeconds: 300 # to avoid killing jobs while running
       nodeSelector:
         doks.digitalocean.com/node-pool: worker-pool
       containers:
@@ -24,7 +25,7 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            memory: "64Mi"
+            memory: "128Mi"
             cpu: "250m"
           limits:
             memory: "512Mi"
