@@ -17,4 +17,9 @@ enum WorkflowStatus: string
     {
         return [self::Completed->value, self::CompletedWithErrors->value, self::Timeout->value, self::Failed->value, self::Unknown->value];
     }
+
+    public static function healthyFiniteStates(): array
+    {
+        return [self::Completed->value, self::CompletedWithErrors->value];
+    }
 }

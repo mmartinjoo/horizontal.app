@@ -62,7 +62,7 @@ class IndexingWorkflowController extends Controller
             ], 200);
         }
 
-        if (in_array($workflow->status, WorkflowStatus::finiteStates())) {
+        if (in_array($workflow->status, WorkflowStatus::healthyFiniteStates())) {
             return response()->json([
                 'result' => true,
             ], 200);
