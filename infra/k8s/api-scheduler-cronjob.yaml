@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: api-scheduler
+  labels:
+    app: api-scheduler
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        metadata:
+          labels:
+            app: api-scheduler
+        spec:
+          restartPolicy: Never
+          nodeSelector:
+            doks.digitalocean.com/node-pool: worker-pool
+          containers:
+          - name: scheduler
+            image: registry.digitalocean.com/horizontal/api:latest
+            imagePullPolicy: Always
+            command: ['php', 'artisan', 'schedule:run']
+            resources:
+              requests:
+                memory: "32Mi"
+                cpu: "50m"
+              limits:
+                memory: "256Mi"
+                cpu: "100m"
+            envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
