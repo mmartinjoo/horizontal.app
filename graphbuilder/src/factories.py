@@ -76,5 +76,6 @@ def build_db_uri(tenant_id: str, protocol: str) -> str:
     host = os.getenv("DB_HOST")
     port = os.getenv("DB_PORT")
     username = os.getenv("DB_USERNAME")
-    password = os.getenv("DB_PASSWORD")  
-    return f"{protocol}://{username}:{password}@{host}:{port}/tenant{tenant_id}"
+    password = os.getenv("DB_PASSWORD") 
+    sslmode = os.getenv("DB_SSLMODE") 
+    return f"{protocol}://{username}:{password}@{host}:{port}/tenant{tenant_id}?sslmode={sslmode}"
