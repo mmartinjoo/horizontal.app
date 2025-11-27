@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\Indexing\CodeRepository\GitHub;
+namespace App\Jobs\Indexing\CodeRepository\Github;
 
 use App\Jobs\Indexing\CodeRepository\IndexRepository;
 use App\Jobs\Indexing\IndexingStepJob;
@@ -8,13 +8,13 @@ use App\Models\GithubRepository;
 use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
-use App\Services\Integration\CodeRepository\GitHub\GitHub;
+use App\Services\Integration\CodeRepository\Github\Github;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 
-class IndexGitHub extends IndexingStepJob implements ShouldQueue
+class IndexGithub extends IndexingStepJob implements ShouldQueue
 {
     use Queueable;
 
@@ -24,7 +24,7 @@ class IndexGitHub extends IndexingStepJob implements ShouldQueue
     }
 
     public function handle(
-        GitHub $github,
+        Github $github,
     ): void {
         /** @var IndexingWorkflowStep $indexingWorkflowStep */
         $indexingWorkflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);

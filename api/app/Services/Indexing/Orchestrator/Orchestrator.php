@@ -3,7 +3,7 @@
 namespace App\Services\Indexing\Orchestrator;
 
 use App\Enums\Indexing\WorkflowStatus;
-use App\Jobs\Indexing\CodeRepository\GitHub\IndexGitHub;
+use App\Jobs\Indexing\CodeRepository\Github\IndexGithub;
 use App\Jobs\Indexing\Communication\GoogleChat\IndexGoogleChat;
 use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\IndexingStepJob;
@@ -87,7 +87,7 @@ class Orchestrator
     {
         return match ($integration) {
             'google_drive' => new IndexGoogleDrive(),
-            'github' => new IndexGitHub(),
+            'github' => new IndexGithub(),
             'slack' => new IndexSlack(),
             'linear' => new IndexLinear(),
             'google_chat' => new IndexGoogleChat(),

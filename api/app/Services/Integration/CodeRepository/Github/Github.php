@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Integration\CodeRepository\GitHub;
+namespace App\Services\Integration\CodeRepository\Github;
 
 use App\Models\GithubIntegration;
 use App\Services\Integration\CodeRepository\CodeRepository;
@@ -15,7 +15,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
 
-class GitHub implements CodeRepository
+class Github implements CodeRepository
 {
     private string $accessToken;
 

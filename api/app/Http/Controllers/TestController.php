@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\Indexing\CodeRepository\GitHub\IndexGitHub;
 use App\Jobs\Indexing\Communication\GoogleChat\IndexGoogleChat;
 use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\KnowledgeGraph\BuildCommunities;
@@ -18,7 +17,6 @@ use App\Models\IndexingWorkflowStepItem;
 use App\Services\GraphDB\GraphDB;
 use App\Services\Indexing\Orchestrator\Orchestrator;
 use App\Services\Indexing\Orchestrator\Supervisor\StuckBucketSupervisor;
-use App\Services\Integration\CodeRepository\GitHub\GitHub;
 use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\Storage\GoogleDrive\GoogleDrive;
 use App\Services\Integration\TaskManagement\Jira\Jira;

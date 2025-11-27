@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GithubIntegration;
 use App\Models\GithubRepository;
 use App\Services\Integration\CodeRepository\DataTransferObjects\Repository;
-use App\Services\Integration\CodeRepository\GitHub\GitHub;
+use App\Services\Integration\CodeRepository\Github\Github;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
 use App\Services\Url;
 use Exception;
@@ -15,7 +15,6 @@ class GithubIntegrationController
 {
     public function __construct(
         private GithubOAuth $githubOAuth,
-        private GitHub $github,
     ) {
     }
 
@@ -114,7 +113,7 @@ class GithubIntegrationController
         return GithubIntegration::where('installation_id', $installationId)->firstOrFail();
     }
 
-    public function resources(GitHub $github)
+    public function resources(Github $github)
     {
         $resources = $github->repositories()
             ->map(function (Repository $repository) {
@@ -130,7 +129,7 @@ class GithubIntegrationController
         ]);
     }
 
-    public function configure(Request $request, GitHub $github)
+    public function configure(Request $request, Github $github)
     {
         $request->validate([
             'selected_resources' => ['required', 'array'],

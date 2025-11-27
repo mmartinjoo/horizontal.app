@@ -7,7 +7,7 @@ use App\Http\Controllers\GoogleDriveIntegrationController;
 use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Integration\Communication\Slack\Slack;
-use App\Services\Integration\CodeRepository\GitHub\GitHub;
+use App\Services\Integration\CodeRepository\Github\Github;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
 use App\Services\Integration\Communication\Slack\SlackOAuthService;
 use App\Services\Integration\Google\GoogleChatOAuthService;
@@ -105,12 +105,12 @@ class AppServiceProvider extends ServiceProvider
             ->give(config('services.slack.base_url'));
 
         $this->app
-            ->when(GitHub::class)
+            ->when(Github::class)
             ->needs('$accessToken')
             ->give(config('services.github_integration.access_token'));
 
         $this->app
-            ->when(GitHub::class)
+            ->when(Github::class)
             ->needs('$baseUrl')
             ->give(config('services.github_integration.base_url'));
 

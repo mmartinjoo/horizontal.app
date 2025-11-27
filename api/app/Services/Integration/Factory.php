@@ -3,7 +3,7 @@
 namespace App\Services\Integration;
 
 use App\Services\Integration\CodeRepository\CodeRepository;
-use App\Services\Integration\CodeRepository\GitHub\GitHub;
+use App\Services\Integration\CodeRepository\Github\Github;
 use App\Services\Integration\Communication\Communication;
 use App\Services\Integration\Communication\GoogleChat\GoogleChat;
 use App\Services\Integration\Communication\Slack\Slack;
@@ -36,7 +36,7 @@ class Factory
     public function createCodeRepository(string $vendor): CodeRepository
     {
         return match($vendor) {
-            'github' => app(GitHub::class),
+            'github' => app(Github::class),
             default => throw new Exception('Unknown code repository integration'),
         };
     }
