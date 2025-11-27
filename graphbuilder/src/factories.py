@@ -61,6 +61,7 @@ def create_queue() -> Queue:
 
 def create_llm(tenant_id: str) -> CustomLLM:
     provider = get_llm_provider(tenant_id=tenant_id) 
+    print(provider)
     if provider == 'fireworks':
         return FireworksLLM(api_key=os.getenv("FIREWORKS_API_KEY"),
                             model_name=os.getenv("FIREWORKS_CHAT_MODEL"))

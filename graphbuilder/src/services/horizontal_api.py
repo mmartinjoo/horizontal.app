@@ -11,7 +11,10 @@ def get_graph_db_connection_info(tenant_id: str):
     # Use base API URL but set Host header for tenant identification
     base_url = _get_base_api_url()
 
-    resp = requests.get(f"{base_url}/api/tenants/{tenant_id}")
+    resp = requests.get(
+        f"{base_url}/api/tenants/{tenant_id}",
+        headers=_get_auth_headers()
+    )
     if resp.status_code != 200:
         raise RuntimeError("Failed to get tenant connection info")
 
@@ -26,7 +29,10 @@ def get_graph_db_connection_info(tenant_id: str):
 def get_tenant_domain(tenant_id: str) -> str:
     # Use base API URL for this initial request (no tenant context needed)
     base_url = _get_base_api_url()
-    resp = requests.get(f"{base_url}/api/tenants/{tenant_id}")
+    resp = requests.get(
+        f"{base_url}/api/tenants/{tenant_id}",
+        headers=_get_auth_headers()
+    )
     if resp.status_code != 200:
         raise RuntimeError("Failed to get tenant from API")
 
@@ -49,7 +55,10 @@ def get_tenant_domain(tenant_id: str) -> str:
 def get_llm_provider(tenant_id: str) -> str:
     # Use base API URL for this initial request (no tenant context needed)
     base_url = _get_base_api_url()
-    resp = requests.get(f"{base_url}/api/tenants/{tenant_id}")
+    resp = requests.get(
+        f"{base_url}/api/tenants/{tenant_id}",
+        headers=_get_auth_headers()
+    )
     if resp.status_code != 200:
         raise RuntimeError("Failed to get tenant from API")
 
@@ -121,7 +130,8 @@ def _create_tenant_request_data(tenant_id: str, path: str) -> Dict[str, any]:
     headers = {
         "Host": tenant_domain,
         "Accepts": "application/json",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {os.getenv('HORIZONTAL_API_TOKEN')}"
     }
     data = {
         "url": f"{base_url}/{path}",
@@ -131,6 +141,11 @@ def _create_tenant_request_data(tenant_id: str, path: str) -> Dict[str, any]:
 
 def _get_base_api_url() -> str:
     return os.getenv('HORIZONTAL_API_URL')
+
+def _get_auth_headers() -> Dict[str, str]:
+    return {
+        "Authorization": f"Bearer {os.getenv('HORIZONTAL_API_TOKEN')}"
+    }
 
 def _extract_hostname(url: str) -> str:
     # Remove the protocol (http:// or https://)

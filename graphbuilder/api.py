@@ -4,7 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from src.graphbuilder import GraphBuilder
-from src.factories import create_graph_client
+from src.factories import create_graph_client, create_llm
 import redis
 
 load_dotenv()
@@ -62,6 +62,12 @@ def api_build_graph():
     except Exception as e:
         logging.exception(e)    
         return jsonify({"success": False, "error": "something went wrong", "details": str(e.args[0])}), 500
+
+@app.route("/api/test", methods=["GET"])
+def test():
+    llm = create_llm("f20c7eb6-3160-487a-8a01-b582cc8632d2")
+    print(llm)
+    return jsonify({"status": "OK"})
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port="9998")
