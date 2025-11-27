@@ -31,12 +31,20 @@ def get_tenant_domain(tenant_id: str) -> str:
         raise RuntimeError("Failed to get tenant from API")
 
     data = resp.json()
+    domains = data["domains"]
+
+    # Production case: tenant has single domain, use it directly
+    if len(domains) == 1:
+        return domains[0]
+
+    # Local dev case: tenant has multiple domains, match against HORIZONTAL_API_URL hostname
+    # (e.g., selects "tenant.nginx" for docker-internal communication)
     hostname = _extract_hostname(os.getenv('HORIZONTAL_API_URL'))
-    for domain in data["domains"]:
-        if f"{domain}".find(hostname) != -1:
+    for domain in domains:
+        if hostname in domain:
             return domain
 
-    raise RuntimeError("domain cannot be determined")
+    raise RuntimeError(f"domain cannot be determined from {len(domains)} domains")
 
 def get_llm_provider(tenant_id: str) -> str:
     # Use base API URL for this initial request (no tenant context needed)
