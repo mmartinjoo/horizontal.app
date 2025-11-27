@@ -17,7 +17,14 @@ spec:
       containers:
       - name: migrations
         image: registry.digitalocean.com/horizontal/api:latest
-        command: ['php', 'artisan', 'migrate', '--force']
+        command:
+          - sh
+          - -c
+          - |
+            set -e
+            php artisan migrate --force
+            php artisan tenants:migrate --force
+            echo 'All migrations completed successfully'
         resources:
           requests:
             memory: "256Mi"
