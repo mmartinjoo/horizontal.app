@@ -29,7 +29,7 @@ def readiness():
 
         return jsonify({
             "status": "ready",
-            "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
+            "timestamp": datetime.utcnow().isoformat(),
             "checks": {
                 "redis": "ok"
             }
