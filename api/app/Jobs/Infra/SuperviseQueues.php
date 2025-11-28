@@ -16,10 +16,20 @@ class SuperviseQueues implements ShouldQueue
     {
         $defaultSize = Queue::size('default');
         $indexingSize = Queue::size('indexing');
-        $questionSize = Queue::size('question');
-        Redis::set('api-queue-size', $defaultSize + $indexingSize + $questionSize);
+        $questionSize = Queue::size('question');        
 
-        $graphBuilderQueueSize = $graphBuilderApi->getQueueSize();        
-        Redis::set('graphbuilder-queue-size', $graphBuilderQueueSize);
+        $size = $defaultSize + $indexingSize + $questionSize;
+        Redis::del('api-queue-size');
+        for ($i = 0; $i <= $size; $i++) {
+            $item = "item_{$i}";
+            Redis::rpush('api-queue-size', $item);
+        }
+
+        $graphBuilderQueueSize = $graphBuilderApi->getQueueSize();     
+        Redis::del('graphbuilder-queue-size');
+        for ($i = 0; $i <= $graphBuilderQueueSize; $i++) {
+            $item = "item_{$i}";
+            Redis::rpush('graphbuilder-queue-size', $item);
+        }
     }
 }
