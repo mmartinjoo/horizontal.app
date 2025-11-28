@@ -14,9 +14,8 @@ use Stancl\Tenancy\Concerns\HasATenantArgument;
 
 class CheckRefreshTokensCommand extends Command
 {
-    use HasATenantArgument;
-    
     protected $signature = 'integrations:check-refresh-tokens
+                            {--tenant= : Tenant ID}
                             {--integration= : Check specific integration type (jira, linear, slack, google-drive, google-chat)}
                             {--show-details : Show detailed information for each integration}';
 
