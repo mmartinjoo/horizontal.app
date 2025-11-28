@@ -14,7 +14,6 @@ use App\Jobs\LLM\RotateLLMProvider;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepItem;
-use App\Services\GraphDB\GraphDB;
 use App\Services\Indexing\Orchestrator\Orchestrator;
 use App\Services\Indexing\Orchestrator\Supervisor\StuckBucketSupervisor;
 use App\Services\Integration\Communication\Slack\Slack;

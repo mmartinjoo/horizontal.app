@@ -4,14 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Jobs\SearchEngine\AnswerQuestion;
 use App\Models\Question;
-use App\Services\GraphDB\GraphDB;
+use App\Services\GraphDB\GraphDBFactory;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class QuestionController
 {
-    public function ask(Request $request, GraphDB $graphDB)
+    public function ask(Request $request, GraphDBFactory $graphDBFactory)
     {
+        $graphDB = $graphDBFactory->create();
         $count = $graphDB->run("match (n:Community) return count(n) as count;")[0]['count'];
         if ($count === 0) {
             return response('Your data is being indexed... Please try again later.', Response::HTTP_SERVICE_UNAVAILABLE);

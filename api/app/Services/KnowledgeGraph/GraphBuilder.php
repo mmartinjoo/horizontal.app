@@ -10,6 +10,7 @@ use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Models\IndexingWorkflowStepItem;
 use App\Services\GraphDB\GraphDB;
+use App\Services\GraphDB\GraphDBFactory;
 use App\Services\LLM\Embedder;
 use Bolt\protocol\v5\structures\Node;
 use Illuminate\Support\Facades\Http;
@@ -18,11 +19,15 @@ use Throwable;
 
 class GraphBuilder
 {
+    private GraphDB $graphDB;
+
     public function __construct(
         private string $baseUrl,
-        private GraphDB $graphDB,
+        private GraphDBFactory $graphDBFactory,
         private Embedder $embedder,
-    ) {}
+    ) {
+        $this->graphDB = $this->graphDBFactory->create();
+    }
 
     public function buildKG(IndexingWorkflowStep $workflowStep): bool
     {

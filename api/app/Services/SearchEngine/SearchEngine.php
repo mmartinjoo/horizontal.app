@@ -6,6 +6,7 @@ use App\Models\DocumentChunk;
 use App\Models\DocumentComment;
 use App\Models\Question;
 use App\Services\GraphDB\GraphDB;
+use App\Services\GraphDB\GraphDBFactory;
 use App\Services\LLM\Embedder;
 use App\Services\LLM\LLMFactory;
 use Bolt\protocol\v5\structures\Node;
@@ -14,11 +15,14 @@ use Illuminate\Support\Arr;
 
 class SearchEngine
 {
+    private GraphDB $graphDB;
+
     public function __construct(
         private Embedder $embedder,
-        private GraphDB $graphDB,
+        private GraphDBFactory $graphDBFactory,
         private string $cosineSimilarityThreshold,
     ) {
+        $this->graphDB = $this->graphDBFactory->create();
     }
 
     public function graphRAG(Question $question)

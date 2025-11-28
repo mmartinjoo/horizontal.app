@@ -4,8 +4,6 @@ namespace App\Providers;
 
 use App\Http\Controllers\GoogleChatIntegrationController;
 use App\Http\Controllers\GoogleDriveIntegrationController;
-use App\Services\GraphDB\GraphDB;
-use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\CodeRepository\Github\Github;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
@@ -84,10 +82,6 @@ class AppServiceProvider extends ServiceProvider
             ->when(LinearOAuthService::class)
             ->needs('$redirectUri')
             ->give(config('services.linear.redirect_uri'));
-
-        $this->app->bind(GraphDB::class, function () {
-            return GraphDBFactory::create();
-        });
 
         $this->app
             ->when(SearchEngine::class)

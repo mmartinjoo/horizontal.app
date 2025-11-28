@@ -5,7 +5,7 @@ namespace App\Jobs\Indexing;
 use App\Enums\Indexing\WorkflowStatus;
 use App\Models\IndexingWorkflowStepBucket;
 use App\Models\IndexingWorkflowStepItem;
-use App\Services\GraphDB\GraphDB;
+use App\Services\GraphDB\GraphDBFactory;
 use App\Services\LLM\Embedder;
 use App\Services\LLM\LLMFactory;
 use Illuminate\Bus\Batchable;
@@ -31,10 +31,11 @@ class IndexGraphCommunity extends IndexingStepItemJob implements ShouldQueue
     }
 
     public function handle(
-        GraphDB $graphDB,
+        GraphDBFactory $graphDBFactory,
         Embedder $embedder,
-    ) {
+    ) {        
         try {
+            $graphDB = $graphDBFactory->create();
             $llm = LLMFactory::create(tenancy()->tenant);
             $bucket = IndexingWorkflowStepBucket::find($this->indexingWorkflowStepBucketId);
             $indexingWorkflowItem = IndexingWorkflowStepItem::create([

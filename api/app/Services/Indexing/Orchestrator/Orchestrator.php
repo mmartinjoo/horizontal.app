@@ -25,6 +25,7 @@ use App\Models\JiraIntegration;
 use App\Models\LinearIntegration;
 use App\Models\SlackIntegration;
 use App\Services\GraphDB\GraphDB;
+use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Indexing\Orchestrator\Supervisor\StuckBucketSupervisor;
 use App\Services\Indexing\Orchestrator\Supervisor\StuckItemSupervisor;
 use App\Services\Indexing\Orchestrator\Supervisor\WorkflowSupervisor;
@@ -32,12 +33,14 @@ use Exception;
 
 class Orchestrator
 {
-    public function __construct(private GraphDB $graphDB)
-    {        
+    private GraphDB $graphDB;
+    public function __construct()
+    {
     }
 
-    public function schedule()
-    {        
+    public function schedule(GraphDBFactory $graphDBFactory)
+    {
+        $this->graphDB = $graphDBFactory->create();
         $workflow = IndexingWorkflow::create([
             'started_at' => now(),
             'status' => WorkflowStatus::Starting->value,
