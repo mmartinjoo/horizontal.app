@@ -10,6 +10,7 @@ use App\Jobs\Indexing\KnowledgeGraph\BuildRelatedNodes;
 use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Jobs\Indexing\Supervisor\SuperviseStuckBuckets;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
+use App\Jobs\Infra\SuperviseQueues;
 use App\Jobs\LLM\RotateLLMProvider;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
@@ -23,12 +24,17 @@ use App\Services\Integration\TaskManagement\Linear\Linear;
 use App\Services\LLM\LLMFactory;
 use App\Services\Url;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 
 class TestController extends Controller
 {
     public function index()
     {
-        RotateLLMProvider::dispatch();
+        if (App::isProduction()) {
+            abort(404);
+        }
+        
+        SuperviseQueues::dispatch();
     }
 
     public function token()

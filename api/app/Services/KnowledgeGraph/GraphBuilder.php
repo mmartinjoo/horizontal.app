@@ -40,6 +40,15 @@ class GraphBuilder
         return $response->status() === Response::HTTP_ACCEPTED;
     }
 
+    public function getQueueSize(): int
+    {
+        $data = Http::get($this->baseUrl . '/api/queue-size')
+            ->throw()
+            ->json();
+
+        return $data['size'];
+    }
+
     public function buildRelatedNodes(IndexingWorkflowStep $workflowStep)
     {
         $bucket = IndexingWorkflowStepBucket::create([

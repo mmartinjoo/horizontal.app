@@ -4,7 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from src.graphbuilder import GraphBuilder
-from src.factories import create_redis
+from src.factories import create_redis, create_queue
 import redis
 
 load_dotenv()
@@ -60,6 +60,12 @@ def api_build_graph():
     except Exception as e:
         logging.exception(e)    
         return jsonify({"success": False, "error": "something went wrong", "details": str(e.args[0])}), 500
+    
+@app.route("/api/queue-size", methods=["GET"])
+def queue_size():
+    q = create_queue()
+    count = len(q)
+    return jsonify({"size": count}), 200
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port="9998")

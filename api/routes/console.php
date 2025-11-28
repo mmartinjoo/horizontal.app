@@ -9,12 +9,17 @@ use App\Jobs\Indexing\Storage\GoogleDrive\RefreshGoogleDriveTokensJob;
 use App\Jobs\Indexing\TaskManagement\Jira\RefreshJiraTokensJob;
 use App\Jobs\Indexing\TaskManagement\Linear\RefreshLinearTokensJob;
 use App\Jobs\Infra\SuperviseAvailableMemgraphInstances;
+use App\Jobs\Infra\SuperviseQueues;
 use App\Jobs\LLM\RotateLLMProvider;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::job(new SuperviseAvailableMemgraphInstances)->everyMinute();
+
+if (config('features.queue_based_auto_scaling.active')) {
+    Schedule::job(new SuperviseQueues)->everyTenSeconds();
+}
 
 // tenant-aware jobs
 // it needs the database check because `composer dump-autoload` invokes it

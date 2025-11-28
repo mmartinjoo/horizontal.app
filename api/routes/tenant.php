@@ -35,8 +35,10 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
 ])->prefix('/api')->group(function () {
-    Route::get('/test', [\App\Http\Controllers\TestController::class, 'index']);
-    Route::get('/test/auth/token', [\App\Http\Controllers\TestController::class, 'token']);
+    if (env('APP_ENV') === 'development') {
+        Route::get('/test', [\App\Http\Controllers\TestController::class, 'index']);
+        Route::get('/test/auth/token', [\App\Http\Controllers\TestController::class, 'token']);
+    }
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/questions/ask', [QuestionController::class, 'ask']);
