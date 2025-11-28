@@ -18,9 +18,11 @@ class UpdateSlackMessageLinks implements ShouldQueue
     {
     }
 
-    public function handle(Slack $slack): void
+    public function handle(): void
     {
         tenancy()->initialize($this->tenant);
+
+        $slack = app(Slack::class);
 
         $messages = Document::query()
             ->select('id', 'metadata', 'source_id')

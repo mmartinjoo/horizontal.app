@@ -6,7 +6,7 @@ use App\Enums\Indexing\WorkflowStatus;
 use App\Models\Document;
 use App\Models\IndexingWorkflow;
 use App\Models\Tenant;
-use App\Services\GraphDB\GraphDB;
+use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Indexing\Orchestrator\Orchestrator;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -24,7 +24,7 @@ class StartEmergencyIndexing implements ShouldQueue
     {
     }
 
-    public function handle(Orchestrator $orchestrator, GraphDB $graphDB)
+    public function handle(Orchestrator $orchestrator, GraphDBFactory $graphDBFactory)
     {
         tenancy()->initialize($this->tenant);
         if (Document::count() === 0) {
@@ -44,6 +44,7 @@ class StartEmergencyIndexing implements ShouldQueue
 
         // at this point, there are documents and completed workflowas
         // the graph should be populated
+        $graphDB = $graphDBFactory->create();
         $count = $graphDB->run("match (n:Community) return count(n) as count;")[0]['count'];
         if ($count === 0) {
             logger()->warning('emergency indexing started');

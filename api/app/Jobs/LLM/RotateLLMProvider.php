@@ -17,7 +17,6 @@ class RotateLLMProvider implements ShouldQueue
 
     public function handle(LLMRotation $llmRotation)
     {
-        tenancy()->initialize($this->tenant);
         $currentProvider = $tenant->llm_provider ?? config('llm.default');
         $newProvider = $llmRotation->rotate($currentProvider);
         $this->tenant->llm_provider = $newProvider;
