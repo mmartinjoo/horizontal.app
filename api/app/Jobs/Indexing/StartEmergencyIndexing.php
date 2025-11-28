@@ -24,7 +24,7 @@ class StartEmergencyIndexing implements ShouldQueue
     {
     }
 
-    public function handle(Orchestrator $orchestrator, GraphDBFactory $graphDBFactory)
+    public function handle(Orchestrator $orchestrator)
     {
         tenancy()->initialize($this->tenant);
         if (Document::count() === 0) {
@@ -44,6 +44,7 @@ class StartEmergencyIndexing implements ShouldQueue
 
         // at this point, there are documents and completed workflowas
         // the graph should be populated
+        $graphDBFactory = app(GraphDBFactory::class);
         $graphDB = $graphDBFactory->create();
         $count = $graphDB->run("match (n:Community) return count(n) as count;")[0]['count'];
         if ($count === 0) {

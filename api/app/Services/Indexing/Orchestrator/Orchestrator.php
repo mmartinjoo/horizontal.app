@@ -38,8 +38,9 @@ class Orchestrator
     {
     }
 
-    public function schedule(GraphDBFactory $graphDBFactory)
+    public function schedule()
     {
+        $graphDBFactory = app(GraphDBFactory::class);
         $this->graphDB = $graphDBFactory->create();
         $workflow = IndexingWorkflow::create([
             'started_at' => now(),
