@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "vm.overcommit_memory = 1" > /etc/sysctl.d/99-redis.conf
+sudo sysctl -p /etc/sysctl.d/99-redis.conf
+
 docker compose down
 echo "Starting docker compose..."
 docker compose up -d
