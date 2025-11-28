@@ -150,7 +150,7 @@ jobs:
 
           # Wait for migration to complete (5 min timeout)
           echo "Running database migrations..."
-          if kubectl wait --for=condition=complete job/api-migrations --timeout=90s; then
+          if kubectl wait --for=condition=complete job/api-migrations --timeout=180s; then
             echo "✓ Migrations completed successfully"
             kubectl logs job/api-migrations
           else
