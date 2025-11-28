@@ -26,7 +26,7 @@ class CheckRefreshTokensCommand extends Command
      */
     public function handle(): int
     {
-        $tenant = Tenant::findOrFail($this->argument('tenant'));
+        $tenant = Tenant::findOrFail($this->option('tenant'));
         tenancy()->initialize($tenant);
         
         $this->info('Checking OAuth integrations for missing refresh tokens...');
