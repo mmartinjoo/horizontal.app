@@ -157,7 +157,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # run infra/postgres/generate-certs.sh to create TLS certificates the set DB_SSLMODE=require
+  # run infra/postgres/generate-certs.sh to create TLS certificates then set DB_SSLMODE=require
   # db-tls:
   #   image: pgvector/pgvector:pg17
   #   ports:

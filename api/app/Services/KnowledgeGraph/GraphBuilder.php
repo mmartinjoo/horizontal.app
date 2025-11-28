@@ -13,8 +13,6 @@ use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\GraphDBFactory;
 use App\Services\LLM\Embedder;
 use Bolt\protocol\v5\structures\Node;
-use Illuminate\Support\Facades\Http;
-use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class GraphBuilder
@@ -27,26 +25,6 @@ class GraphBuilder
         private Embedder $embedder,
     ) {
         $this->graphDB = $this->graphDBFactory->create();
-    }
-
-    public function buildKG(IndexingWorkflowStep $workflowStep): bool
-    {
-        $response = Http::post($this->baseUrl . '/api/build', [
-            'tenant_id' => tenancy()->tenant->id,
-            'workflow_step_id' => $workflowStep->id,
-        ])
-            ->throw();
-
-        return $response->status() === Response::HTTP_ACCEPTED;
-    }
-
-    public function getQueueSize(): int
-    {
-        $data = Http::get($this->baseUrl . '/api/queue-size')
-            ->throw()
-            ->json();
-
-        return $data['size'];
     }
 
     public function buildRelatedNodes(IndexingWorkflowStep $workflowStep)

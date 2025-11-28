@@ -35,7 +35,7 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
 ])->prefix('/api')->group(function () {
-    if (env('APP_ENV') === 'development') {
+    if (env('APP_ENV') === 'local') {
         Route::get('/test', [\App\Http\Controllers\TestController::class, 'index']);
         Route::get('/test/auth/token', [\App\Http\Controllers\TestController::class, 'token']);
     }

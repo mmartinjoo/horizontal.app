@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Infra;
 
-use App\Services\KnowledgeGraph\GraphBuilder;
+use App\Services\GraphBuilderApi;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Queue;
@@ -12,14 +12,14 @@ class SuperviseQueues implements ShouldQueue
 {
     use Queueable;
 
-    public function handle(GraphBuilder $graphBuilder)
+    public function handle(GraphBuilderApi $graphBuilderApi)
     {
         $defaultSize = Queue::size('default');
         $indexingSize = Queue::size('indexing');
         $questionSize = Queue::size('question');
         Redis::set('api-queue-size', $defaultSize + $indexingSize + $questionSize);
 
-        $graphBuilderQueueSize = $graphBuilder->getQueueSize();        
+        $graphBuilderQueueSize = $graphBuilderApi->getQueueSize();        
         Redis::set('graphbuilder-queue-size', $graphBuilderQueueSize);
     }
 }

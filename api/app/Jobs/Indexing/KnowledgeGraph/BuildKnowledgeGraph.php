@@ -5,7 +5,7 @@ namespace App\Jobs\Indexing\KnowledgeGraph;
 use App\Enums\Indexing\WorkflowStatus;
 use App\Jobs\Indexing\IndexingStepJob;
 use App\Models\IndexingWorkflowStep;
-use App\Services\KnowledgeGraph\GraphBuilder;
+use App\Services\GraphBuilderApi;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -18,7 +18,7 @@ class BuildKnowledgeGraph extends IndexingStepJob implements ShouldQueue
         $this->onQueue('indexing');
     }
 
-    public function handle(GraphBuilder $graphBuilder)
+    public function handle(GraphBuilderApi $graphBuilderApi)
     {
         $workflowStep = IndexingWorkflowStep::findOrFail($this->indexingWorkflowStepId);
         $workflowStep->update([
@@ -26,6 +26,6 @@ class BuildKnowledgeGraph extends IndexingStepJob implements ShouldQueue
             'started_at' => now(),
             'job_id' => $this->job->payload()['uuid'],
         ]);
-        $graphBuilder->buildKG($workflowStep);
+        $graphBuilderApi->buildKG($workflowStep);
     }
 }

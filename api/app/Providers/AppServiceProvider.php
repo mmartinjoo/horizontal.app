@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Http\Controllers\GoogleChatIntegrationController;
 use App\Http\Controllers\GoogleDriveIntegrationController;
+use App\Services\GraphBuilderApi;
 use App\Services\Integration\Communication\Slack\Slack;
 use App\Services\Integration\CodeRepository\Github\Github;
 use App\Services\Integration\CodeRepository\Github\GithubOAuth;
@@ -13,7 +14,6 @@ use App\Services\Integration\Google\GoogleDriveOAuthService;
 use App\Services\Integration\Google\GoogleOAuthService;
 use App\Services\Integration\TaskManagement\Jira\JiraOAuthService;
 use App\Services\Integration\TaskManagement\Linear\LinearOAuthService;
-use App\Services\KnowledgeGraph\GraphBuilder;
 use App\Services\LLM\Embedder;
 use App\Services\LLM\LLMFactory;
 use App\Services\SearchEngine\SearchEngine;
@@ -89,7 +89,7 @@ class AppServiceProvider extends ServiceProvider
             ->give(config('search_engine.cosine_similarity_threshold'));
 
         $this->app
-            ->when(GraphBuilder::class)
+            ->when(GraphBuilderApi::class)
             ->needs('$baseUrl')
             ->give(config('graph_builder.base_url'));
 
