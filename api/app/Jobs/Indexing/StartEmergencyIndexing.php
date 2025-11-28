@@ -37,12 +37,12 @@ class StartEmergencyIndexing implements ShouldQueue
 
         // at this point, the tenant has started at least one indexing workflow and has document
         
-        $inProgressWorkflowExists = IndexingWorkflow::where('status', WorkflowStatus::Processing)->exists();
+        $inProgressWorkflowExists = IndexingWorkflow::whereIn('status', [WorkflowStatus::Processing->value, WorkflowStatus::ReadForNextStep])->exists();
         if ($inProgressWorkflowExists) {
             return false;
         }
 
-        // at this point, there are documents and completed workflowas
+        // at this point, there are documents and completed workflows
         // the graph should be populated
         $graphDBFactory = app(GraphDBFactory::class);
         $graphDB = $graphDBFactory->create();
