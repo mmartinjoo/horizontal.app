@@ -36,7 +36,7 @@ spec:
         - name: QUEUE_TIMEOUT
           value: "1800"
         - name: QUEUE_TRIES
-          value: "3"
+          value: "1"
         envFrom:
         - configMapRef:
             name: app-config
@@ -81,7 +81,7 @@ spec:
         - name: QUEUE_TIMEOUT
           value: "1800"
         - name: QUEUE_TRIES
-          value: "3"
+          value: "1"
         envFrom:
         - configMapRef:
             name: app-config
@@ -126,7 +126,7 @@ spec:
         - name: QUEUE_TIMEOUT
           value: "1800"
         - name: QUEUE_TRIES
-          value: "3"
+          value: "1"
         envFrom:
         - configMapRef:
             name: app-config
