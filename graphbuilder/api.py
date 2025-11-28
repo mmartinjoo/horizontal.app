@@ -4,7 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from src.graphbuilder import GraphBuilder
-from src.factories import create_graph_client, create_llm
+from src.factories import create_redis
 import redis
 
 load_dotenv()
@@ -24,14 +24,12 @@ def readiness():
     """Readiness check that verifies external dependencies"""
     try:
         # Check Redis connection
-        redis_url = os.getenv("REDIS_URL")
-        if redis_url:
-            r = redis.from_url(redis_url, socket_connect_timeout=2)
-            r.ping()
+        redis = create_redis()
+        redis.ping()
 
         return jsonify({
             "status": "ready",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
             "checks": {
                 "redis": "ok"
             }

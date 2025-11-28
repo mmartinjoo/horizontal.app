@@ -1,7 +1,7 @@
 import os
 import psycopg2
-import logging
 import neo4j
+import ssl
 from redis import Redis
 from rq import Queue
 from llama_index.readers.database import DatabaseReader
@@ -56,8 +56,19 @@ def create_graph_client(tenant_id: str) -> neo4j.Driver:
     )
 
 def create_queue() -> Queue:
-    redis = Redis.from_url(os.getenv("REDIS_URL"))
+    redis = create_redis()
     return Queue(connection=redis, name="default", default_timeout="30m")
+
+def create_redis() -> Redis:
+    url = os.getenv("REDIS_URL")
+    if "rediss://" in url:
+        return Redis.from_url(
+            url,
+            ssl_cert_reqs=ssl.CERT_NONE,
+            ssl_check_hostname=False
+        )
+    else:
+        return Redis.from_url(url)
 
 def create_llm(tenant_id: str) -> CustomLLM:
     provider = get_llm_provider(tenant_id=tenant_id) 
