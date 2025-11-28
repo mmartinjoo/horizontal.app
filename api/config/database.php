@@ -153,36 +153,33 @@ return [
 
         'default' => [
             'url' => env('REDIS_URL'),
-            'host' => env('REDIS_HOST', '127.0.0.1'),
-            'username' => env('REDIS_USERNAME'),
-            'password' => env('REDIS_PASSWORD'),
-            'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_DB', '0'),
-            'options' => [
-                'stream' => [
-                    'ssl' => [
-                        'verify_peer' => false,
-                        'verify_peer_name' => false,
-                    ],
-                ],
-            ],
+            // 'host' => env('REDIS_HOST', '127.0.0.1'),
+            // 'username' => env('REDIS_USERNAME'),
+            // 'password' => env('REDIS_PASSWORD'),
+            // 'port' => env('REDIS_PORT', '6379'),
+            // 'scheme' => 'tls',
+            // 'ssl' => [          
+            //     'verify_peer' => false,
+            //     'verify_peer_name' => false,
+            //     'allow_self_signed' => true,
+            // ],
         ],
 
         'cache' => [
             'url' => env('REDIS_URL'),
-            'host' => env('REDIS_HOST', '127.0.0.1'),
-            'username' => env('REDIS_USERNAME'),
-            'password' => env('REDIS_PASSWORD'),
-            'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_CACHE_DB', '1'),
-            'options' => [
-                'stream' => [
-                    'ssl' => [
-                        'verify_peer' => false,
-                        'verify_peer_name' => false,
-                    ],
-                ],
-            ],
+            // 'ssl' => [          
+            //     'verify_peer' => false,
+            //     'verify_peer_name' => false,
+            //     'allow_self_signed' => true,
+            // ],
+            // 'host' => env('REDIS_HOST', '127.0.0.1'),
+            // 'username' => env('REDIS_USERNAME'),
+            // 'password' => env('REDIS_PASSWORD'),
+            // 'port' => env('REDIS_PORT', '6379'),
+            // 'scheme' => 'tls',
+            // 
         ],
 
     ],
