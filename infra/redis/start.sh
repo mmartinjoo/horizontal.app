@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export REDIS_PASSWORD=
+
 echo "vm.overcommit_memory = 1" > /etc/sysctl.d/99-redis.conf
 sudo sysctl -p /etc/sysctl.d/99-redis.conf
 
