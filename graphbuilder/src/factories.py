@@ -61,14 +61,7 @@ def create_queue() -> Queue:
 
 def create_redis() -> Redis:
     url = os.getenv("REDIS_URL")
-    if "rediss://" in url:
-        return Redis.from_url(
-            url,
-            ssl_cert_reqs=ssl.CERT_NONE,
-            ssl_check_hostname=False
-        )
-    else:
-        return Redis.from_url(url)
+    return Redis.from_url(url)
 
 def create_llm(tenant_id: str) -> CustomLLM:
     provider = get_llm_provider(tenant_id=tenant_id) 
