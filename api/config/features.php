@@ -49,34 +49,50 @@ return [
     'integrations' => [
         Provider::Slack->value => [
             'active' => true,
+            'slug' => Provider::Slack->value,
+            'name' => 'Slack',
             'category' => Category::Communication->value,
         ],
         Provider::GoogleChat->value => [
             'active' => true,
+            'slug' => Provider::GoogleChat->value,
+            'name' => 'Google Chat',
             'category' => Category::Communication->value,
         ],
         Provider::Jira->value => [
             'active' => true,
+            'slug' => Provider::Jira->value,
+            'name' => 'Jira',
             'category' => Category::TaskManagement->value,
         ],
         Provider::Linear->value => [
             'active' => true,
+            'slug' => Provider::Linear->value,
+            'name' => 'Linear',
             'category' => Category::TaskManagement->value,
         ],
         Provider::Github->value => [
             'active' => true,
+            'slug' => Provider::Github->value,
+            'name' => 'GitHub',
             'category' => Category::CodeRepository->value,
         ],
         Provider::GoogleDrive->value => [
             'active' => true,
+            'slug' => Provider::GoogleDrive->value,
+            'name' => 'GoogleDrive',
             'category' => Category::Storage->value,
         ],
         Provider::GithubProjects->value => [
             'active' => false,
+            'slug' => Provider::GithubProjects->value,
+            'name' => 'GitHub Projects',
             'category' => Category::TaskManagement->value,
         ],
         Provider::Confluence->value => [
             'active' => false,
+            'slug' => Provider::Confluence->value,
+            'name' => 'Confluence',
             'category' => Category::Documentation->value,
         ],
     ],

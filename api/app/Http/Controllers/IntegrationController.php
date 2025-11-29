@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Integration\Category;
 use App\Models\GithubIntegration;
 use App\Models\GithubRepository;
 use App\Models\GoogleChatChannel;
@@ -24,58 +25,52 @@ class IntegrationController extends Controller
     public function index(): JsonResponse
     {
         $integrations = [
-            'communication' => [
+            Category::Communication->value => [
                 [
-                    'provider' => 'slack',
-                    'name' => 'Slack',
+                    'provider' => config('features.integrations.slack.slug'),
+                    'name' => config('features.integrations.slack.name'),
                     'description' => 'Connect your Slack workspace and channels',
-                    'icon' => '/icons/slack.svg',
                     'connected' => SlackIntegration::query()->exists(),
                     'configured' => $this->isSlackConfigured(),
                 ],
                 [
-                    'provider' => 'google_chat',
-                    'name' => 'Google Chat',
+                    'provider' => config('features.integrations.google_chat.slug'),
+                    'name' => config('features.integrations.google_chat.name'),
                     'description' => 'Connect your Google Chat conversations and spaces',
-                    'icon' => '/icons/google-chat.svg',
                     'connected' => GoogleChatIntegration::query()->exists(),
                     'configured' => $this->isGoogleChatConfigured(),
                 ],
             ],
             'task_management' => [
                 [
-                    'provider' => 'linear',
-                    'name' => 'Linear',
+                    'provider' => config('features.integrations.linear.slug'),
+                    'name' => config('features.integrations.linear.name'),
                     'description' => 'Connect your Linear issues and projects',
-                    'icon' => '/icons/linear.svg',
                     'connected' => LinearIntegration::query()->exists(),
                     'configured' => $this->isLinearConfigured(),
                 ],
                 [
-                    'provider' => 'jira',
-                    'name' => 'Jira',
+                    'provider' => config('features.integrations.jira.slug'),
+                    'name' => config('features.integrations.jira.name'),
                     'description' => 'Connect your Jira issues and projects',
-                    'icon' => '/icons/jira.svg',
                     'connected' => JiraIntegration::query()->exists(),
                     'configured' => $this->isJiraConfigured(),
                 ],
             ],
             'storage' => [
                 [
-                    'provider' => 'google_drive',
-                    'name' => 'Google Drive',
+                    'provider' => config('features.integrations.google_drive.slug'),
+                    'name' => config('features.integrations.google_drive.name'),
                     'description' => 'Connect your files and folders',
-                    'icon' => '/icons/google-drive.svg',
                     'connected' => GoogleDriveIntegration::query()->exists(),
                     'configured' => $this->isGoogleDriveConfigured(),
                 ],
             ],
             'code_repository' => [
                 [
-                    'provider' => 'github',
-                    'name' => 'GitHub',
+                    'provider' => config('features.integrations.github.slug'),
+                    'name' => config('features.integrations.github.name'),
                     'description' => 'Connect your repositories and PRs',
-                    'icon' => '/icons/github.svg',
                     'connected' => GithubIntegration::query()->exists(),
                     'configured' => $this->isGithubConfigured(),
                 ],
