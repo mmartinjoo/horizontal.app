@@ -24,4 +24,12 @@ return [
             ],
         ],
     ],
+    'llm_rotation' => [
+        'active' => env('FEATURE_LLM_ROTATION_ACTIVE', true),
+        'description' => 'If active, we rotate LLM providers every X minutes to avoid rate limits',
+        'scheduling_frequency_in_minutes' => [
+            'value' => env('FEATURE_LLM_ROTATION_FREQUENCY_IN_MINUTES', 15),
+            'description' => '15 means, LLM provider is rotated every 15 minute',
+        ],
+    ],
 ];

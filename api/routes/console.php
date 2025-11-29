@@ -42,7 +42,10 @@ try {
         Schedule::job(new StartIndexing($tenant))->dailyAt('03:00');
         Schedule::job(new MonitorGraph($tenant))->everyTenMinutes();
 
-        Schedule::job(new RotateLLMProvider($tenant))->everyMinute();
+        if (config('features.llm_rotation.active')) {
+            Schedule::job(new RotateLLMProvider($tenant))
+                ->cron(sprintf("*/%d * * * *", config('features.llm_rotation.scheduling_frequency_in_minutes.value')));
+        }        
 
         $integration = [
             'google_drive',
