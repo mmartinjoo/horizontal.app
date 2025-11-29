@@ -174,9 +174,11 @@ jobs:
           kubectl apply -f infra/k8s/tenant-app-deployment.yaml
 
           kubectl apply -f infra/k8s/api-hpa.yaml
-          kubectl apply -f infra/k8s/worker-question-hpa.yaml
-          kubectl apply -f infra/k8s/worker-default-hpa.yaml
           kubectl apply -f infra/k8s/graphbuilder-api-hpa.yaml
+          kubectl apply -f infra/k8s/worker-default-scaledobject.yaml
+          kubectl apply -f infra/k8s/worker-indexing-scaledobject.yaml
+          kubectl apply -f infra/k8s/worker-question-scaledobject.yaml
+          kubectl apply -f infra/k8s/graphbuilder-worker-scaledobject.yaml
 
       - name: Deploy Ingress Rules
         run: |
