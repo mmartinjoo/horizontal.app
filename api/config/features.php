@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\Integration\Category;
+use App\Enums\Integration\Provider;
+
 return [
     'queue_based_auto_scaling' => [
         'active' => env('FEATURE_QUEUE_BASED_AUTOSCALING_ACTIVE', false),
@@ -41,6 +44,40 @@ return [
             // the server is in UTC. when it's 3AM:
             //  - 7PM-11PM (previous day) in the US
             //  - 1AM-4AM in Europe
+        ],
+    ],
+    'integrations' => [
+        Provider::Slack->value => [
+            'active' => true,
+            'category' => Category::Communication->value,
+        ],
+        Provider::GoogleChat->value => [
+            'active' => true,
+            'category' => Category::Communication->value,
+        ],
+        Provider::Jira->value => [
+            'active' => true,
+            'category' => Category::TaskManagement->value,
+        ],
+        Provider::Linear->value => [
+            'active' => true,
+            'category' => Category::TaskManagement->value,
+        ],
+        Provider::Github->value => [
+            'active' => true,
+            'category' => Category::CodeRepository->value,
+        ],
+        Provider::GoogleDrive->value => [
+            'active' => true,
+            'category' => Category::Storage->value,
+        ],
+        Provider::GithubProjects->value => [
+            'active' => false,
+            'category' => Category::TaskManagement->value,
+        ],
+        Provider::Confluence->value => [
+            'active' => false,
+            'category' => Category::Documentation->value,
         ],
     ],
 ];

@@ -12,6 +12,7 @@ use App\Jobs\Infra\SuperviseAvailableMemgraphInstances;
 use App\Jobs\Infra\SuperviseQueues;
 use App\Jobs\LLM\RotateLLMProvider;
 use App\Models\Tenant;
+use App\Services\Integration\ProviderService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
@@ -51,16 +52,10 @@ try {
                 ->cron(sprintf("*/%d * * * *", config('features.llm_rotation.scheduling_frequency_in_minutes.value')));
         }        
 
-        $integration = [
-            'google_drive',
-            'github',
-            'slack',
-            'linear',
-            'google_chat',
-            'jira',
-        ];
-        foreach ($integration as $integration) {
-            Schedule::command("integrations:check-refresh-tokens --tenant={$tenant->id} --integration={$integration} --show-details")->hourly();
+        $providerService = app(ProviderService::class);
+        $activeProviders = $providerService->getActiveProviders();
+        foreach ($activeProviders as $provider => $config) {
+            Schedule::command("integrations:check-refresh-tokens --tenant={$tenant->id} --integration={$provider} --show-details")->hourly();
         }
     }
 } catch (Exception $e) {
