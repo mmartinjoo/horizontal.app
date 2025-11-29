@@ -1,14 +1,14 @@
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
-  name: worker-indexing-scaler
+  name: worker-question-scaler
   namespace: default
 spec:
   scaleTargetRef:
-    name: worker-indexing
+    name: worker-question
   minReplicaCount: 1
-  maxReplicaCount: 10
-  pollingInterval: 10  # Check queue every 10 seconds
+  maxReplicaCount: 8
+  pollingInterval: 10  # Check queue every 15 seconds
   cooldownPeriod: 30   # Wait 30s before scaling down
   advanced:
     horizontalPodAutoscalerConfig:
@@ -37,6 +37,6 @@ spec:
         password: aBRQtD0S3mbhnrdYwhETh06w6Jdi7tiC
         databaseIndex: "0"
         listName: horizontal-database-api-queue-size
-        listLength: "2"  # Target 2 jobs per replica
+        listLength: "4"  # Target 4 jobs per replica
         activationListLength: "1"  # Scale from 0 to 1 when 1+ jobs exist
         enableTLS: "false"
