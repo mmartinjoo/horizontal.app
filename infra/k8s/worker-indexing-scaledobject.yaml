@@ -34,9 +34,10 @@ spec:
       metadata:
         address: redis-14547.c55.eu-central-1-1.ec2.cloud.redislabs.com:14547
         username: default
-        password: aBRQtD0S3mbhnrdYwhETh06w6Jdi7tiC
         databaseIndex: "0"
         listName: horizontal-database-api-queue-size
         listLength: "2"  # Target 2 jobs per replica
         activationListLength: "1"  # Scale from 0 to 1 when 1+ jobs exist
         enableTLS: "false"
+      authenticationRef:
+        name: redis-trigger-auth

@@ -1,0 +1,25 @@
+# TriggerAuthentication for Redis
+# This allows KEDA ScaledObjects to authenticate with Redis using credentials
+# stored in the app-secrets Kubernetes Secret (managed by External Secrets)
+#
+# Prerequisites:
+# 1. ExternalSecret must sync REDIS_PASSWORD from AWS Secrets Manager
+# 2. app-secrets Secret must exist with REDIS_PASSWORD key
+#
+# To apply:
+#   kubectl apply -f k8s/redis-trigger-auth.yaml
+#
+# To verify:
+#   kubectl get triggerauthentication redis-trigger-auth
+#   kubectl describe triggerauthentication redis-trigger-auth
+
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: redis-trigger-auth
+  namespace: default
+spec:
+  secretTargetRef:
+    - parameter: password
+      name: app-secrets
+      key: REDIS_PASSWORD
