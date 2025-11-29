@@ -7,6 +7,15 @@ sync-secrets:
 	kubectl rollout restart deployment/graphbuilder-api
 	kubectl rollout restart deployment/graphbuilder-worker
 
+update-config:
+	kubectl apply -f infra/k8s/app-config.yaml
+	kubectl rollout restart deployment/api
+	kubectl rollout restart deployment/worker-indexing
+	kubectl rollout restart deployment/worker-question
+	kubectl rollout restart deployment/worker-default
+	kubectl rollout restart deployment/graphbuilder-api
+	kubectl rollout restart deployment/graphbuilder-worker
+
 logs-api:
 	kubectl logs -l app=api --tail=100 -f
 
