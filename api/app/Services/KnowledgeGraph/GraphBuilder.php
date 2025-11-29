@@ -20,7 +20,6 @@ class GraphBuilder
     private GraphDB $graphDB;
 
     public function __construct(
-        private string $baseUrl,
         private GraphDBFactory $graphDBFactory,
         private Embedder $embedder,
     ) {
