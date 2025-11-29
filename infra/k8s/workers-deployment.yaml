@@ -26,9 +26,9 @@ spec:
         resources:
           requests:
             memory: "64Mi"
-            cpu: "250m"
+            cpu: "100m"
           limits:
-            memory: "1Gi"
+            memory: "256Mi"
             cpu: "1000m"
         env:
         - name: QUEUE_NAMES
@@ -71,9 +71,9 @@ spec:
         resources:
           requests:
             memory: "64Mi"
-            cpu: "250m"
+            cpu: "100m"
           limits:
-            memory: "1Gi"
+            memory: "256Mi"
             cpu: "1000m"
         env:
         - name: QUEUE_NAMES
@@ -116,9 +116,9 @@ spec:
         resources:
           requests:
             memory: "64Mi"
-            cpu: "250m"
+            cpu: "100m"
           limits:
-            memory: "1Gi"
+            memory: "256Mi"
             cpu: "1000m"
         env:
         - name: QUEUE_NAMES
