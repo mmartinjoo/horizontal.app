@@ -69,7 +69,7 @@ data:
   GOOGLE_AUTH_URI: "https://accounts.google.com/o/oauth2/auth"
   GOOGLE_TOKEN_URI: "https://oauth2.googleapis.com/token"
   GOOGLE_AUTH_PROVIDER_X509_CERT_URL: "https://www.googleapis.com/oauth2/v1/certs"
-  GOOGLE_REDIRECT_URI: "/api/integrations/google/oauth/callback"
+  GOOGLE_REDIRECT_URI: "https://horizontal.app/api/integrations/google/oauth/callback"
 
   GOOGLE_CHAT_AUTH_URI: "https://accounts.google.com/o/oauth2/auth"
   GOOGLE_CHAT_TOKEN_URI: "https://oauth2.googleapis.com/token"
@@ -82,13 +82,13 @@ data:
   GOOGLE_DRIVE_REDIRECT_URI: "https://horizontal.app/api/integrations/google_drive/oauth/callback"
 
   # Jira
-  JIRA_REDIRECT_URI: "/api/integrations/jira/oauth/callback"
+  JIRA_REDIRECT_URI: "https://horizontal.app/api/integrations/jira/oauth/callback"
 
   SLACK_BASE_URL: "https://slack.com/api"
   SLACK_REDIRECT_URI: "https://horizontal.app/api/integrations/slack/oauth/callback"
 
   # Linear
-  LINEAR_REDIRECT_URL: "/api/integrations/linear/oauth/callback"
+  LINEAR_REDIRECT_URL: "https://horizontal.app/api/integrations/linear/oauth/callback"
 
   # GitHub
   GITHUB_BASE_URL: "https://api.github.com/"
@@ -107,7 +107,7 @@ data:
   # Supervisor
   SUPERVISOR_TIMEOUT: "14400"
   SUPERVISOR_INTERVAL: "5"
-  SUPERVISOR_STUCK_BUCKET_TIMEOUT: "900"
+  SUPERVISOR_STUCK_BUCKET_TIMEOUT: "300"
   SUPERVISOR_STUCK_ITEM_TIMEOUT: "120"
 
   LOG_SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/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"
