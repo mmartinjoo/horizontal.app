@@ -8,8 +8,8 @@ spec:
     name: graphbuilder-worker
   minReplicaCount: 2
   maxReplicaCount: 20
-  pollingInterval: 10  # Check queue every 15 seconds
-  cooldownPeriod: 30   # Wait 30s before scaling down
+  pollingInterval: 10  # Check queue every 10 seconds
+  cooldownPeriod: 20   # Wait 20s before scaling down
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
@@ -18,7 +18,7 @@ spec:
           policies:
             - type: Pods
               value: 1
-              periodSeconds: 60  # Max 1 pod down per minute
+              periodSeconds: 20  # Max 1 pod down per 20 seconds
         scaleUp:
           stabilizationWindowSeconds: 10
           policies:
