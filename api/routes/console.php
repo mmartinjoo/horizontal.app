@@ -3,7 +3,7 @@
 use App\Jobs\Indexing\Communication\GoogleChat\RefreshGoogleChatTokensJob;
 use App\Jobs\Indexing\Communication\Slack\RefreshSlackTokensJob;
 use App\Jobs\Indexing\Communication\Slack\UpdateSlackMessageLinks;
-use App\Jobs\Indexing\StartEmergencyIndexing;
+use App\Jobs\Indexing\MonitorGraph;
 use App\Jobs\Indexing\StartIndexing;
 use App\Jobs\Indexing\Storage\GoogleDrive\RefreshGoogleDriveTokensJob;
 use App\Jobs\Indexing\TaskManagement\Jira\RefreshJiraTokensJob;
@@ -40,10 +40,7 @@ try {
         //  - 7PM-11PM (previous day) in the US
         //  - 1AM-4AM in Europe
         Schedule::job(new StartIndexing($tenant))->dailyAt('03:00');
-
-        if (config('features.emergency_graph_building.active')) {
-            Schedule::job(new StartEmergencyIndexing($tenant))->everyThirtyMinutes();
-        }
+        Schedule::job(new MonitorGraph($tenant))->everyTenMinutes();
 
         Schedule::job(new RotateLLMProvider($tenant))->everyFifteenMinutes();
 

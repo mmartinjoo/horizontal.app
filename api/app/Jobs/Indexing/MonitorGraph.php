@@ -14,9 +14,9 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * since memgraph is an in-memory database it can lose its content between startups
- * to avoid that we run this "emergency" indexing job every X minutes
+ * this job monitors its health
  */
-class StartEmergencyIndexing implements ShouldQueue
+class MonitorGraph implements ShouldQueue
 {
     use Queueable;
 
@@ -24,7 +24,7 @@ class StartEmergencyIndexing implements ShouldQueue
     {
     }
 
-    public function handle(Orchestrator $orchestrator)
+    public function handle()
     {
         tenancy()->initialize($this->tenant);
         if (Document::count() === 0) {
@@ -48,9 +48,22 @@ class StartEmergencyIndexing implements ShouldQueue
         $graphDB = $graphDBFactory->create();
         $count = $graphDB->run("match (n:Community) return count(n) as count;")[0]['count'];
         if ($count === 0) {
-            logger()->warning('emergency indexing started');
-            Log::channel('slack')->warning('emergency indexing started');
-            $orchestrator->schedule();
+            if (config('features.graph_monitoring.emergency_action.slack_warning.active')) {
+                Log::channel('slack')->log(
+                    level: config('features.graph_monitoring.emergency_action.slack_warning.log_level'),
+                    message: 'GRAPH IS IN UNHEALTHY STATE',
+                    context: [
+                        'tenant_id' => $this->tenant->id,
+                        'company' => $this->tenant->company,
+                    ],
+                );
+            }
+
+            if (config('features.graph_monitoring.emergency_action.graph_building.active')) {
+                logger()->warning('emergency indexing started');
+                $orchestrator = app(Orchestrator::class);
+                $orchestrator->schedule();
+            }
         }
     }
 }
