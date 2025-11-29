@@ -173,6 +173,8 @@ jobs:
           kubectl apply -f infra/k8s/central-app-deployment.yaml
           kubectl apply -f infra/k8s/tenant-app-deployment.yaml
 
+          kubectl apply -f infra/k8s/redis-trigger-auth.yaml
+          
           kubectl apply -f infra/k8s/api-hpa.yaml
           kubectl apply -f infra/k8s/graphbuilder-api-hpa.yaml
           kubectl apply -f infra/k8s/worker-default-scaledobject.yaml
