@@ -12,6 +12,7 @@ use App\Jobs\Indexing\Supervisor\SuperviseStuckBuckets;
 use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
 use App\Jobs\Infra\SuperviseQueues;
 use App\Jobs\LLM\RotateLLMProvider;
+use App\Models\GithubIntegration;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
 use App\Models\IndexingWorkflowStepItem;
@@ -28,17 +29,22 @@ use Illuminate\Support\Facades\App;
 
 class TestController extends Controller
 {
-    public function index()
+    public function index(Orchestrator $orchestrator)
     {
         if (App::isProduction()) {
             abort(404);
         }
         
-        SuperviseQueues::dispatch();
+        $orchestrator->schedule();
+        
     }
 
     public function token()
     {
+        if (App::isProduction()) {
+            abort(404);
+        }
+        
         $user = \App\Models\User::updateOrCreate(
             [
                 'email' => 'jira1@example.com',

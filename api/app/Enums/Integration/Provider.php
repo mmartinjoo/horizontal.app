@@ -12,4 +12,18 @@ enum Provider: string
     case GoogleDrive = 'google_drive';
     case Github = 'github';
     case Confluence = 'confluence';
+
+    public function name(): string
+    {
+        return match($this) {
+            self::Slack => 'Slack',
+            self::GoogleChat => 'Google Chat',
+            self::Jira => 'Jira',
+            self::Linear => 'Linear',
+            self::GithubProjects => 'GitHub Projects',
+            self::GoogleDrive => 'Google Drive',
+            self::Github => 'GitHub',
+            self::Confluence => 'Confluence',
+        };
+    }
 }

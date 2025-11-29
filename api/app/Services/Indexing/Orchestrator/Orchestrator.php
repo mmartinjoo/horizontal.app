@@ -3,33 +3,23 @@
 namespace App\Services\Indexing\Orchestrator;
 
 use App\Enums\Indexing\WorkflowStatus;
-use App\Jobs\Indexing\CodeRepository\Github\IndexGithub;
-use App\Jobs\Indexing\Communication\GoogleChat\IndexGoogleChat;
-use App\Jobs\Indexing\Communication\Slack\IndexSlack;
 use App\Jobs\Indexing\IndexingStepJob;
 use App\Jobs\Indexing\Orchestrator\ScheduleAdditionalNodeBuilding;
 use App\Jobs\Indexing\Orchestrator\ScheduleCommunityBuilding;
 use App\Jobs\Indexing\Orchestrator\ScheduleGraphBuilding;
-use App\Jobs\Indexing\Storage\GoogleDrive\IndexGoogleDrive;
 use App\Jobs\Indexing\Supervisor\SuperviseStuckBuckets;
 use App\Jobs\Indexing\Supervisor\SuperviseStuckItems;
 use App\Jobs\Indexing\Supervisor\SuperviseWorkflow;
-use App\Jobs\Indexing\TaskManagement\Jira\IndexJira;
-use App\Jobs\Indexing\TaskManagement\Linear\IndexLinear;
-use App\Models\GithubIntegration;
-use App\Models\GoogleChatIntegration;
-use App\Models\GoogleDriveIntegration;
 use App\Models\IndexingWorkflow;
 use App\Models\IndexingWorkflowStep;
-use App\Models\JiraIntegration;
-use App\Models\LinearIntegration;
-use App\Models\SlackIntegration;
 use App\Services\GraphDB\GraphDB;
 use App\Services\GraphDB\GraphDBFactory;
 use App\Services\Indexing\Orchestrator\Supervisor\StuckBucketSupervisor;
 use App\Services\Indexing\Orchestrator\Supervisor\StuckItemSupervisor;
 use App\Services\Indexing\Orchestrator\Supervisor\WorkflowSupervisor;
+use App\Services\Integration\ProviderService;
 use Exception;
+use Throwable;
 
 class Orchestrator
 {
@@ -47,7 +37,6 @@ class Orchestrator
             'status' => WorkflowStatus::Starting->value,
         ]);
 
-        // This will be merged into one `integrations` table
         $integrations = $this->getEnabledIntegrations();
         $jobs = [];
 
@@ -89,15 +78,29 @@ class Orchestrator
 
     private function createIndexingJob(string $integration): IndexingStepJob
     {
-        return match ($integration) {
-            'google_drive' => new IndexGoogleDrive(),
-            'github' => new IndexGithub(),
-            'slack' => new IndexSlack(),
-            'linear' => new IndexLinear(),
-            'google_chat' => new IndexGoogleChat(),
-            'jira' => new IndexJira(),
-            default => throw new Exception('unknown integration'),
-        };
+        $config = config("features.integrations.{$integration}");
+        if (!$config['active']) {
+            throw new Exception('Orchestrator: integration is inactive: '.$integration);
+        }
+
+        $indexingJobClassName = $config['indexing_job_class_name'];
+        if (!$indexingJobClassName) {
+            throw new Exception('Orchestrator: unknown integration: '.$integration);
+        }
+
+        try {
+            $indexingJob = new $indexingJobClassName;
+            if (!$indexingJob) {
+                throw new Exception('index job is null');
+            }
+            return $indexingJob;
+        } catch (Throwable $ex) {
+            throw new Exception(
+                message: 'Orchestrator: indexing job cannot be created for '.$integration, 
+                code: 0, 
+                previous: $ex,
+            );
+        }
     }
 
     private function createWorkflowSupervisor(IndexingWorkflow $workflow): SuperviseWorkflow
@@ -130,24 +133,18 @@ class Orchestrator
     public function getEnabledIntegrations(): array
     {
         $integrations = [];
-        if (GithubIntegration::count() > 0) {
-            $integrations[] = 'github';
+        $providerService = app(ProviderService::class);
+        $activeProviders = $providerService->getActiveProviders();
+
+        foreach ($activeProviders as $config) {
+            $integrationModelClassName = $config['integration_model_class_name'];
+            $count = $integrationModelClassName::count();
+
+            if ($count > 0) {
+                $integrations[] = $config['slug'];
+            }
         }
-        if (GoogleChatIntegration::count() > 0) {
-            $integrations[] = 'google_chat';
-        }
-        if (GoogleDriveIntegration::count() > 0) {
-            $integrations[] = 'google_drive';
-        }
-        if (JiraIntegration::count() > 0) {
-            $integrations[] = 'jira';
-        }
-        if (LinearIntegration::count() > 0) {
-            $integrations[] = 'linear';
-        }
-        if (SlackIntegration::count() > 0) {
-            $integrations[] = 'slack';
-        }
+
         return $integrations;
     }
 }
