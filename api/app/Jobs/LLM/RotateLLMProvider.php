@@ -21,7 +21,7 @@ class RotateLLMProvider implements ShouldQueue
         logger()->info('---- Rotate LLM provider ----');
         logger()->info('tenant BEFORE update');
         logger()->info($this->tenant);
-        $currentProvider = $tenant->llm_provider ?? config('llm.default');
+        $currentProvider = $this->tenant->llm_provider ?? config('llm.default');
         logger()->info('current provider');
         logger()->info($currentProvider);
         $newProvider = $llmRotation->rotate($currentProvider);
