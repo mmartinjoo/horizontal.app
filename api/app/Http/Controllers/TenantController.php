@@ -2,17 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\User\Role;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
-use App\Enums\User\Role;
 use Symfony\Component\HttpFoundation\Response;
 
 class TenantController
 {
     public function store(Request $request)
     {
+        if (! config('features.registration.active')) {
+            return response()->json([
+                'message' => 'Registration is currently closed. Please contact us to book a demo.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
         $request->validate([
             'company_name' => ['required', 'string'],
             'subdomain' => ['required', 'string', 'ascii', 'lowercase'],
@@ -22,7 +28,7 @@ class TenantController
             'admin_user_name' => ['required', 'string'],
             'questions_per_month' => ['required', 'numeric', 'in:150,250,500'],
             'data_retention' => ['required', 'numeric', 'in:3,6,12'],
-            'number_of_seats' => ['required', 'numeric', 'lte:50'],            
+            'number_of_seats' => ['required', 'numeric', 'lte:50'],
         ]);
 
         $tenant = Tenant::create([
@@ -34,12 +40,12 @@ class TenantController
             'llm_provider' => config('llm.default'),
         ]);
 
-        $tenant->createDomain($request->get('subdomain') . '.horizontal.app');
+        $tenant->createDomain($request->get('subdomain').'.horizontal.app');
 
         if (App::isLocal()) {
-            $tenant->createDomain($request->get('subdomain') . '.localhost');
-            $tenant->createDomain($request->get('subdomain') . '-horizontal.loca.lt');
-            $tenant->createDomain($request->get('subdomain') . '.nginx');
+            $tenant->createDomain($request->get('subdomain').'.localhost');
+            $tenant->createDomain($request->get('subdomain').'-horizontal.loca.lt');
+            $tenant->createDomain($request->get('subdomain').'.nginx');
         }
 
         tenancy()->initialize($tenant);

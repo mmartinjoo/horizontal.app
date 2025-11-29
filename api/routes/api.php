@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\CentralIntegrationController;
 use App\Http\Controllers\CentralOAuthController;
-use App\Http\Controllers\ElasticMemgraphService\OccupationController;
+use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\TenantController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +12,8 @@ foreach (config('tenancy.central_domains') as $domain) {
 
         Route::get('/tenants/{tenant}/', [TenantController::class, 'show'])
             ->middleware('auth.service');
+
+        Route::get('/features/public', [FeatureController::class, 'public']);
 
         Route::get('/health', function () {
             return response()->json(['status' => 'ok']);

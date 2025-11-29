@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { fetchFeatures, isRegistrationOpen } from '../services/features'
 
 // Pricing plans data
 const plans = [
@@ -84,6 +85,7 @@ const selectedSeats = ref(5)
 const selectedAdditionalQuestions = ref(0) // Index: 0 = 150 questions (default)
 const selectedDataRetention = ref(0) // Index: 0 = 3 months (default)
 const selectedHosting = ref('cloud') // 'cloud' or 'on-premise'
+const registrationOpen = ref(false)
 
 // Computed values
 const currentPlan = computed(() => {
@@ -138,6 +140,11 @@ const handleBookingCall = () => {
 }
 
 const handleGetStarted = () => {
+  if (!registrationOpen.value) {
+    window.location.href = '/registration-closed'
+    return
+  }
+
   const params = new URLSearchParams({
     number_of_seats: selectedSeats.value,
     questions_per_month: availableAdditionalQuestions.value[selectedAdditionalQuestions.value].questions,
@@ -146,6 +153,11 @@ const handleGetStarted = () => {
 
   window.location.href = `/signup?${params.toString()}`
 }
+
+onMounted(async () => {
+  await fetchFeatures()
+  registrationOpen.value = isRegistrationOpen()
+})
 </script>
 
 <template>
@@ -343,12 +355,16 @@ const handleGetStarted = () => {
             <div class="text-slate-400 text-sm mt-1 text-right">per month</div>
           </div>
 
-          <button @click="handleGetStarted" class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg">
-            Get Started
+          <button
+            @click="handleGetStarted"
+            class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg transition-colors text-lg"
+            :class="{ 'opacity-75': !registrationOpen }"
+          >
+            {{ registrationOpen ? 'Get Started' : 'Book a Demo' }}
           </button>
 
           <p class="text-center text-slate-400 text-sm mt-4">
-            30-day free trial • Cancel anytime
+            {{ registrationOpen ? '30-day free trial • Cancel anytime' : 'Registration opening soon' }}
           </p>
         </div>
 
