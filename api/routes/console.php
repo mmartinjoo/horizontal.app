@@ -40,7 +40,10 @@ try {
         //  - 7PM-11PM (previous day) in the US
         //  - 1AM-4AM in Europe
         Schedule::job(new StartIndexing($tenant))->dailyAt('03:00');
-        Schedule::job(new StartEmergencyIndexing($tenant))->everyThirtyMinutes();
+
+        if (config('features.emergency_graph_building.active')) {
+            Schedule::job(new StartEmergencyIndexing($tenant))->everyThirtyMinutes();
+        }
 
         Schedule::job(new RotateLLMProvider($tenant))->everyFifteenMinutes();
 
