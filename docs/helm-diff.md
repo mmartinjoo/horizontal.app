@@ -1,0 +1,1 @@
+helm plugin install --verify=false https://github.com/databus23/helm-diff
