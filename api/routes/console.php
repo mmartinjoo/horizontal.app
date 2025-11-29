@@ -36,11 +36,15 @@ try {
 
         Schedule::job(new UpdateSlackMessageLinks($tenant))->everyFiveMinutes();
 
-        // the server is in UTC. when it's 3AM:
-        //  - 7PM-11PM (previous day) in the US
-        //  - 1AM-4AM in Europe
-        Schedule::job(new StartIndexing($tenant))->dailyAt('03:00');
-        Schedule::job(new MonitorGraph($tenant))->everyTenMinutes();
+        if (config('features.graph_monitoring.active')) {
+            Schedule::job(new MonitorGraph($tenant))
+                ->everyTenMinutes();
+        }        
+    
+        if (config('features.automatic_indexing.active')) {
+            Schedule::job(new StartIndexing($tenant))
+                ->dailyAt(config('features.automatic_indexing.scheduling_daily_at.value'));
+        }
 
         if (config('features.llm_rotation.active')) {
             Schedule::job(new RotateLLMProvider($tenant))
