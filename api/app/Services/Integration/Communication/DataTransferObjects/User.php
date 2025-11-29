@@ -17,8 +17,8 @@ class User
     {
         return new self(
             externalId: $data['id'],
-            username: $data['name'],
-            realName: $data['real_name'],
+            username: Arr::get($data, 'name', 'unknown'),
+            realName: Arr::get($data, 'real_name', 'Unknown User'),
         );
     }
 
