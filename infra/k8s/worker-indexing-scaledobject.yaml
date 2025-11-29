@@ -9,12 +9,12 @@ spec:
   minReplicaCount: 1
   maxReplicaCount: 10
   pollingInterval: 15  # Check queue every 15 seconds
-  cooldownPeriod: 60   # Wait 60s before scaling down
+  cooldownPeriod: 30   # Wait 60s before scaling down
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
         scaleDown:
-          stabilizationWindowSeconds: 120
+          stabilizationWindowSeconds: 30
           policies:
             - type: Pods
               value: 1

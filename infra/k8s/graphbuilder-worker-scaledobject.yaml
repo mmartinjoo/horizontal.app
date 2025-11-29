@@ -9,12 +9,12 @@ spec:
   minReplicaCount: 2
   maxReplicaCount: 20
   pollingInterval: 15  # Check queue every 15 seconds
-  cooldownPeriod: 60   # Wait 60s before scaling down
+  cooldownPeriod: 30   # Wait 30s before scaling down
   advanced:
     horizontalPodAutoscalerConfig:
       behavior:
         scaleDown:
-          stabilizationWindowSeconds: 120
+          stabilizationWindowSeconds: 30
           policies:
             - type: Pods
               value: 1
@@ -37,6 +37,6 @@ spec:
         password: aBRQtD0S3mbhnrdYwhETh06w6Jdi7tiC
         databaseIndex: "0"
         listName: horizontal-database-graphbuilder-queue-size
-        listLength: "4"  # Target 4 jobs per replica
+        listLength: "3"  # Target 3 jobs per replica
         activationListLength: "1"  # Scale from 0 to 1 when 1+ jobs exist
         enableTLS: "false"
