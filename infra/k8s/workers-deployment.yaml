@@ -33,10 +33,6 @@ spec:
         env:
         - name: QUEUE_NAMES
           value: "indexing,question,default"
-        - name: QUEUE_TIMEOUT
-          value: "1800"
-        - name: QUEUE_TRIES
-          value: "1"
         envFrom:
         - configMapRef:
             name: app-config
@@ -78,10 +74,6 @@ spec:
         env:
         - name: QUEUE_NAMES
           value: "question,indexing,default"
-        - name: QUEUE_TIMEOUT
-          value: "1800"
-        - name: QUEUE_TRIES
-          value: "1"
         envFrom:
         - configMapRef:
             name: app-config
@@ -122,11 +114,7 @@ spec:
             cpu: "1000m"
         env:
         - name: QUEUE_NAMES
-          value: "default,question,indexing"
-        - name: QUEUE_TIMEOUT
-          value: "1800"
-        - name: QUEUE_TRIES
-          value: "1"
+          value: "default,question,indexing"        
         envFrom:
         - configMapRef:
             name: app-config
